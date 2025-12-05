@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -59,10 +60,21 @@ public class EmbeddingController {
 		}
 		
 		Embedding[] embeddings = embeddingService.embedBatch(texts.toArray(new String[0]));
-		return Map.of(
-			"count", embeddings.length,
-			"embeddings", List.of(embeddings)
-		);
+		
+		// 将 Embedding 对象转换为可序列化的 Map
+		List<Map<String, Object>> embeddingList = Arrays.stream(embeddings)
+			.map(embedding -> {
+				Map<String, Object> embeddingMap = new java.util.HashMap<>();
+				embeddingMap.put("dimension", embedding.dimension());
+				embeddingMap.put("vector", embedding.vectorAsList());
+				return embeddingMap;
+			})
+			.collect(Collectors.toList());
+		
+		Map<String, Object> response = new java.util.HashMap<>();
+		response.put("count", embeddings.length);
+		response.put("embeddings", embeddingList);
+		return response;
 	}
 
 	/**

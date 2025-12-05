@@ -30,9 +30,26 @@ public class EmbeddingService {
 	 */
 	public Embedding embed(String text) {
 		log.debug("开始向量化文本，长度: {}", text.length());
-		Embedding embedding = embeddingModel.embed(text).content();
-		log.debug("向量化完成，向量维度: {}", embedding.dimension());
-		return embedding;
+		try {
+			Embedding embedding = embeddingModel.embed(text).content();
+			log.debug("向量化完成，向量维度: {}", embedding.dimension());
+			return embedding;
+		} catch (Exception e) {
+			log.error("向量化失败: {}", e.getMessage());
+			log.error("错误类型: {}", e.getClass().getName());
+			if (e.getCause() != null) {
+				log.error("根本原因: {}", e.getCause().getMessage());
+			}
+			// 如果是 404 错误，提供更详细的提示
+			if (e.getMessage() != null && e.getMessage().contains("404")) {
+				log.error("⚠️  404 错误通常表示：");
+				log.error("  1. baseUrl 配置错误（应该是 https://api.openai.com，不包含 /v1）");
+				log.error("  2. API Key 无效或已过期");
+				log.error("  3. 使用了代理服务器但配置不正确");
+				log.error("  建议：检查 Nacos 配置中的 spring.ai.openai.embedding.base-url");
+			}
+			throw new RuntimeException("向量化失败: " + e.getMessage(), e);
+		}
 	}
 
 	/**

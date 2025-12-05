@@ -44,10 +44,10 @@ public class VectorDatabaseConfig {
 	@Value("${vector.database.zilliz.api-key:}")
 	private String zillizApiKey;
 
-	@Value("${vector.database.zilliz.collection-name:pet_vet_embeddings}")
+	@Value("${vector.database.zilliz.collection-name:pet-vet-embeddings}")
 	private String zillizCollectionName;
 
-	@Value("${vector.database.dimension:1536}")
+	@Value("${vector.database.dimension:1024}")
 	private Integer dimension;
 
 	/**
@@ -97,12 +97,17 @@ public class VectorDatabaseConfig {
 		
 		log.info("创建 Qdrant 向量数据库连接 - Host: {}, Port: {}, TLS: {}, Collection: {}", 
 			host, qdrantPort, useTls, qdrantCollectionName);
+		log.info("注意: 当前 embedding 模型维度为 {}，如果集合已存在但维度不匹配，请删除集合或修改集合名称", dimension);
 		
 		QdrantEmbeddingStore.Builder builder = QdrantEmbeddingStore.builder()
 			.host(host)
 			.port(qdrantPort)
 			.collectionName(qdrantCollectionName)
 			.useTls(useTls);
+		
+		// 注意：QdrantEmbeddingStore 不支持直接设置维度
+		// 如果集合不存在，会在第一次 add 时自动创建，维度由第一个向量决定
+		// 如果集合已存在但维度不匹配，会报错，需要删除集合或修改集合名称
 		
 		if (qdrantApiKey != null && !qdrantApiKey.trim().isEmpty()) {
 			builder.apiKey(qdrantApiKey);

@@ -30,15 +30,22 @@ vector:
   database:
     # 向量数据库类型: qdrant 或 zilliz
     type: ${VECTOR_DB_TYPE:qdrant}
-    # 向量维度（根据使用的 embedding 模型确定，OpenAI text-embedding-3-small 为 1536）
-    dimension: ${VECTOR_DB_DIMENSION:1536}
+    # 向量维度（根据使用的 embedding 模型确定）
+    # - OpenAI text-embedding-3-small: 1536维
+    # - Hugging Face bge-small-zh-v1.5: 384维
+    # - Hugging Face all-MiniLM-L6-v2: 384维
+    # - Cohere embed-english-v3.0: 1024维
+    # - Cohere embed-multilingual-v3.0: 1024维
+    dimension: ${VECTOR_DB_DIMENSION:1024}
     
     # Qdrant 配置
+    # 注意：如果集合已存在但维度不匹配（例如：集合是 1536 维，但当前模型是 1024 维），
+    # 需要删除现有集合或修改集合名称，否则会报错 "Vector dimension error"
     qdrant:
       host: ${QDRANT_HOST:https://e2b72e30-6371-4b2f-a925-af91477e9f25.europe-west3-0.gcp.cloud.qdrant.io}
       port: ${QDRANT_PORT:6334}
       api-key: ${QDRANT_API_KEY:}
-      collection-name: ${QDRANT_COLLECTION:pet-vet-embeddings}
+      collection-name: ${QDRANT_COLLECTION:pet-vet-embeddings-v2}
       use-tls: ${QDRANT_USE_TLS:false}
     
     # Zilliz 配置
@@ -59,15 +66,20 @@ vector:
 # - cohere: 有免费额度，性能好
 embedding:
   model:
-    type: ${EMBEDDING_MODEL_TYPE:openai}
+    type: ${EMBEDDING_MODEL_TYPE:cohere}
     
     # Hugging Face 配置（完全免费，推荐）
     hugging-face:
-      # 推荐模型:
-      # - BAAI/bge-small-zh-v1.5 (中文，384维，推荐中文场景)
-      # - sentence-transformers/all-MiniLM-L6-v2 (英文，384维，轻量级)
-      # - sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 (多语言，384维)
-      # - BAAI/bge-large-zh-v1.5 (中文，1024维，性能更好但更慢)
+      # 推荐模型（按资源占用从小到大）:
+      # - sentence-transformers/all-MiniLM-L6-v2 (英文，384维，~80MB，最轻量)
+      # - BAAI/bge-small-zh-v1.5 (中文，384维，~96MB，推荐中文场景)
+      # - sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 (多语言，384维，~120MB)
+      # - BAAI/bge-large-zh-v1.5 (中文，1024维，~1.3GB，性能更好但资源占用大)
+      # 
+      # 资源占用说明：
+      # - 模型下载大小：约 80-120 MB（首次下载）
+      # - 运行时内存：约 300-500 MB（取决于模型大小）
+      # - 建议：Mac 资源有限时，优先使用 all-MiniLM-L6-v2 或 bge-small-zh-v1.5
       model-id: ${HUGGING_FACE_MODEL_ID:BAAI/bge-small-zh-v1.5}
       wait-for-model: ${HUGGING_FACE_WAIT_FOR_MODEL:true}
     
@@ -80,8 +92,17 @@ embedding:
     # Cohere 配置（有免费额度）
     cohere:
       api-key: ${COHERE_API_KEY:}
-      # 推荐模型: embed-english-v3.0, embed-multilingual-v3.0
+      # 推荐模型:
+      # - embed-english-v3.0 (v3 模型，需要 input_type)
+      # - embed-multilingual-v3.0 (v3 模型，需要 input_type)
+      # - embed-english-v2 (v2 模型，不需要 input_type)
       model-name: ${COHERE_MODEL_NAME:embed-english-v3.0}
+      # input_type 仅 v3 模型需要，可选值:
+      # - search_document: 用于存储在向量数据库中的文档（默认，推荐）
+      # - search_query: 用于搜索查询
+      # - classification: 用于文本分类
+      # - clustering: 用于聚类
+      input-type: ${COHERE_INPUT_TYPE:search_document}
 
 # OpenAI 配置（需要 API Key）
 spring:
