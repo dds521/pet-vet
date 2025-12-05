@@ -1,0 +1,58 @@
+# ============================================
+# Nacos 生产环境配置文件
+# ============================================
+# Data ID: pet-vet-ai-prod.yml
+# Group: DEFAULT_GROUP
+# Namespace: (空，使用 public 命名空间)
+# 此文件用于上传到 Nacos 配置中心，包含生产环境的特定配置
+# ============================================
+
+# 数据源配置（生产环境）
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:prod-db}:${DB_PORT:3306}/${DB_NAME:pet_vet_ai}?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:prod_user}
+    password: ${DB_PASSWORD:prod_secure_pass}
+  
+  # Redis 配置（生产环境）
+  data:
+    redis:
+      host: ${REDIS_HOST:prod-redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:prod_redis_pass}
+      database: ${REDIS_DB:0}
+      lettuce:
+        pool:
+          max-active: 32
+          max-idle: 16
+          min-idle: 4
+          max-wait: -1ms
+
+# RocketMQ 配置（生产环境）
+rocketmq:
+  name-server: ${ROCKETMQ_NAMESRV:prod-rocketmq:9876}
+  producer:
+    group: pet-vet-ai-producer-group-prod
+
+# MyBatis-Plus 配置（生产环境）
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+# AI 配置（生产环境特定配置，可选）
+# 公共 AI 配置在 pet-vet-ai-common.yml 中
+# 生产环境建议使用 DeepSeek（价格更便宜，国内访问更稳定）
+# 如需切换，设置环境变量：AI_PROVIDER_TYPE=openai 或 deepseek
+# spring:
+#   ai:
+#     provider:
+#       type: ${AI_PROVIDER_TYPE:deepseek}  # 生产环境默认使用 deepseek
+
+# 日志配置（生产环境）
+logging:
+  level:
+    root: WARN # 生产环境只记录警告以上
+    com.petvetai.app: INFO # 业务日志保留 INFO
+    dev.langchain4j: WARN  # LangChain4j 只记录警告以上
+

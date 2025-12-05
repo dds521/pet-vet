@@ -1,0 +1,219 @@
+# ============================================
+# Nacos 公共配置文件
+# ============================================
+# Data ID: pet-vet-ai-common.yml
+# Group: DEFAULT_GROUP
+# Namespace: (空，使用 public 命名空间)
+# 此文件用于上传到 Nacos 配置中心，包含所有环境的公共配置
+# ============================================
+
+# Seata 配置（所有环境公共）
+seata:
+  enabled: true
+  application-id: ${spring.application.name}
+  tx-service-group: default_tx_group
+  # 使用 Nacos 作为配置中心
+  config:
+    type: nacos
+    nacos:
+      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+      namespace: ${NACOS_NAMESPACE:}
+      group: ${NACOS_GROUP:SEATA_GROUP}
+      data-id: seataServer.properties
+  # 使用 file 注册中心，直接指定 Seata Server 地址
+  registry:
+    type: file
+  service:
+    vgroup-mapping:
+      default_tx_group: default
+    default:
+      grouplist: ${SEATA_SERVER_ADDR:127.0.0.1:8091}
+  client:
+    rm:
+      async-commit-buffer-limit: 10000
+      report-retry-count: 5
+      table-meta-check-enable: false
+      report-success-enable: false
+      saga-branch-register-enable: false
+      lock-retry-interval: 10
+      lock-retry-times: 30
+    tm:
+      commit-retry-count: 5
+      rollback-retry-count: 5
+      # 启用降级检查：当 Seata Server 不可用时，自动降级为本地事务，不阻塞应用启动
+      # 这是关键配置：如果 Seata Server 连接失败，Seata 会自动降级为本地事务模式
+      # 应用可以正常启动，只是分布式事务功能不可用（会使用本地事务）
+      degrade-check: true
+      degrade-check-period: 2000
+      degrade-check-allow-times: 10
+    undo:
+      data-validation: true
+      only-care-update-columns: true
+      log-serialization: jackson
+      log-table: undo_log
+
+# Spring Cloud Alibaba 配置（所有环境公共）
+# AI 配置（所有环境公共）
+# 支持 OpenAI、DeepSeek 和 xAI Grok
+# 推荐使用 DeepSeek（价格更便宜，国内访问更稳定）或 Grok（性能优秀）
+spring:
+  cloud:
+    alibaba:
+      seata:
+        tx-service-group: default_tx_group
+        enabled: true
+    sentinel:
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD:localhost:8718}
+        port: 8719
+        # 连接超时时间（毫秒），默认 3 秒
+        heartbeat-interval-ms: 5000
+      # 设置为 false：延迟初始化，不阻塞应用启动；如果 Dashboard 不可用，只记录警告，不抛出异常
+      eager: false
+      web:
+        filter:
+          enabled: true
+          url-patterns: /**
+      compatibility-verifier:
+        enabled: false
+      # Sentinel 规则持久化到 Nacos
+      # 配置说明：
+      # 1. 规则存储在 Nacos 配置中心，应用重启后规则不会丢失
+      # 2. 在 Sentinel Dashboard 中修改规则后，会自动同步到 Nacos
+      # 3. Nacos 中的规则变更会自动推送到应用，实现动态更新
+      # 4. 如果 Nacos 连接失败，Sentinel 会使用内存规则（不影响应用启动）
+      datasource:
+        # 流控规则（Flow Rules）
+        flow:
+          nacos:
+            server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+            namespace: ${NACOS_NAMESPACE:}
+            data-id: ${spring.application.name}-flow-rules
+            group-id: ${NACOS_GROUP:DEFAULT_GROUP}
+            rule-type: flow
+            # 数据格式：JSON
+            # 示例：[{"resource":"/api/test","limitApp":"default","grade":1,"count":10,"strategy":0,"controlBehavior":0,"clusterMode":false}]
+        # 降级规则（Degrade Rules）
+        degrade:
+          nacos:
+            server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+            namespace: ${NACOS_NAMESPACE:}
+            data-id: ${spring.application.name}-degrade-rules
+            group-id: ${NACOS_GROUP:DEFAULT_GROUP}
+            rule-type: degrade
+            # 数据格式：JSON
+            # 示例：[{"resource":"/api/test","grade":0,"count":100,"timeWindow":10}]
+        # 系统规则（System Rules）
+        system:
+          nacos:
+            server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+            namespace: ${NACOS_NAMESPACE:}
+            data-id: ${spring.application.name}-system-rules
+            group-id: ${NACOS_GROUP:DEFAULT_GROUP}
+            rule-type: system
+            # 数据格式：JSON
+            # 示例：[{"avgRt":1000,"maxThread":10,"qps":1000}]
+        # 授权规则（Authority Rules）
+        authority:
+          nacos:
+            server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+            namespace: ${NACOS_NAMESPACE:}
+            data-id: ${spring.application.name}-authority-rules
+            group-id: ${NACOS_GROUP:DEFAULT_GROUP}
+            rule-type: authority
+            # 数据格式：JSON
+            # 示例：[{"resource":"/api/test","limitApp":"app1","strategy":0}]
+        # 热点参数规则（Param Flow Rules）
+        param-flow:
+          nacos:
+            server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+            namespace: ${NACOS_NAMESPACE:}
+            data-id: ${spring.application.name}-param-flow-rules
+            group-id: ${NACOS_GROUP:DEFAULT_GROUP}
+            rule-type: param-flow
+            # 数据格式：JSON
+            # 示例：[{"resource":"/api/test","paramIdx":0,"count":10,"grade":1}]
+  ai:
+    # AI 提供商类型：openai、deepseek 或 grok（默认使用 deepseek）
+    provider:
+      type: ${AI_PROVIDER_TYPE:deepseek}
+    
+    # OpenAI 配置
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:gpt-4o}
+          temperature: ${OPENAI_TEMPERATURE:0.7}
+    
+    # DeepSeek 配置（推荐）
+    # DeepSeek 使用 OpenAI 兼容的 API，价格更便宜，国内访问更稳定
+    # 申请地址：https://platform.deepseek.com/
+    # ⚠️ 注意：API Key 必须通过环境变量 DEEPSEEK_API_KEY 配置，不要直接写在配置文件中
+    deepseek:
+      api-key: ${DEEPSEEK_API_KEY:}
+      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      chat:
+        options:
+          model: ${DEEPSEEK_MODEL:deepseek-chat}
+          temperature: ${DEEPSEEK_TEMPERATURE:0.7}
+    
+    # xAI Grok 配置
+    # Grok 是 xAI 开发的 AI 模型，使用 OpenAI 兼容的 API
+    # 申请地址：https://x.ai/
+    # ⚠️ 注意：API Key 必须通过环境变量 GROK_API_KEY 配置，不要直接写在配置文件中
+    grok:
+      api-key: ${GROK_API_KEY:}
+      base-url: ${GROK_BASE_URL:https://api.x.ai/v1}
+      chat:
+        options:
+          model: ${GROK_MODEL:grok-4-latest}
+          temperature: ${GROK_TEMPERATURE:0.7}
+
+# RocketMQ 基础配置（所有环境公共，producer.group 在各环境配置中指定）
+rocketmq:
+  producer:
+    send-message-timeout: 3000
+
+# MyBatis-Plus 基础配置（所有环境公共）
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.petvetai.app.domain
+  configuration:
+    map-underscore-to-camel-case: true
+
+# Spring Boot Actuator 配置（所有环境公共）
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# 微信小程序配置（所有环境公共）
+wechat:
+  miniapp:
+    # 微信小程序AppID（必须配置，通过环境变量或Nacos配置）
+    appid: ${WECHAT_MINIAPP_APPID:}
+    # 微信小程序AppSecret（必须配置，通过环境变量或Nacos配置）
+    secret: ${WECHAT_MINIAPP_SECRET:}
+  # 微信API配置
+  api:
+    # 微信登录API地址（默认使用官方地址，测试环境可配置为mock服务器）
+    login-url: ${WECHAT_API_LOGIN_URL:https://api.weixin.qq.com/sns/jscode2session}
+  # Redis配置（用于存储sessionKey）
+  redis:
+    # sessionKey在Redis中的key前缀
+    session-key-prefix: ${WECHAT_REDIS_SESSION_KEY_PREFIX:wechat:session:}
+    # sessionKey过期时间（秒），微信sessionKey有效期为3天，建议设置为2天
+    session-key-expire-seconds: ${WECHAT_REDIS_SESSION_KEY_EXPIRE_SECONDS:172800}
+
+# JWT配置（所有环境公共）
+jwt:
+  # JWT密钥（生产环境必须修改为强随机字符串，至少32位）
+  secret: ${JWT_SECRET:pet-vet-ai-secret-key-change-in-production-environment-minimum-32-characters}
+  # JWT过期时间（毫秒），默认7天
+  expiration: ${JWT_EXPIRATION:604800000}
+

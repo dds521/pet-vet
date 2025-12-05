@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.example</groupId>
+		<artifactId>pet-vet</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+	<artifactId>pet-vet-embedding</artifactId>
+	<packaging>pom</packaging>
+	<name>PetVetEmbedding</name>
+	<description>PetVetEmbedding: 数据向量化服务模块</description>
+	
+	<modules>
+		<module>pet-vet-embedding-api</module>
+		<module>pet-vet-embedding-service</module>
+	</modules>
+	
+	<properties>
+		<langchain4j.version>0.34.0</langchain4j.version>
+	</properties>
+</project>

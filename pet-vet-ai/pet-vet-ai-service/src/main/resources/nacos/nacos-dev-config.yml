@@ -1,0 +1,87 @@
+# ============================================
+# Nacos 开发环境配置文件
+# ============================================
+# Data ID: pet-vet-ai-dev.yml
+# Group: DEFAULT_GROUP
+# Namespace: (空，使用 public 命名空间)
+# 此文件用于上传到 Nacos 配置中心，包含开发环境的特定配置
+# ============================================
+
+# 数据源配置（开发环境）
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:pet_vet_ai}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root12345678}
+  
+  # Redis 配置（开发环境）
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DB:0}
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+# RocketMQ 配置（开发环境）
+rocketmq:
+  name-server: ${ROCKETMQ_NAMESRV:localhost:9876}
+  producer:
+    group: pet-vet-ai-producer-group-dev
+
+# MyBatis-Plus 配置（开发环境）
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 开发环境打印 SQL
+
+# AI 配置（开发环境特定配置，可选）
+# 公共 AI 配置在 pet-vet-ai-common.yml 中
+# 支持：deepseek（推荐）、grok、openai
+# 如需在开发环境使用不同的 AI 提供商，可在此覆盖
+# spring:
+#   ai:
+#     provider:
+#       type: ${AI_PROVIDER_TYPE:deepseek}  # deepseek、grok 或 openai
+#     deepseek:
+#       api-key: ${DEEPSEEK_API_KEY:}
+#     grok:
+#       api-key: ${GROK_API_KEY:}
+#     openai:
+#       api-key: ${OPENAI_API_KEY:}
+
+# 邮件读取配置（开发环境）
+email:
+  imap:
+    host: ${EMAIL_IMAP_HOST:imap.example.com}
+    port: ${EMAIL_IMAP_PORT:993}
+    username: ${EMAIL_IMAP_USERNAME:}
+    password: ${EMAIL_IMAP_PASSWORD:}
+    ssl: ${EMAIL_IMAP_SSL:true}
+  subject:
+    pattern: ${EMAIL_SUBJECT_PATTERN:^\\[系统通知\\]\\s+.*$}
+  attachment:
+    save-path: ${EMAIL_ATTACHMENT_SAVE_PATH:./attachments}
+
+# 日志配置（开发环境）
+logging:
+  level:
+    root: INFO
+    com.petvetai.app.mapper: DEBUG
+    com.alibaba.csp.sentinel: INFO
+    io.seata: INFO
+    com.alibaba.nacos: INFO  # Nacos 日志（INFO 级别，避免 gRPC 警告）
+    com.alibaba.cloud.nacos: INFO  # Nacos Cloud 日志
+    com.alibaba.cloud.nacos.config: DEBUG  # Nacos 配置加载详细日志
+    com.alibaba.cloud.nacos.client.config: DEBUG  # Nacos 客户端详细日志
+    # 降低 gRPC 相关类的日志级别，避免 ClassNotFoundException 警告
+    com.alibaba.nacos.shaded.io.grpc: WARN  # gRPC 相关警告忽略
+    com.alibaba.nacos.shaded.io.grpc.internal.ManagedChannelImplBuilder: WARN  # gRPC 通道构建器警告忽略
+    dev.langchain4j: DEBUG  # LangChain4j 调试日志
+    com.petvetai.app.service.EmailReaderService: DEBUG  # 邮件读取服务日志
+

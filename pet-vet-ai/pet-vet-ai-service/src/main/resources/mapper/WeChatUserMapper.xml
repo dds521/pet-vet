@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.petvetai.app.mapper.WeChatUserMapper">
+    
+    <!-- 根据openId查询用户 -->
+    <select id="selectByOpenId" resultType="com.petvetai.app.domain.WeChatUser">
+        SELECT * FROM wechat_users
+        WHERE open_id = #{openId}
+        LIMIT 1
+    </select>
+    
+    <!-- 根据unionId查询用户 -->
+    <select id="selectByUnionId" resultType="com.petvetai.app.domain.WeChatUser">
+        SELECT * FROM wechat_users
+        WHERE union_id = #{unionId}
+        LIMIT 1
+    </select>
+    
+</mapper>

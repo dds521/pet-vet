@@ -1,0 +1,62 @@
+# ============================================
+# Nacos UAT 环境配置文件
+# ============================================
+# Data ID: pet-vet-ai-uat.yml
+# Group: DEFAULT_GROUP
+# Namespace: (空，使用 public 命名空间)
+# 此文件用于上传到 Nacos 配置中心，包含 UAT 环境的特定配置
+# ============================================
+
+# 数据源配置（UAT 环境）
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:uat-db}:${DB_PORT:3306}/${DB_NAME:pet_vet_ai_uat}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:app_user}
+    password: ${DB_PASSWORD:secure_pass}
+  
+  # Redis 配置（UAT 环境）
+  data:
+    redis:
+      host: ${REDIS_HOST:uat-redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:secure_redis_pass}
+      database: ${REDIS_DB:0}
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+# RocketMQ 配置（UAT 环境）
+rocketmq:
+  name-server: ${ROCKETMQ_NAMESRV:uat-rocketmq:9876}
+  producer:
+    group: pet-vet-ai-producer-group-uat
+
+# MyBatis-Plus 配置（UAT 环境）
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl # UAT 使用日志文件记录
+
+# AI 配置（UAT 环境特定配置，可选）
+# 公共 AI 配置在 pet-vet-ai-common.yml 中
+# UAT 环境建议使用 DeepSeek（成本更低，适合测试）
+# spring:
+#   ai:
+#     provider:
+#       type: ${AI_PROVIDER_TYPE:deepseek}  # UAT 环境默认使用 deepseek
+
+# 日志配置（UAT 环境）
+logging:
+  level:
+    root: INFO
+    com.petvetai.app.mapper: INFO
+    com.alibaba.nacos: INFO  # Nacos 日志（INFO 级别，避免 gRPC 警告）
+    com.alibaba.cloud.nacos: INFO  # Nacos Cloud 日志
+    # 降低 gRPC 相关类的日志级别，避免 ClassNotFoundException 警告
+    com.alibaba.nacos.shaded.io.grpc: WARN  # gRPC 相关警告忽略
+    com.alibaba.nacos.shaded.io.grpc.internal.ManagedChannelImplBuilder: WARN  # gRPC 通道构建器警告忽略
+    dev.langchain4j: INFO  # LangChain4j 日志
+

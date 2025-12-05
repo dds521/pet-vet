@@ -1,0 +1,83 @@
+# ============================================
+# Nacos 测试环境配置文件
+# ============================================
+# Data ID: pet-vet-ai-test.yml
+# Group: DEFAULT_GROUP
+# Namespace: (空，使用 public 命名空间)
+# 此文件用于上传到 Nacos 配置中心，包含测试环境的特定配置
+# ============================================
+
+# 数据源配置（测试环境）
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 添加连接超时参数，快速失败，避免长时间等待
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:pet_vet_ai}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&connectTimeout=3000&socketTimeout=3000
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root12345678}
+    hikari:
+      # 连接池配置，快速失败
+      connection-timeout: 3000  # 连接超时 3 秒
+      initialization-fail-timeout: -1  # 初始化失败不抛出异常，允许测试继续
+  
+  # Redis 配置（测试环境）
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DB:1}
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: 3000ms  # 最大等待 3 秒
+        shutdown-timeout: 2000ms  # 关闭超时 2 秒
+      timeout: 3000ms  # Redis 连接超时 3 秒
+
+# RocketMQ 配置（测试环境）
+rocketmq:
+  name-server: ${ROCKETMQ_NAMESRV:localhost:9876}
+  producer:
+    group: pet-vet-ai-producer-group-test
+
+# MyBatis-Plus 配置（测试环境）
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# AI 配置（测试环境特定配置，可选）
+# 公共 AI 配置在 pet-vet-ai-common.yml 中
+# 测试环境建议使用 DeepSeek（成本更低）
+# spring:
+#   ai:
+#     provider:
+#       type: ${AI_PROVIDER_TYPE:deepseek}  # 测试环境默认使用 deepseek
+
+# 邮件读取配置（测试环境）
+email:
+  imap:
+    host: ${EMAIL_IMAP_HOST:imap.example.com}
+    port: ${EMAIL_IMAP_PORT:993}
+    username: ${EMAIL_IMAP_USERNAME:}
+    password: ${EMAIL_IMAP_PASSWORD:}
+    ssl: ${EMAIL_IMAP_SSL:true}
+  subject:
+    pattern: ${EMAIL_SUBJECT_PATTERN:^\\[系统通知\\]\\s+.*$}
+  attachment:
+    save-path: ${EMAIL_ATTACHMENT_SAVE_PATH:./attachments}
+
+# 日志配置（测试环境）
+logging:
+  level:
+    root: INFO
+    com.petvetai.app.mapper: DEBUG
+    com.alibaba.nacos: INFO  # Nacos 日志（INFO 级别，避免 gRPC 警告）
+    com.alibaba.cloud.nacos: INFO  # Nacos Cloud 日志
+    # 降低 gRPC 相关类的日志级别，避免 ClassNotFoundException 警告
+    com.alibaba.nacos.shaded.io.grpc: WARN  # gRPC 相关警告忽略
+    com.alibaba.nacos.shaded.io.grpc.internal.ManagedChannelImplBuilder: WARN  # gRPC 通道构建器警告忽略
+    dev.langchain4j: INFO  # LangChain4j 日志
+    com.petvetai.app.service.EmailReaderService: DEBUG  # 邮件读取服务日志
+

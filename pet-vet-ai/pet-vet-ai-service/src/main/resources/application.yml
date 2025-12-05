@@ -1,0 +1,14 @@
+# ============================================
+# 应用基础配置
+# 公共配置已抽取到 Nacos: pet-vet-ai-common.yml
+# 如果 Nacos 不可用，本地配置会作为备用
+# ============================================
+
+server:
+  port: ${SERVER_PORT:48080} # 服务端口，支持通过环境变量配置
+
+spring:
+  application:
+    name: pet-vet-ai
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev} # 默认激活 dev，可通过启动参数或环境变量覆盖

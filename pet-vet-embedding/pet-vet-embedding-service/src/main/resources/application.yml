@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: pet-vet-embedding
+  profiles:
+    active: dev
+
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

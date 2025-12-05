@@ -1,0 +1,37 @@
+# ============================================
+# 生产环境配置
+# 所有配置统一从 Nacos 加载：
+# - 公共配置: pet-vet-ai-common.yml
+# - 生产环境配置: pet-vet-ai-prod.yml
+# 
+# 注意：Nacos 连接配置必须保留在本地（必须先连接 Nacos 才能加载配置）
+# ============================================
+
+spring:
+  cloud:
+    nacos:
+      config:
+        # Nacos 连接配置（必须保留，用于连接 Nacos）
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+        refresh-enabled: true
+        # Spring Boot 3.x + Spring Cloud Alibaba 2023.x: 禁用 import-check（使用 shared-configs 和 extension-configs）
+        import-check:
+          enabled: false
+        # 共享配置：从 Nacos 加载公共配置
+        shared-configs:
+          - data-id: pet-vet-ai-common.yml
+            group: DEFAULT_GROUP
+            refresh: true
+        # 扩展配置：从 Nacos 加载生产环境特定配置
+        extension-configs:
+          - data-id: pet-vet-ai-prod.yml
+            group: DEFAULT_GROUP
+            refresh: true
+      discovery:
+        # Nacos 服务发现配置（必须保留，用于连接 Nacos）
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+

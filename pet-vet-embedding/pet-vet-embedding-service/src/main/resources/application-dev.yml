@@ -1,0 +1,22 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        namespace: dev
+      config:
+        server-addr: localhost:8848
+        namespace: dev
+        file-extension: yml
+        shared-configs:
+          - data-id: nacos-common-config.yml
+            group: DEFAULT_GROUP
+            refresh: true
+          - data-id: nacos-dev-config.yml
+            group: DEFAULT_GROUP
+            refresh: true
+
+logging:
+  level:
+    root: INFO
+    com.petvet.embedding: DEBUG
