@@ -1,0 +1,35 @@
+# ============================================
+# PetVet Embedding 服务 - 开发环境配置
+# 配置文件名: pet-vet-embedding-dev.yml
+# Group: DEFAULT_GROUP
+# 说明: 开发环境特定配置
+# ============================================
+
+spring:
+  cloud:
+    nacos:
+      discovery:
+        namespace: ${NACOS_NAMESPACE:dev}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+
+logging:
+  level:
+    root: INFO
+    com.petvet.embedding: DEBUG
+    dev.langchain4j: DEBUG
+
+# ============================================
+# 向量数据库配置 - 开发环境
+# ============================================
+vector:
+  database:
+    type: qdrant
+    qdrant:
+      host: https://e2b72e30-6371-4b2f-a925-af91477e9f25.europe-west3-0.gcp.cloud.qdrant.io
+      port: 6334
+      collection-name: pet-vet-embeddings
+    zilliz:
+      host: https://in03-404be71e0f75d6e.serverless.aws-eu-central-1.cloud.zilliz.com
+      port: 19530
+      collection-name: pet-vet-embeddings
+

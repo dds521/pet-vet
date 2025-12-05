@@ -1,0 +1,34 @@
+# ============================================
+# PetVet Embedding 服务 - 测试环境配置
+# 配置文件名: pet-vet-embedding-test.yml
+# Group: DEFAULT_GROUP
+# 说明: 测试环境特定配置
+# ============================================
+
+spring:
+  cloud:
+    nacos:
+      discovery:
+        namespace: ${NACOS_NAMESPACE:test}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+
+logging:
+  level:
+    root: INFO
+    com.petvet.embedding: INFO
+
+# ============================================
+# 向量数据库配置 - 测试环境
+# ============================================
+vector:
+  database:
+    type: qdrant
+    qdrant:
+      host: ${QDRANT_HOST:test-qdrant-server}
+      port: 6333
+      collection-name: pet-vet-embeddings-test
+    zilliz:
+      host: ${ZILLIZ_HOST:test-zilliz-server}
+      port: 19530
+      collection-name: pet_vet_embeddings_test
+

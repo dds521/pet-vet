@@ -1,0 +1,96 @@
+# ============================================
+# PetVet Embedding 服务 - 公共配置
+# 配置文件名: pet-vet-embedding-common.yml
+# Group: DEFAULT_GROUP
+# 说明: 所有环境共享的公共配置
+# ============================================
+
+server:
+  port: 48082
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.petvet.embedding: DEBUG
+    dev.langchain4j: INFO
+
+# ============================================
+# 向量数据库配置
+# ============================================
+vector:
+  database:
+    # 向量数据库类型: qdrant 或 zilliz
+    type: ${VECTOR_DB_TYPE:qdrant}
+    # 向量维度（根据使用的 embedding 模型确定，OpenAI text-embedding-3-small 为 1536）
+    dimension: ${VECTOR_DB_DIMENSION:1536}
+    
+    # Qdrant 配置
+    qdrant:
+      host: ${QDRANT_HOST:https://e2b72e30-6371-4b2f-a925-af91477e9f25.europe-west3-0.gcp.cloud.qdrant.io}
+      port: ${QDRANT_PORT:6334}
+      api-key: ${QDRANT_API_KEY:}
+      collection-name: ${QDRANT_COLLECTION:pet-vet-embeddings}
+      use-tls: ${QDRANT_USE_TLS:false}
+    
+    # Zilliz 配置
+    zilliz:
+      host: ${ZILLIZ_HOST:https://in03-404be71e0f75d6e.serverless.aws-eu-central-1.cloud.zilliz.com}
+      port: ${ZILLIZ_PORT:19530}
+      api-key: ${ZILLIZ_API_KEY:}
+      collection-name: ${ZILLIZ_COLLECTION:pet-vet-embeddings}
+
+# ============================================
+# Embedding 模型配置
+# 支持多种模型: openai, hugging-face, ollama, cohere
+# ============================================
+# Embedding 模型类型选择
+# - hugging-face: 完全免费，开源（推荐，默认）
+# - ollama: 完全免费，本地运行（需要安装 Ollama）
+# - openai: 需要 API Key，性能优秀
+# - cohere: 有免费额度，性能好
+embedding:
+  model:
+    type: ${EMBEDDING_MODEL_TYPE:openai}
+    
+    # Hugging Face 配置（完全免费，推荐）
+    hugging-face:
+      # 推荐模型:
+      # - BAAI/bge-small-zh-v1.5 (中文，384维，推荐中文场景)
+      # - sentence-transformers/all-MiniLM-L6-v2 (英文，384维，轻量级)
+      # - sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 (多语言，384维)
+      # - BAAI/bge-large-zh-v1.5 (中文，1024维，性能更好但更慢)
+      model-id: ${HUGGING_FACE_MODEL_ID:BAAI/bge-small-zh-v1.5}
+      wait-for-model: ${HUGGING_FACE_WAIT_FOR_MODEL:true}
+    
+    # Ollama 配置（完全免费，本地运行）
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      # 推荐模型: nomic-embed-text (768维)
+      model-name: ${OLLAMA_MODEL_NAME:nomic-embed-text}
+    
+    # Cohere 配置（有免费额度）
+    cohere:
+      api-key: ${COHERE_API_KEY:}
+      # 推荐模型: embed-english-v3.0, embed-multilingual-v3.0
+      model-name: ${COHERE_MODEL_NAME:embed-english-v3.0}
+
+# OpenAI 配置（需要 API Key）
+spring:
+  ai:
+    openai:
+      embedding:
+        base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+        api-key: ${OPENAI_API_KEY:}
+        options:
+          model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
+          dimensions: ${OPENAI_EMBEDDING_DIMENSIONS:1536}
+

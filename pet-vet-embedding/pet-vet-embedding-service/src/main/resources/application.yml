@@ -3,9 +3,14 @@ spring:
     name: pet-vet-embedding
   profiles:
     active: dev
+  config:
+    # Spring Boot 3.x 需要显式导入 Nacos 配置
+    import:
+      - optional:nacos:pet-vet-embedding-common.yml?group=DEFAULT_GROUP
+      - optional:nacos:pet-vet-embedding-${spring.profiles.active}.yml?group=DEFAULT_GROUP
 
 server:
-  port: 8081
+  port: 48082
 
 management:
   endpoints:

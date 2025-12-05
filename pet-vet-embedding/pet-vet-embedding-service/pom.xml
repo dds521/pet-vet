@@ -47,10 +47,45 @@
 			<version>${langchain4j.version}</version>
 		</dependency>
 		
+		<!-- LangChain4j Hugging Face (免费，开源) -->
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j-hugging-face</artifactId>
+			<version>${langchain4j.version}</version>
+		</dependency>
+		
+		<!-- LangChain4j Ollama (免费，本地运行) -->
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j-ollama</artifactId>
+			<version>${langchain4j.version}</version>
+		</dependency>
+		
+		<!-- LangChain4j Cohere (有免费额度) -->
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j-cohere</artifactId>
+			<version>${langchain4j.version}</version>
+		</dependency>
+		
 		<!-- LangChain4j Spring Boot Starter -->
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-spring-boot-starter</artifactId>
+			<version>${langchain4j.version}</version>
+		</dependency>
+		
+		<!-- LangChain4j Qdrant -->
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j-qdrant</artifactId>
+			<version>${langchain4j.version}</version>
+		</dependency>
+		
+		<!-- LangChain4j Milvus (Zilliz 基于 Milvus，使用 Milvus 客户端) -->
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j-milvus</artifactId>
 			<version>${langchain4j.version}</version>
 		</dependency>
 		

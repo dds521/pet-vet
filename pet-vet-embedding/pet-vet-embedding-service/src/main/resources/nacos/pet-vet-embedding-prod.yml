@@ -1,0 +1,37 @@
+# ============================================
+# PetVet Embedding 服务 - 生产环境配置
+# 配置文件名: pet-vet-embedding-prod.yml
+# Group: DEFAULT_GROUP
+# 说明: 生产环境特定配置
+# ============================================
+
+spring:
+  cloud:
+    nacos:
+      discovery:
+        namespace: ${NACOS_NAMESPACE:prod}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+
+logging:
+  level:
+    root: WARN
+    com.petvet.embedding: INFO
+
+# ============================================
+# 向量数据库配置 - 生产环境
+# ============================================
+vector:
+  database:
+    type: ${VECTOR_DB_TYPE:zilliz}
+    qdrant:
+      host: ${QDRANT_HOST:prod-qdrant-server}
+      port: 6333
+      api-key: ${QDRANT_API_KEY:}
+      collection-name: pet-vet-embeddings-prod
+      use-tls: true
+    zilliz:
+      host: ${ZILLIZ_HOST:prod-zilliz-server}
+      port: 19530
+      api-key: ${ZILLIZ_API_KEY:}
+      collection-name: pet_vet_embeddings_prod
+
