@@ -27,7 +27,7 @@ vector:
     qdrant:
       host: https://e2b72e30-6371-4b2f-a925-af91477e9f25.europe-west3-0.gcp.cloud.qdrant.io
       port: 6334
-      collection-name: pet-vet-embeddings
+      collection-name: pet-vet-embeddings-v2
     zilliz:
       host: https://in03-404be71e0f75d6e.serverless.aws-eu-central-1.cloud.zilliz.com
       port: 19530

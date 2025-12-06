@@ -32,7 +32,7 @@ public class VectorDatabaseConfig {
 	@Value("${vector.database.qdrant.api-key:}")
 	private String qdrantApiKey;
 
-	@Value("${vector.database.qdrant.collection-name:pet-vet-embeddings}")
+	@Value("${vector.database.qdrant.collection-name:pet-vet-embeddings-v2}")
 	private String qdrantCollectionName;
 
 	@Value("${vector.database.zilliz.host:localhost}")
