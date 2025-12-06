@@ -13,7 +13,8 @@
 	<description>PetVetEmbedding Service: 数据向量化服务实现</description>
 	
 	<properties>
-		<langchain4j.version>0.34.0</langchain4j.version>
+		<!-- 回退到稳定版本 0.35.0 -->
+		<langchain4j.version>0.35.0</langchain4j.version>
 	</properties>
 	
 	<dependencies>
@@ -87,6 +88,13 @@
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-milvus</artifactId>
 			<version>${langchain4j.version}</version>
+		</dependency>
+		
+		<!-- 强制升级 milvus-sdk-java 到 2.4.8 以支持 Zilliz Cloud -->
+		<dependency>
+			<groupId>io.milvus</groupId>
+			<artifactId>milvus-sdk-java</artifactId>
+			<version>2.4.8</version>
 		</dependency>
 		
 		<!-- Nacos 客户端依赖 -->

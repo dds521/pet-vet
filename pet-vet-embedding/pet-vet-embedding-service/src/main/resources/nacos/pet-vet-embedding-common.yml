@@ -29,6 +29,11 @@ logging:
 vector:
   database:
     # 向量数据库类型: qdrant 或 zilliz
+    # 注意：如果 Zilliz 连接失败，可以暂时切换到 Qdrant
+    # Zilliz 连接失败常见原因：
+    # 1. 网络问题（防火墙/代理阻止 gRPC 连接）
+    # 2. IP 未加入 Zilliz 白名单
+    # 3. Token 不正确或已过期
     type: ${VECTOR_DB_TYPE:qdrant}
     # 向量维度（根据使用的 embedding 模型确定）
     # - OpenAI text-embedding-3-small: 1536维
@@ -49,11 +54,18 @@ vector:
       use-tls: ${QDRANT_USE_TLS:false}
     
     # Zilliz 配置
+    # 注意：Zilliz serverless 需要启用 secure 连接（TLS）
     zilliz:
       host: ${ZILLIZ_HOST:https://in03-404be71e0f75d6e.serverless.aws-eu-central-1.cloud.zilliz.com}
       port: ${ZILLIZ_PORT:19530}
       api-key: ${ZILLIZ_API_KEY:}
-      collection-name: ${ZILLIZ_COLLECTION:pet-vet-embeddings}
+      collection-name: ${ZILLIZ_COLLECTION:pet_vet_embeddings}
+      # Zilliz serverless 必须启用 secure 连接
+      use-secure: ${ZILLIZ_USE_SECURE:true}
+      # 连接失败时是否让应用启动失败
+      # 注意：由于 gRPC 端口可能被防火墙阻止，暂时设置为 false 允许应用启动
+      # 修复网络问题后，可以改回 true
+      fail-on-connection-error: ${ZILLIZ_FAIL_ON_CONNECTION_ERROR:false}
 
 # ============================================
 # Embedding 模型配置

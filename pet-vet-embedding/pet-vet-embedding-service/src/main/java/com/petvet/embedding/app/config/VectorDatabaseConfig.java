@@ -1,8 +1,8 @@
 package com.petvet.embedding.app.config;
 
 import com.petvet.embedding.api.enums.VectorDatabaseType;
+import com.petvet.embedding.app.store.ZillizClientV2EmbeddingStore;
 import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
 import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+
+import java.util.List;
 
 /**
  * 向量数据库配置类
@@ -47,17 +49,27 @@ public class VectorDatabaseConfig {
 	@Value("${vector.database.zilliz.collection-name:pet-vet-embeddings}")
 	private String zillizCollectionName;
 
+	@Value("${vector.database.zilliz.use-secure:true}")
+	private Boolean zillizUseSecure;
+
+	@Value("${vector.database.zilliz.fail-on-connection-error:true}")
+	private Boolean zillizFailOnConnectionError;
+
 	@Value("${vector.database.dimension:1024}")
 	private Integer dimension;
 
 	/**
 	 * 创建向量数据库存储实例
 	 * 根据配置的 vector.database.type 选择使用 Qdrant 或 Zilliz
+	 * 
+	 * 注意：使用 @Lazy 延迟初始化，避免启动时立即连接导致超时
+	 * 连接将在实际使用时才建立
 	 *
 	 * @return EmbeddingStore 实例
 	 */
 	@Bean
 	@Primary
+	@org.springframework.context.annotation.Lazy
 	public EmbeddingStore<TextSegment> embeddingStore() {
 		VectorDatabaseType type = VectorDatabaseType.fromValue(vectorDatabaseType);
 		
@@ -119,31 +131,99 @@ public class VectorDatabaseConfig {
 	/**
 	 * 创建 Zilliz 向量数据库存储
 	 * 注意: Zilliz 基于 Milvus，使用 MilvusEmbeddingStore
+	 * 
+	 * 注意：对于 Zilliz serverless，连接可能需要在网络层面支持 TLS，
+	 * MilvusEmbeddingStore 可能通过底层 Milvus SDK 自动处理 secure 连接
+	 * 
+	 * 注意：MilvusEmbeddingStore.build() 会立即尝试连接，如果连接失败会抛出异常
+	 * 这里添加重试机制，允许应用在连接失败时继续启动
 	 */
 	private EmbeddingStore<TextSegment> createZillizStore() {
-		// 处理 host 配置，移除协议前缀
-		String host = zillizHost;
-		if (host.startsWith("https://")) {
-			host = host.replace("https://", "");
-		} else if (host.startsWith("http://")) {
-			host = host.replace("http://", "");
+		log.info("创建 Zilliz 自定义向量数据库连接 - URI: {}, Collection: {}", zillizHost, zillizCollectionName);
+		log.info("注意: 使用自定义 ZillizClientV2EmbeddingStore，支持完整 URI 和 Token 认证");
+		log.info("注意: 当前 embedding 模型维度为 {}，确保 Zilliz 集合维度匹配", dimension);
+		
+		try {
+			EmbeddingStore<TextSegment> store = new ZillizClientV2EmbeddingStore(zillizHost, zillizApiKey, zillizCollectionName, dimension);
+			log.info("✓ Zilliz 自定义连接成功");
+			return store;
+		} catch (Exception e) {
+			log.error("❌ Zilliz 自定义连接失败: {}", e.getMessage(), e);
+			log.error("错误详情: {}", e.getClass().getSimpleName());
+			log.error("可能的原因:");
+			log.error("  1. Zilliz URI 不正确 (确保使用 https:// 格式)");
+			log.error("  2. Token 无效或已过期 (在 Zilliz 控制台检查)");
+			log.error("  3. IP 地址未加入 Zilliz Cloud 白名单");
+			log.error("  4. Zilliz 实例在休眠 (首次连接可能需要 5-10 秒)");
+			log.error("  5. 网络连接问题 (防火墙/代理阻止)");
+			log.error("");
+			log.error("解决方案:");
+			log.error("  1. 验证 Zilliz URI 和 Token 在 Zilliz 控制台");
+			log.error("  2. 在 Zilliz Cloud 控制台添加您的公网 IP 到白名单");
+			log.error("  3. 检查网络连接 (尝试关闭 VPN/代理)");
+			log.error("  4. 暂时切换到 Qdrant: 设置 vector.database.type=qdrant");
+			log.error("  5. 如果使用代理，配置代理设置");
+			log.error("");
+			log.error("应用将继续启动，但向量数据库功能将不可用，直到连接成功");
+
+			if (zillizFailOnConnectionError) {
+				throw new RuntimeException("无法连接到 Zilliz 向量数据库，请检查配置和网络连接", e);
+			} else {
+				log.warn("⚠️  由于 vector.database.zilliz.fail-on-connection-error=false，应用将继续启动");
+				log.warn("⚠️  向量数据库功能将不可用，直到连接成功");
+				log.warn("⚠️  在实际使用向量数据库时会抛出异常");
+				return createFailedZillizStore(e);
+			}
 		}
-		
-		log.info("创建 Zilliz 向量数据库连接 - Host: {}, Port: {}, Collection: {}", 
-			host, zillizPort, zillizCollectionName);
-		log.info("注意: Zilliz 基于 Milvus，使用 MilvusEmbeddingStore");
-		
-		MilvusEmbeddingStore.Builder builder = MilvusEmbeddingStore.builder()
-			.host(host)
-			.port(zillizPort)
-			.collectionName(zillizCollectionName)
-			.dimension(dimension);
-		
-		// Milvus/Zilliz 使用 token 而不是 apiKey
-		if (zillizApiKey != null && !zillizApiKey.trim().isEmpty()) {
-			builder.token(zillizApiKey);
-		}
-		
-		return builder.build();
+	}
+
+	/**
+	 * 创建一个失败的 Zilliz 存储包装器
+	 * 允许应用启动，但在实际使用时抛出异常
+	 */
+	private EmbeddingStore<TextSegment> createFailedZillizStore(Exception connectionException) {
+		return new EmbeddingStore<TextSegment>() {
+			@Override
+			public String add(dev.langchain4j.data.embedding.Embedding embedding) {
+				throw new RuntimeException("Zilliz 向量数据库连接失败，无法添加向量。请检查网络连接和配置。原始错误: " + connectionException.getMessage(), connectionException);
+			}
+			
+			@Override
+			public void add(String id, dev.langchain4j.data.embedding.Embedding embedding) {
+				throw new RuntimeException("Zilliz 向量数据库连接失败，无法添加向量。请检查网络连接和配置。原始错误: " + connectionException.getMessage(), connectionException);
+			}
+			
+			@Override
+			public String add(dev.langchain4j.data.embedding.Embedding embedding, TextSegment textSegment) {
+				throw new RuntimeException("Zilliz 向量数据库连接失败，无法添加向量。请检查网络连接和配置。原始错误: " + connectionException.getMessage(), connectionException);
+			}
+			
+			@Override
+			public List<String> addAll(List<dev.langchain4j.data.embedding.Embedding> embeddings) {
+				throw new RuntimeException("Zilliz 向量数据库连接失败，无法添加向量。请检查网络连接和配置。原始错误: " + connectionException.getMessage(), connectionException);
+			}
+			
+			@Override
+			public List<String> addAll(List<dev.langchain4j.data.embedding.Embedding> embeddings, List<TextSegment> textSegments) {
+				throw new RuntimeException("Zilliz 向量数据库连接失败，无法添加向量。请检查网络连接和配置。原始错误: " + connectionException.getMessage(), connectionException);
+			}
+			
+			@Override
+			public List<dev.langchain4j.store.embedding.EmbeddingMatch<TextSegment>> findRelevant(
+					dev.langchain4j.data.embedding.Embedding referenceEmbedding, int maxResults) {
+				throw new RuntimeException("Zilliz 向量数据库连接失败，无法搜索向量。请检查网络连接和配置。原始错误: " + connectionException.getMessage(), connectionException);
+			}
+			
+			@Override
+			public List<dev.langchain4j.store.embedding.EmbeddingMatch<TextSegment>> findRelevant(
+					dev.langchain4j.data.embedding.Embedding referenceEmbedding, int maxResults, double minScore) {
+				throw new RuntimeException("Zilliz 向量数据库连接失败，无法搜索向量。请检查网络连接和配置。原始错误: " + connectionException.getMessage(), connectionException);
+			}
+			
+			@Override
+			public void remove(String id) {
+				throw new RuntimeException("Zilliz 向量数据库连接失败，无法删除向量。请检查网络连接和配置。原始错误: " + connectionException.getMessage(), connectionException);
+			}
+		};
 	}
 }
