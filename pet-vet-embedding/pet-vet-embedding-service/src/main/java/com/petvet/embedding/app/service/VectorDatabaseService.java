@@ -1,6 +1,5 @@
 package com.petvet.embedding.app.service;
 
-import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
