@@ -25,14 +25,14 @@ logging:
 # ============================================
 # MCP 配置
 # ============================================
+# 注意：我们使用手动管理 MCP 客户端，禁用 Spring AI 自动配置
+# 这样可以延迟初始化，只在调用时才创建客户端连接
 spring:
   ai:
     mcp:
       client:
-        # MCP 服务器配置文件路径
-        # 支持 classpath: 和 file: 前缀
-        stdio:
-          servers-configuration: classpath:mcp-servers.json
-        # HTTP/SSE 配置（如果需要）
-        # http:
-        #   servers-configuration: classpath:mcp-http-servers.json
+        # 禁用自动配置，使用手动管理
+        enabled: false
+        # 以下配置已禁用，我们通过 McpClientManager 手动管理
+        # stdio:
+        #   servers-configuration: classpath:mcp-servers.json

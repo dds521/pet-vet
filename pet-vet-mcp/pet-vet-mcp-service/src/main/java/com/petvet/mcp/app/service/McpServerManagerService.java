@@ -3,7 +3,6 @@ package com.petvet.mcp.app.service;
 import com.petvet.mcp.api.dto.McpConnectionConfig;
 import com.petvet.mcp.api.dto.McpServerInfo;
 import com.petvet.mcp.api.enums.McpServerStatus;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class McpServerManagerService {
 	
 	/**
