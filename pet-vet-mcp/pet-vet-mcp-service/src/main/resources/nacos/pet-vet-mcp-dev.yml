@@ -1,0 +1,22 @@
+# ============================================
+# PetVet MCP 服务 - 开发环境配置
+# 配置文件名: pet-vet-mcp-dev.yml
+# Group: DEFAULT_GROUP
+# 说明: 开发环境特定配置
+# ============================================
+
+logging:
+  level:
+    root: INFO
+    com.petvet.mcp: DEBUG
+    org.springframework.ai: DEBUG
+
+# ============================================
+# MCP 开发环境配置
+# ============================================
+spring:
+  ai:
+    mcp:
+      client:
+        stdio:
+          servers-configuration: classpath:mcp-servers.json
