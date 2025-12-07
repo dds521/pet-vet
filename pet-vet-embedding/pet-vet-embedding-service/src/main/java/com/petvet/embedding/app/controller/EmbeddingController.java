@@ -138,9 +138,12 @@ public class EmbeddingController {
 				Map<String, Object> result = new java.util.HashMap<>();
 				result.put("id", match.embeddingId());
 				result.put("score", match.score());
-				result.put("text", match.embedded().text());
+				// 注意: embedded() 可能为 null（如果使用 add(String, Embedding) 方法添加数据时没有保存 TextSegment）
+				TextSegment embedded = match.embedded();
+				result.put("text", embedded != null ? embedded.text() : null);
 				return result;
 			})
+			.filter(result -> result.get("id") != null) // 过滤掉无效结果
 			.collect(Collectors.toList());
 		
 		Map<String, Object> response = new java.util.HashMap<>();
