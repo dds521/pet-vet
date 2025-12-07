@@ -133,17 +133,76 @@ public class VectorDatabaseInitializer implements CommandLineRunner {
 			log.error("❌ Zilliz 集合初始化失败: {}", e.getMessage());
 			log.error("错误详情:", e);
 			log.error("");
-			log.error("请检查以下配置:");
-			log.error("  1. Zilliz 服务可访问: {}", System.getenv("ZILLIZ_HOST"));
-			log.error("  2. API Key 已配置: {}", 
-				(System.getenv("ZILLIZ_API_KEY") != null && !System.getenv("ZILLIZ_API_KEY").isEmpty()) ? "是" : "否");
-			log.error("  3. 集合名称: {}", zillizCollectionName);
-			log.error("  4. 向量维度配置是否正确（应与 embedding 模型维度匹配）");
+			
+			// 检查整个异常链中的错误消息
+			String errorMessage = e.getMessage();
+			Throwable cause = e.getCause();
+			while (cause != null && errorMessage != null && !errorMessage.contains("primary_key") && !errorMessage.contains("Type mismatch") && !errorMessage.contains("auto generated")) {
+				String causeMessage = cause.getMessage();
+				if (causeMessage != null) {
+					errorMessage = causeMessage;
+				}
+				cause = cause.getCause();
+			}
+			
+			// 检查是否是主键字段错误
+			boolean isPrimaryKeyError = errorMessage != null && (errorMessage.contains("primary_key") || errorMessage.contains("primary key"));
+			boolean isTypeMismatch = errorMessage != null && (errorMessage.contains("Type mismatch") || errorMessage.contains("Int64") || errorMessage.contains("must be Long"));
+			boolean isAutoIdError = errorMessage != null && (errorMessage.contains("auto generated") || errorMessage.contains("auto_id") || errorMessage.contains("no need to input"));
+			
+			if (isAutoIdError) {
+				log.error("⚠️  检测到主键自动生成配置冲突:");
+				log.error("  集合 '{}' 已存在，且主键字段 'primary_key' 被设置为 auto_id=true（自动生成）", zillizCollectionName);
+				log.error("  但 MilvusEmbeddingStore 需要手动指定主键值（auto_id=false）");
+				log.error("");
+				log.error("解决方案（必须选择一个）:");
+				log.error("  【推荐】在 Zilliz 控制台中删除现有集合 '{}'，让系统自动创建新集合", zillizCollectionName);
+				log.error("     - 新集合将使用 auto_id=false，允许手动指定主键值");
+				log.error("     - 主键字段名: primary_key");
+				log.error("     - 主键类型: VARCHAR (String)");
+				log.error("");
+				log.error("  或者，修改配置中的集合名称，使用新的集合:");
+				log.error("     vector.database.zilliz.collection-name=pet_vet_embeddings_v2");
+				log.error("");
+				log.error("  注意: 如果必须使用现有的 auto_id=true 集合，需要修改代码逻辑，");
+				log.error("        使用 add(Embedding) 方法（不提供主键值），让 Milvus 自动生成");
+			} else if (isPrimaryKeyError || isTypeMismatch) {
+				log.error("⚠️  检测到主键字段错误，可能的原因:");
+				log.error("  1. 集合 '{}' 已存在但主键字段配置不匹配", zillizCollectionName);
+				log.error("  2. 集合已存在但使用了不同的 schema 定义");
+				
+				// 检查是否是类型不匹配错误
+				if (isTypeMismatch) {
+					log.error("  3. ⚠️  主键字段类型不匹配: 集合中的 'primary_key' 是 Int64 类型，但 MilvusEmbeddingStore 使用 String 类型");
+					log.error("");
+					log.error("解决方案（推荐）:");
+					log.error("  - 在 Zilliz 控制台中删除现有集合 '{}'，让 MilvusEmbeddingStore 自动创建新集合", zillizCollectionName);
+					log.error("  - MilvusEmbeddingStore 会自动创建使用正确类型的主键字段（VARCHAR/String）");
+					log.error("");
+					log.error("替代方案:");
+					log.error("  - 修改配置中的集合名称，使用新的集合名称（例如: pet_vet_embeddings_v2）");
+				} else {
+					log.error("  3. 集合已存在但主键字段类型或配置不匹配");
+					log.error("");
+					log.error("解决方案:");
+					log.error("  - 在 Zilliz 控制台中删除现有集合 '{}'，让系统自动创建新集合（推荐）", zillizCollectionName);
+					log.error("  - 或修改配置中的集合名称，使用新的集合名称");
+					log.error("  - 注意: 系统已配置主键字段名为 'primary_key'，确保集合 schema 匹配");
+				}
+			} else {
+				log.error("请检查以下配置:");
+				log.error("  1. Zilliz 服务可访问: {}", System.getenv("ZILLIZ_HOST"));
+				log.error("  2. API Key 已配置: {}", 
+					(System.getenv("ZILLIZ_API_KEY") != null && !System.getenv("ZILLIZ_API_KEY").isEmpty()) ? "是" : "否");
+				log.error("  3. 集合名称: {}", zillizCollectionName);
+				log.error("  4. 向量维度配置是否正确（应与 embedding 模型维度匹配）");
+				log.error("");
+				log.error("如果集合已存在但配置不匹配，请:");
+				log.error("  - 在 Zilliz 控制台中删除现有集合，或");
+				log.error("  - 修改配置中的集合名称");
+			}
 			log.error("");
-			log.error("如果集合已存在但维度不匹配，请:");
-			log.error("  - 在 Zilliz 控制台中删除现有集合，或");
-			log.error("  - 修改配置中的集合名称");
-			log.error("");
+			log.warn("⚠️  应用将继续启动，但向量数据库功能可能不可用，直到问题解决");
 			// 不抛出异常，允许应用继续启动，但会在实际使用时失败
 			// 这样可以让用户看到详细的错误信息
 		}

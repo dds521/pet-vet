@@ -12,10 +12,7 @@
 	<name>PetVetEmbedding-Service</name>
 	<description>PetVetEmbedding Service: 数据向量化服务实现</description>
 	
-	<properties>
-		<!-- 回退到稳定版本 0.35.0 -->
-		<langchain4j.version>0.35.0</langchain4j.version>
-	</properties>
+	<!-- 继承父模块的 langchain4j.version 和 langchain4j.beta.version 属性 -->
 	
 	<dependencies>
 		<!-- 依赖 API 模块 -->
@@ -35,9 +32,23 @@
 		</dependency>
 		
 		<!-- LangChain4j Core -->
+		<!-- 注意: 排除旧版本的 langchain4j-core，使用 1.9.1-beta17 版本以兼容 langchain4j-milvus -->
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j</artifactId>
+			<version>${langchain4j.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>dev.langchain4j</groupId>
+					<artifactId>langchain4j-core</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- 显式引入 langchain4j-core:1.9.1 以兼容 langchain4j-milvus -->
+		<!-- 注意: langchain4j-milvus:1.9.1-beta17 实际依赖 langchain4j-core:1.9.1（非 beta） -->
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j-core</artifactId>
 			<version>${langchain4j.version}</version>
 		</dependency>
 		
@@ -46,13 +57,26 @@
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-open-ai</artifactId>
 			<version>${langchain4j.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>dev.langchain4j</groupId>
+					<artifactId>langchain4j-core</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		
 		<!-- LangChain4j Hugging Face (免费，开源) -->
+		<!-- 注意: langchain4j-hugging-face 只有 beta 版本，使用 1.9.1-beta17 -->
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-hugging-face</artifactId>
-			<version>${langchain4j.version}</version>
+			<version>${langchain4j.beta.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>dev.langchain4j</groupId>
+					<artifactId>langchain4j-core</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		
 		<!-- LangChain4j Ollama (免费，本地运行) -->
@@ -60,42 +84,56 @@
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-ollama</artifactId>
 			<version>${langchain4j.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>dev.langchain4j</groupId>
+					<artifactId>langchain4j-core</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		
-		<!-- LangChain4j Cohere (有免费额度) -->
+		<!-- LangChain4j Cohere (有免费额度) (使用 beta 版本) -->
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-cohere</artifactId>
-			<version>${langchain4j.version}</version>
+			<version>${langchain4j.beta.version}</version>
 		</dependency>
 		
-		<!-- LangChain4j Spring Boot Starter -->
+		<!-- 注意: 移除了 langchain4j-spring-boot-starter，因为我们手动配置了 EmbeddingStore 和 EmbeddingModel -->
+		<!-- 如果需要使用 @AiService 或 RAG 功能，可以恢复此依赖 -->
+		<!-- 
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-spring-boot-starter</artifactId>
-			<version>${langchain4j.version}</version>
+			<version>${langchain4j.beta.version}</version>
 		</dependency>
+		-->
 		
-		<!-- LangChain4j Qdrant -->
+		<!-- LangChain4j Qdrant (使用 beta 版本) -->
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-qdrant</artifactId>
-			<version>${langchain4j.version}</version>
+			<version>${langchain4j.beta.version}</version>
 		</dependency>
 		
-		<!-- LangChain4j Milvus (Zilliz 基于 Milvus，使用 Milvus 客户端) -->
+		<!-- LangChain4j Milvus (Zilliz 基于 Milvus，使用 Milvus 客户端) (使用 beta 版本) -->
+		<!-- 注意: langchain4j-milvus:1.9.1-beta17 已包含 milvus-sdk-java:2.5.9 作为传递依赖，无需显式声明 -->
+		<!-- 版本对应关系: langchain4j-milvus:1.9.1-beta17 → milvus-sdk-java:2.5.9 -->
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-milvus</artifactId>
-			<version>${langchain4j.version}</version>
+			<version>${langchain4j.beta.version}</version>
 		</dependency>
 		
-		<!-- 强制升级 milvus-sdk-java 到 2.4.8 以支持 Zilliz Cloud -->
+		<!-- 如果需要强制使用特定版本的 milvus-sdk-java，可以取消下面的注释 -->
+		<!-- 注意: 手动指定版本可能导致兼容性问题，建议使用 langchain4j-milvus 自带的版本 -->
+		<!-- 
 		<dependency>
 			<groupId>io.milvus</groupId>
 			<artifactId>milvus-sdk-java</artifactId>
-			<version>2.4.8</version>
+			<version>2.5.9</version>
 		</dependency>
+		-->
 		
 		<!-- Nacos 客户端依赖 -->
 		<dependency>

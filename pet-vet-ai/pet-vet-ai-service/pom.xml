@@ -12,9 +12,7 @@
 	<name>PetVetAI-Service</name>
 	<description>PetVetAI Service: AI-powered pet medical consultation platform service implementation</description>
 	
-	<properties>
-		<langchain4j.version>0.34.0</langchain4j.version>
-	</properties>
+	<!-- 继承父模块的 langchain4j.version 和 langchain4j.beta.version 属性 -->
 	
 	<dependencies>
 		<!-- 依赖 API 模块 -->
@@ -47,11 +45,11 @@
 			<version>${langchain4j.version}</version>
 		</dependency>
 		
-		<!-- LangChain4j Spring Boot Starter -->
+		<!-- LangChain4j Spring Boot Starter (使用 beta 版本) -->
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-spring-boot-starter</artifactId>
-			<version>${langchain4j.version}</version>
+			<version>${langchain4j.beta.version}</version>
 		</dependency>
 
 		<!-- Sentinel 流量控制 -->

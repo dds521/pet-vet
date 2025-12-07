@@ -1,9 +1,9 @@
 package com.petvet.embedding.app.config;
 
 import com.petvet.embedding.api.enums.VectorDatabaseType;
-import com.petvet.embedding.app.store.ZillizClientV2EmbeddingStore;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
 import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,7 +49,7 @@ public class VectorDatabaseConfig {
 	private String zillizCollectionName;
 
 	@Value("${vector.database.zilliz.use-secure:true}")
-	private Boolean zillizUseSecure;
+	private Boolean zillizUseSecure; // 保留配置项以兼容现有配置，但 Zilliz Cloud 使用完整 URI，此配置不再使用
 
 	@Value("${vector.database.zilliz.fail-on-connection-error:true}")
 	private Boolean zillizFailOnConnectionError;
@@ -129,25 +129,45 @@ public class VectorDatabaseConfig {
 
 	/**
 	 * 创建 Zilliz 向量数据库存储
-	 * 注意: Zilliz 基于 Milvus，使用 MilvusEmbeddingStore
+	 * 注意: Zilliz 基于 Milvus，使用 langchain4j-milvus 提供的 MilvusEmbeddingStore
 	 * 
-	 * 注意：对于 Zilliz serverless，连接可能需要在网络层面支持 TLS，
-	 * MilvusEmbeddingStore 可能通过底层 Milvus SDK 自动处理 secure 连接
+	 * 注意：Zilliz Cloud 使用完整 URI（包含协议，如 https://xxx.zillizcloud.com）
+	 * 如果配置中的 zillizHost 已经是完整 URI，直接使用；否则组合 host 和 port
 	 * 
-	 * 注意：MilvusEmbeddingStore.build() 会立即尝试连接，如果连接失败会抛出异常
-	 * 这里添加重试机制，允许应用在连接失败时继续启动
+	 * 注意：MilvusEmbeddingStore 支持：
+	 * - uri(): 完整 URI（如 https://xxx.zillizcloud.com 或 https://host:port）
+	 * - token(): API Key (Token)
+	 * - collectionName(): 集合名称
+	 * - dimension(): 向量维度
+	 * - idFieldName(): 主键字段名称（Zilliz 集合使用 "primary_key" 作为主键字段名）
 	 */
 	private EmbeddingStore<TextSegment> createZillizStore() {
-		log.info("创建 Zilliz 自定义向量数据库连接 - URI: {}, Collection: {}", zillizHost, zillizCollectionName);
-		log.info("注意: 使用自定义 ZillizClientV2EmbeddingStore，支持完整 URI 和 Token 认证");
+		// 构建完整 URI
+		String uri = buildZillizUri(zillizHost, zillizPort, zillizUseSecure);
+		
+		log.info("创建 Zilliz 向量数据库连接 - URI: {}, Collection: {}", uri, zillizCollectionName);
+		log.info("注意: 使用 langchain4j-milvus 的 MilvusEmbeddingStore，支持完整 URI 和 Token 认证");
 		log.info("注意: 当前 embedding 模型维度为 {}，确保 Zilliz 集合维度匹配", dimension);
 		
 		try {
-			EmbeddingStore<TextSegment> store = new ZillizClientV2EmbeddingStore(zillizHost, zillizApiKey, zillizCollectionName, dimension);
-			log.info("✓ Zilliz 自定义连接成功");
+			MilvusEmbeddingStore.Builder builder = MilvusEmbeddingStore.builder()
+					.uri(uri)
+					.collectionName(zillizCollectionName)
+					.dimension(dimension)
+					// 注意: Zilliz 集合的主键字段名是 "primary_key"，不是默认的 "id"
+					.idFieldName("primary_key");
+			
+			// 如果提供了 Token，设置 Token
+			if (zillizApiKey != null && !zillizApiKey.trim().isEmpty()) {
+				builder.token(zillizApiKey);
+			}
+			
+			EmbeddingStore<TextSegment> store = builder.build();
+			log.info("✓ Zilliz 连接成功");
+			log.info("注意: 已设置主键字段名为 'primary_key'，与 Zilliz 集合 schema 匹配");
 			return store;
 		} catch (Exception e) {
-			log.error("❌ Zilliz 自定义连接失败: {}", e.getMessage(), e);
+			log.error("❌ Zilliz 连接失败: {}", e.getMessage(), e);
 			log.error("错误详情: {}", e.getClass().getSimpleName());
 			log.error("可能的原因:");
 			log.error("  1. Zilliz URI 不正确 (确保使用 https:// 格式)");
@@ -174,6 +194,30 @@ public class VectorDatabaseConfig {
 				return createFailedZillizStore(e);
 			}
 		}
+	}
+
+	/**
+	 * 构建 Zilliz URI
+	 * 如果 zillizHost 已经是完整 URI（包含协议），直接使用
+	 * 否则根据 useSecure 和 port 组合成完整 URI
+	 * 
+	 * @param host 主机地址或完整 URI
+	 * @param port 端口号（如果 host 不是完整 URI）
+	 * @param useSecure 是否使用安全连接（如果 host 不是完整 URI）
+	 * @return 完整 URI
+	 */
+	private String buildZillizUri(String host, Integer port, Boolean useSecure) {
+		// 如果 host 已经是完整 URI（包含协议），直接使用
+		if (host.startsWith("http://") || host.startsWith("https://")) {
+			log.debug("使用配置中的完整 URI: {}", host);
+			return host;
+		}
+		
+		// 否则组合 host、port 和协议
+		String protocol = (useSecure != null && useSecure) ? "https" : "http";
+		String uri = String.format("%s://%s:%d", protocol, host, port);
+		log.debug("组合 URI: {} (host: {}, port: {}, secure: {})", uri, host, port, useSecure);
+		return uri;
 	}
 
 	/**
@@ -208,14 +252,8 @@ public class VectorDatabaseConfig {
 			}
 			
 			@Override
-			public List<dev.langchain4j.store.embedding.EmbeddingMatch<TextSegment>> findRelevant(
-					dev.langchain4j.data.embedding.Embedding referenceEmbedding, int maxResults) {
-				throw new RuntimeException("Zilliz 向量数据库连接失败，无法搜索向量。请检查网络连接和配置。原始错误: " + connectionException.getMessage(), connectionException);
-			}
-			
-			@Override
-			public List<dev.langchain4j.store.embedding.EmbeddingMatch<TextSegment>> findRelevant(
-					dev.langchain4j.data.embedding.Embedding referenceEmbedding, int maxResults, double minScore) {
+			public dev.langchain4j.store.embedding.EmbeddingSearchResult<TextSegment> search(
+					dev.langchain4j.store.embedding.EmbeddingSearchRequest request) {
 				throw new RuntimeException("Zilliz 向量数据库连接失败，无法搜索向量。请检查网络连接和配置。原始错误: " + connectionException.getMessage(), connectionException);
 			}
 			

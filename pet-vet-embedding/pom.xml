@@ -18,7 +18,6 @@
 		<module>pet-vet-embedding-service</module>
 	</modules>
 	
-	<properties>
-		<langchain4j.version>0.34.0</langchain4j.version>
-	</properties>
+	<!-- 注意: langchain4j.version 继承自父 POM，值为 1.9.1 -->
+	<!-- 如果需要使用 beta 版本，使用 ${langchain4j.beta.version} -->
 </project>

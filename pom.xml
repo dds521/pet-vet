@@ -21,7 +21,10 @@
 		<java.version>17</java.version>
 		<spring-cloud.version>2023.0.1</spring-cloud.version>
 		<spring-cloud-alibaba.version>2023.0.1.2</spring-cloud-alibaba.version>
-		<langchain4j.version>0.34.0</langchain4j.version>
+		<!-- 注意: langchain4j 核心模块有 1.9.1 版本，但部分模块（如 spring-boot-starter）只有 1.9.1-beta17 -->
+		<!-- 核心模块使用 1.9.1，其他模块在子模块中单独指定 beta17 版本 -->
+		<langchain4j.version>1.9.1</langchain4j.version>
+		<langchain4j.beta.version>1.9.1-beta17</langchain4j.beta.version>
 	</properties>
 	
 	<modules>
@@ -53,9 +56,83 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+			<!-- 强制统一 protobuf 版本，解决 MapFieldReflectionAccessor 找不到的问题 -->
+			<!-- milvus-sdk-java 2.5.9 需要 protobuf 3.25.0+ -->
+			<dependency>
+				<groupId>com.google.protobuf</groupId>
+				<artifactId>protobuf-java</artifactId>
+				<version>3.25.3</version>
+			</dependency>
+			<!-- 强制统一 langchain4j-core 版本，解决版本冲突 -->
+			<!-- langchain4j-milvus:1.9.1-beta17 实际依赖 langchain4j-core:1.9.1（非 beta） -->
+			<dependency>
+				<groupId>dev.langchain4j</groupId>
+				<artifactId>langchain4j-core</artifactId>
+				<version>${langchain4j.version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 	
+	<repositories>
+		<!-- 阿里云 Maven 仓库（优先使用，速度快） -->
+		<repository>
+			<id>aliyun-public</id>
+			<name>Aliyun Maven Public Repository</name>
+			<url>https://maven.aliyun.com/repository/public</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>daily</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>daily</updatePolicy>
+			</snapshots>
+		</repository>
+		<!-- Maven Central 官方仓库（备用） -->
+		<repository>
+			<id>central</id>
+			<name>Maven Central Repository</name>
+			<url>https://repo1.maven.org/maven2</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>daily</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+	
+	<pluginRepositories>
+		<!-- 阿里云 Maven 插件仓库 -->
+		<pluginRepository>
+			<id>aliyun-plugin</id>
+			<name>Aliyun Maven Plugin Repository</name>
+			<url>https://maven.aliyun.com/repository/public</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>daily</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>daily</updatePolicy>
+			</snapshots>
+		</pluginRepository>
+		<!-- Maven Central 插件仓库 -->
+		<pluginRepository>
+			<id>central-plugin</id>
+			<name>Maven Central Plugin Repository</name>
+			<url>https://repo1.maven.org/maven2</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>daily</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
+
 	<build>
 		<pluginManagement>
 			<plugins>
