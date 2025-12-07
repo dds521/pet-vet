@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: pet-vet-mcp
+  profiles:
+    active: dev
+  config:
+    # Spring Boot 3.x 需要显式导入 Nacos 配置
+    import:
+      - optional:nacos:pet-vet-mcp-common.yml?group=DEFAULT_GROUP
+      - optional:nacos:pet-vet-mcp-${spring.profiles.active}.yml?group=DEFAULT_GROUP
+
+server:
+  port: 48083
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

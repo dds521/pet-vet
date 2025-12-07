@@ -1,0 +1,46 @@
+# ============================================
+# 开发环境配置
+# 所有配置统一从 Nacos 加载：
+# - 公共配置: pet-vet-mcp-common.yml
+# - 开发环境配置: pet-vet-mcp-dev.yml
+# 
+# 注意：Nacos 连接配置必须保留在本地（必须先连接 Nacos 才能加载配置）
+# ============================================
+
+spring:
+  config:
+    # Spring Boot 3.x 需要显式导入 Nacos 配置
+    import:
+      - optional:nacos:pet-vet-mcp-common.yml?group=DEFAULT_GROUP
+      - optional:nacos:pet-vet-mcp-dev.yml?group=DEFAULT_GROUP
+  cloud:
+    nacos:
+      config:
+        # Nacos 连接配置（必须保留，用于连接 Nacos）
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+        refresh-enabled: true
+        # Spring Boot 3.x + Spring Cloud Alibaba 2023.x: 禁用 import-check（使用 spring.config.import）
+        import-check:
+          enabled: false
+        # 共享配置：从 Nacos 加载公共配置（备用，如果 spring.config.import 不工作）
+        shared-configs:
+          - data-id: pet-vet-mcp-common.yml
+            group: DEFAULT_GROUP
+            refresh: true
+        # 扩展配置：从 Nacos 加载开发环境特定配置（备用）
+        extension-configs:
+          - data-id: pet-vet-mcp-dev.yml
+            group: DEFAULT_GROUP
+            refresh: true
+      discovery:
+        # Nacos 服务发现配置（必须保留，用于连接 Nacos）
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+
+logging:
+  level:
+    root: INFO
+    com.petvet.mcp: DEBUG

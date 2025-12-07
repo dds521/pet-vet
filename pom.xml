@@ -30,6 +30,7 @@
 	<modules>
 		<module>pet-vet-ai</module>
 		<module>pet-vet-embedding</module>
+		<module>pet-vet-mcp</module>
 	</modules>
 	
 	<dependencyManagement>
@@ -96,6 +97,18 @@
 			<releases>
 				<enabled>true</enabled>
 				<updatePolicy>daily</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<!-- Spring Milestones 仓库（用于 Spring AI 等 Spring 项目） -->
+		<repository>
+			<id>spring-milestones</id>
+			<name>Spring Milestones</name>
+			<url>https://repo.spring.io/milestone</url>
+			<releases>
+				<enabled>true</enabled>
 			</releases>
 			<snapshots>
 				<enabled>false</enabled>

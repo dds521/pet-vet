@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.example</groupId>
+		<artifactId>pet-vet</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+	<artifactId>pet-vet-mcp</artifactId>
+	<packaging>pom</packaging>
+	<name>PetVetMCP</name>
+	<description>PetVetMCP: MCP (Model Context Protocol) 服务器管理模块</description>
+	
+	<modules>
+		<module>pet-vet-mcp-api</module>
+		<module>pet-vet-mcp-service</module>
+	</modules>
+</project>

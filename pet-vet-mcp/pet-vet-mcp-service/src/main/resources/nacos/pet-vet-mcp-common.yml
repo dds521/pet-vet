@@ -1,0 +1,38 @@
+# ============================================
+# PetVet MCP 服务 - 公共配置
+# 配置文件名: pet-vet-mcp-common.yml
+# Group: DEFAULT_GROUP
+# 说明: 所有环境共享的公共配置
+# ============================================
+
+server:
+  port: 48083
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.petvet.mcp: DEBUG
+
+# ============================================
+# MCP 配置
+# ============================================
+spring:
+  ai:
+    mcp:
+      client:
+        # MCP 服务器配置文件路径
+        # 支持 classpath: 和 file: 前缀
+        stdio:
+          servers-configuration: classpath:mcp-servers.json
+        # HTTP/SSE 配置（如果需要）
+        # http:
+        #   servers-configuration: classpath:mcp-http-servers.json
