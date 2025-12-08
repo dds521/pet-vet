@@ -64,8 +64,7 @@ public class ResumeChunkStrategy implements ChunkStrategy {
                 chunks.add(createChunk(paragraph, i, text));
             } else {
                 // 段落过长，使用滑动窗口切分
-                List<TextChunk> subChunks = splitWithSlidingWindow(
-                    paragraph, maxChunkSize, overlapSize, i, text);
+                List<TextChunk> subChunks = splitWithSlidingWindow(paragraph, maxChunkSize, overlapSize, i, text);
                 chunks.addAll(subChunks);
             }
         }
@@ -112,9 +111,7 @@ public class ResumeChunkStrategy implements ChunkStrategy {
      * 使用滑动窗口切分长文本
      * 确保重叠部分保留上下文
      */
-    private List<TextChunk> splitWithSlidingWindow(
-            String text, int maxChunkSize, int overlapSize, 
-            int paragraphIndex, String fullText) {
+    private List<TextChunk> splitWithSlidingWindow(String text, int maxChunkSize, int overlapSize, int paragraphIndex, String fullText) {
         
         List<TextChunk> chunks = new ArrayList<>();
         int start = 0;
