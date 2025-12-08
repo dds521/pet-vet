@@ -152,4 +152,7 @@ resume:
     enable-paragraph-priority: ${RESUME_CHUNK_ENABLE_PARAGRAPH_PRIORITY:true}
     # 是否启用上下文增强
     enable-context-enrichment: ${RESUME_CHUNK_ENABLE_CONTEXT_ENRICHMENT:true}
+    # 分批处理大小（每批处理的 chunk 数量）
+    # 用于避免内存溢出，建议值：50-100
+    batch-size: ${RESUME_CHUNK_BATCH_SIZE:50}
 

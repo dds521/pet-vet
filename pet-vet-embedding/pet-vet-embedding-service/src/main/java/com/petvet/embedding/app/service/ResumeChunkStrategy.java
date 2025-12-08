@@ -1,8 +1,9 @@
 package com.petvet.embedding.app.service;
 
+import com.petvet.embedding.app.config.ResumeChunkConfig;
 import com.petvet.embedding.app.domain.TextChunk;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -13,23 +14,10 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ResumeChunkStrategy implements ChunkStrategy {
     
-    // 默认配置
-    @Value("${resume.chunk.max-size:500}")
-    private int defaultMaxChunkSize;
-    
-    @Value("${resume.chunk.overlap-size:100}")
-    private int defaultOverlapSize;
-    
-    @Value("${resume.chunk.enable-sentence-boundary:true}")
-    private boolean enableSentenceBoundary;
-    
-    @Value("${resume.chunk.enable-paragraph-priority:true}")
-    private boolean enableParagraphPriority;
-    
-    @Value("${resume.chunk.enable-context-enrichment:true}")
-    private boolean enableContextEnrichment;
+    private final ResumeChunkConfig config;
     
     /**
      * 切分文本为多个chunk
@@ -42,16 +30,16 @@ public class ResumeChunkStrategy implements ChunkStrategy {
         
         // 使用默认值如果未指定
         if (maxChunkSize <= 0) {
-            maxChunkSize = defaultMaxChunkSize;
+            maxChunkSize = config.getMaxSize();
         }
         if (overlapSize <= 0) {
-            overlapSize = defaultOverlapSize;
+            overlapSize = config.getOverlapSize();
         }
         
         List<TextChunk> chunks = new ArrayList<>();
         
         // 1. 首先尝试按段落切分
-        List<String> paragraphs = enableParagraphPriority 
+        List<String> paragraphs = config.isEnableParagraphPriority() 
             ? splitByParagraph(text) 
             : Collections.singletonList(text);
         
@@ -70,7 +58,7 @@ public class ResumeChunkStrategy implements ChunkStrategy {
         }
         
         // 3. 添加上下文信息到每个chunk
-        if (enableContextEnrichment) {
+        if (config.isEnableContextEnrichment()) {
             enrichWithContext(chunks);
         }
         
@@ -121,7 +109,7 @@ public class ResumeChunkStrategy implements ChunkStrategy {
             int end = Math.min(start + maxChunkSize, text.length());
             
             // 尝试在句子边界处结束（避免截断句子）
-            if (enableSentenceBoundary && end < text.length()) {
+            if (config.isEnableSentenceBoundary() && end < text.length()) {
                 end = findSentenceBoundary(text, end);
             }
             

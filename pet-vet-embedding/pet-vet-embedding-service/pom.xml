@@ -155,16 +155,13 @@
 			<artifactId>commons-pool2</artifactId>
 		</dependency>
 		
-		<!-- Apache PDFBox for PDF parsing -->
+		<!-- Apache PDFBox 3.0.2 - 用于自定义 PDF 解析器 -->
+		<!-- 注意：不使用 langchain4j-document-parser-apache-pdfbox，因为它依赖 PDFBox 2.x，
+		     与 PDFBox 3.x API 不兼容。使用自定义的 PdfBox3DocumentParser -->
 		<dependency>
 			<groupId>org.apache.pdfbox</groupId>
 			<artifactId>pdfbox</artifactId>
-			<version>3.0.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.pdfbox</groupId>
-			<artifactId>pdfbox-tools</artifactId>
-			<version>3.0.0</version>
+			<version>3.0.2</version>
 		</dependency>
 		
 		<!-- Tools -->

@@ -96,8 +96,7 @@ public class ResumeParseController {
             double minScore = request.getMinScore() != null ? request.getMinScore() : 0.7;
             
             // 搜索相似向量
-            List<EmbeddingMatch<TextSegment>> matches = 
-                vectorDatabaseService.findSimilar(queryText, maxResults, minScore);
+            List<EmbeddingMatch<TextSegment>> matches = vectorDatabaseService.findSimilar(queryText, maxResults, minScore);
             
             // 构建返回结果
             List<ResumeSearchResp.SearchItem> results = matches.stream()
