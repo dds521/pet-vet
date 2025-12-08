@@ -42,8 +42,7 @@ public class PdfBox3DocumentParser implements DocumentParser {
                 // 文本清理
                 text = cleanText(text);
                 
-                log.info("PDF文档解析完成（PDFBox 3.x），页数: {}, 字符数: {}", 
-                    document.getNumberOfPages(), text.length());
+                log.info("PDF文档解析完成（PDFBox 3.x），页数: {}, 字符数: {}", document.getNumberOfPages(), text.length());
                 
                 return Document.from(text);
             }
