@@ -127,3 +127,29 @@ spring:
           model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
           dimensions: ${OPENAI_EMBEDDING_DIMENSIONS:1536}
 
+# ============================================
+# 简历解析配置
+# ============================================
+resume:
+  parse:
+    # 支持的文件类型
+    supported-formats:
+      - pdf
+    # 最大文件大小（MB）
+    max-file-size: 10
+    # 文件名格式验证
+    filename-pattern: "^[^\\-]+-[^\\-]+-[^\\-]+\\.pdf$"
+  chunk:
+    # 最大chunk大小（字符数）
+    max-size: ${RESUME_CHUNK_MAX_SIZE:500}
+    # 重叠大小（字符数）
+    overlap-size: ${RESUME_CHUNK_OVERLAP_SIZE:100}
+    # 重叠比例（0.0-1.0）
+    overlap-ratio: 0.2
+    # 是否启用句子边界识别
+    enable-sentence-boundary: ${RESUME_CHUNK_ENABLE_SENTENCE_BOUNDARY:true}
+    # 是否启用段落优先切分
+    enable-paragraph-priority: ${RESUME_CHUNK_ENABLE_PARAGRAPH_PRIORITY:true}
+    # 是否启用上下文增强
+    enable-context-enrichment: ${RESUME_CHUNK_ENABLE_CONTEXT_ENRICHMENT:true}
+

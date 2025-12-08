@@ -13,6 +13,13 @@
 	<description>PetVetEmbedding API: 对外提供的API接口定义、DTO、常量等</description>
 	
 	<dependencies>
+		<!-- Spring Web (用于 @PathVariable, @RequestPart 等注解) -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-web</artifactId>
+			<optional>true</optional>
+		</dependency>
+		
 		<!-- 参数校验 -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

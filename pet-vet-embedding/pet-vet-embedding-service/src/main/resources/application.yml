@@ -17,3 +17,27 @@ management:
     web:
       exposure:
         include: health,info,metrics
+
+# 简历解析配置
+resume:
+  parse:
+    # 支持的文件类型
+    supported-formats:
+      - pdf
+    # 最大文件大小（MB）
+    max-file-size: 10
+    # 文件名格式验证
+    filename-pattern: "^[^\\-]+-[^\\-]+-[^\\-]+\\.pdf$"
+  chunk:
+    # 最大chunk大小（字符数）
+    max-size: 500
+    # 重叠大小（字符数）
+    overlap-size: 100
+    # 重叠比例（0.0-1.0）
+    overlap-ratio: 0.2
+    # 是否启用句子边界识别
+    enable-sentence-boundary: true
+    # 是否启用段落优先切分
+    enable-paragraph-priority: true
+    # 是否启用上下文增强
+    enable-context-enrichment: true
