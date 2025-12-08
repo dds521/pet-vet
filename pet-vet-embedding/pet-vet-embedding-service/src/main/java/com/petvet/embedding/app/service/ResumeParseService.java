@@ -67,12 +67,12 @@ public class ResumeParseService {
         
         // 5. 批量向量化并存储
         List<String> vectorIds = storeChunksToVectorDB(resumeId, chunks);
+
+        log.info("简历解析完成，ID: {}, Chunk数量: {}", resumeId, chunks.size());
         
         // 6. 保存简历元数据（内部使用ResumeMetadata）
         ResumeMetadata metadata = buildMetadata(resumeId, fileInfo, file, chunks, vectorIds);
         metadataService.save(metadata);
-        
-        log.info("简历解析完成，ID: {}, Chunk数量: {}", resumeId, chunks.size());
         
         // 7. 转换为Resp返回
         return ResumeParseResp.builder()
