@@ -6,16 +6,48 @@
 # ============================================
 
 spring:
+  config:
+    # Spring Boot 3.x 需要显式导入 Nacos 配置
+    import:
+      - optional:nacos:pet-vet-embedding-common.yml?group=DEFAULT_GROUP
+      - optional:nacos:pet-vet-embedding-dev.yml?group=DEFAULT_GROUP
   cloud:
     nacos:
       discovery:
         namespace: ${NACOS_NAMESPACE:dev}
         group: ${NACOS_GROUP:DEFAULT_GROUP}
+  
+  # 数据源配置（开发环境）
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:pet_vet_embedding}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root12345678}
+  
+  # Redis 配置（开发环境）
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DB:0}
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+# MyBatis-Plus 配置（开发环境）
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 开发环境打印 SQL
 
 logging:
   level:
     root: INFO
     com.petvet.embedding: DEBUG
+    com.petvet.embedding.app.mapper: DEBUG
     dev.langchain4j: DEBUG
 
 # ============================================

@@ -128,6 +128,15 @@ spring:
           dimensions: ${OPENAI_EMBEDDING_DIMENSIONS:1536}
 
 # ============================================
+# MyBatis-Plus 配置（所有环境公共）
+# ============================================
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.petvet.embedding.app.domain
+  configuration:
+    map-underscore-to-camel-case: true
+
+# ============================================
 # 简历解析配置
 # ============================================
 resume:

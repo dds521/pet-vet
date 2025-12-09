@@ -1,34 +1,56 @@
 package com.petvet.embedding.app.service;
 
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.petvet.embedding.api.dto.ResumeMetadata;
 import com.petvet.embedding.api.resp.ResumeMetadataResp;
+import com.petvet.embedding.app.domain.ResumeMetadataEntity;
+import com.petvet.embedding.app.mapper.ResumeMetadataMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 简历元数据服务
- * 注意：当前使用内存存储，生产环境应使用数据库（如MySQL、MongoDB等）
+ * 使用MySQL数据库持久化存储简历元数据
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ResumeMetadataService {
     
-    // 使用内存Map存储，生产环境应替换为数据库
-    private final Map<String, ResumeMetadata> metadataStore = new ConcurrentHashMap<>();
+    private final ResumeMetadataMapper metadataMapper;
     
     /**
      * 保存简历元数据（内部使用ResumeMetadata）
      */
+    @Transactional(rollbackFor = Exception.class)
     public void save(ResumeMetadata metadata) {
         if (metadata == null || metadata.getResumeId() == null) {
             throw new IllegalArgumentException("简历元数据或ID不能为空");
         }
         
-        metadataStore.put(metadata.getResumeId(), metadata);
-        log.info("保存简历元数据，ID: {}, 文件名: {}", metadata.getResumeId(), metadata.getFileName());
+        // 转换为数据库实体
+        ResumeMetadataEntity entity = convertToEntity(metadata);
+        
+        // 检查是否已存在
+        ResumeMetadataEntity existing = metadataMapper.selectById(metadata.getResumeId());
+        if (existing != null) {
+            // 更新
+            entity.setUpdateTime(LocalDateTime.now());
+            metadataMapper.updateById(entity);
+            log.info("更新简历元数据，ID: {}, 文件名: {}", metadata.getResumeId(), metadata.getFileName());
+        } else {
+            // 新增
+            entity.setCreateTime(LocalDateTime.now());
+            entity.setUpdateTime(LocalDateTime.now());
+            metadataMapper.insert(entity);
+            log.info("保存简历元数据，ID: {}, 文件名: {}", metadata.getResumeId(), metadata.getFileName());
+        }
     }
     
     /**
@@ -39,15 +61,53 @@ public class ResumeMetadataService {
             return null;
         }
         
-        ResumeMetadata metadata = metadataStore.get(resumeId);
-        if (metadata == null) {
+        ResumeMetadataEntity entity = metadataMapper.selectById(resumeId);
+        if (entity == null) {
             return null;
         }
         
         log.debug("查询简历元数据，ID: {}", resumeId);
         
         // 转换为Resp返回
-        return ResumeMetadataResp.builder()
+        return convertToResp(entity);
+    }
+    
+    /**
+     * 删除简历元数据
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(String resumeId) {
+        if (resumeId != null && !resumeId.trim().isEmpty()) {
+            int deleted = metadataMapper.deleteById(resumeId);
+            if (deleted > 0) {
+                log.info("删除简历元数据，ID: {}", resumeId);
+            } else {
+                log.warn("删除简历元数据失败，ID不存在: {}", resumeId);
+            }
+        }
+    }
+    
+    /**
+     * 检查简历是否存在
+     */
+    public boolean exists(String resumeId) {
+        if (resumeId == null || resumeId.trim().isEmpty()) {
+            return false;
+        }
+        return metadataMapper.selectById(resumeId) != null;
+    }
+    
+    /**
+     * 将ResumeMetadata转换为数据库实体
+     */
+    private ResumeMetadataEntity convertToEntity(ResumeMetadata metadata) {
+        // 序列化vectorIds为JSON字符串
+        String vectorIdsJson = null;
+        if (metadata.getVectorIds() != null && !metadata.getVectorIds().isEmpty()) {
+            vectorIdsJson = JSONUtil.toJsonStr(metadata.getVectorIds());
+        }
+        
+        return ResumeMetadataEntity.builder()
             .resumeId(metadata.getResumeId())
             .fileName(metadata.getFileName())
             .name(metadata.getName())
@@ -57,24 +117,35 @@ public class ResumeMetadataService {
             .fileSize(metadata.getFileSize())
             .parseTime(metadata.getParseTime())
             .chunkCount(metadata.getChunkCount())
-            .vectorIds(metadata.getVectorIds())
+            .vectorIdsJson(vectorIdsJson)
             .build();
     }
     
     /**
-     * 删除简历元数据
+     * 将数据库实体转换为ResumeMetadataResp
      */
-    public void delete(String resumeId) {
-        if (resumeId != null && !resumeId.trim().isEmpty()) {
-            metadataStore.remove(resumeId);
-            log.info("删除简历元数据，ID: {}", resumeId);
+    private ResumeMetadataResp convertToResp(ResumeMetadataEntity entity) {
+        // 反序列化vectorIds JSON字符串为List
+        List<String> vectorIds = null;
+        if (entity.getVectorIdsJson() != null && !entity.getVectorIdsJson().trim().isEmpty()) {
+            try {
+                vectorIds = JSONUtil.toList(entity.getVectorIdsJson(), String.class);
+            } catch (Exception e) {
+                log.warn("解析vectorIds JSON失败，ID: {}, JSON: {}", entity.getResumeId(), entity.getVectorIdsJson(), e);
+            }
         }
-    }
-    
-    /**
-     * 检查简历是否存在
-     */
-    public boolean exists(String resumeId) {
-        return resumeId != null && metadataStore.containsKey(resumeId);
+        
+        return ResumeMetadataResp.builder()
+            .resumeId(entity.getResumeId())
+            .fileName(entity.getFileName())
+            .name(entity.getName())
+            .position(entity.getPosition())
+            .version(entity.getVersion())
+            .contactInfo(entity.getContactInfo())
+            .fileSize(entity.getFileSize())
+            .parseTime(entity.getParseTime())
+            .chunkCount(entity.getChunkCount())
+            .vectorIds(vectorIds)
+            .build();
     }
 }
