@@ -67,22 +67,42 @@ public class ResumeParseServiceOptimized {
             throw new IllegalArgumentException("PDF文件内容为空，无法解析");
         }
         
-        log.info("PDF文档解析完成（使用 LangChain4j），文本长度: {}", document.text().length());
+        String rawText = document.text();
+        log.info("PDF文档解析完成（使用 LangChain4j），文本长度: {}，文档内容: {}", rawText.length());
+        
+        // 4. 预处理文本：识别简历结构并增强
+        String enhancedText = preprocessResumeText(rawText);
+        log.debug("文本预处理完成，增强后长度: {}，文档内容: {}", enhancedText.length(), enhancedText);
         
         // 5. 使用 LangChain4j 的递归分割器进行智能切分
         // DocumentSplitters.recursive() 会先尝试按段落分割，如果段落太长则递归分割
+        // 注意：对于简历，建议使用更大的chunk size以保持语义完整性
+        int effectiveMaxSize = Math.max(chunkConfig.getMaxSize(), 800); // 至少800字符
+        int effectiveOverlapSize = Math.max(chunkConfig.getOverlapSize(), (int)(effectiveMaxSize * 0.2)); // overlap至少是maxSize的20%
+        
+        log.info("使用切分参数 - maxSize: {}, overlapSize: {}", effectiveMaxSize, effectiveOverlapSize);
+        
+        // 使用增强后的文本创建新的Document
+        Document enhancedDocument = Document.from(enhancedText);
         var splitter = DocumentSplitters.recursive(
-            chunkConfig.getMaxSize(),
-            chunkConfig.getOverlapSize()
+            effectiveMaxSize,
+            effectiveOverlapSize
         );
         
-        List<TextSegment> segments = splitter.split(document);
+        List<TextSegment> segments = splitter.split(enhancedDocument);
         
         if (segments.isEmpty()) {
             throw new IllegalArgumentException("文本切分后没有生成任何segment");
         }
         
-        log.info("文档分割完成，Segment数量: {}", segments.size());
+        log.info("文档分割完成，Segment数量: {}, 平均长度: {}", 
+            segments.size(), 
+            segments.stream().mapToInt(s -> s.text().length()).average().orElse(0));
+        
+        // 记录切分统计信息
+        int minLength = segments.stream().mapToInt(s -> s.text().length()).min().orElse(0);
+        int maxLength = segments.stream().mapToInt(s -> s.text().length()).max().orElse(0);
+        log.debug("Segment长度统计 - 最小: {}, 最大: {}", minLength, maxLength);
         
         // 6. 转换为 TextChunk 并分批处理，避免内存溢出
         List<TextChunk> allChunks = convertSegmentsToChunks(segments, resumeId);
@@ -165,47 +185,129 @@ public class ResumeParseServiceOptimized {
     }
     
     /**
-     * 识别文本所属的简历字段类型
+     * 预处理简历文本，增强结构识别
+     * - 识别简历段落（工作经历、教育背景等）
+     * - 添加段落标记以便后续切分
+     * - 规范化格式
+     */
+    private String preprocessResumeText(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return text;
+        }
+        
+        // 识别常见的简历段落标题并添加标记
+        // 这样可以帮助切分器更好地识别段落边界
+        String[] sectionKeywords = {
+            "工作经历", "工作经验", "工作履历",
+            "教育背景", "教育经历", "学历",
+            "项目经验", "项目经历",
+            "技能", "专业技能", "技术栈",
+            "自我评价", "个人简介",
+            "联系方式", "联系信息"
+        };
+        
+        String processed = text;
+        for (String keyword : sectionKeywords) {
+            // 在段落标题前添加特殊标记（保留原文本，只是增强识别）
+            // 使用正则表达式匹配，确保是独立的段落标题
+            String pattern = "(?m)^\\s*" + keyword + "[：:：]?\\s*$";
+            processed = processed.replaceAll(pattern, "\n\n【" + keyword + "】\n");
+        }
+        
+        // 规范化段落分隔（确保段落之间有明确的分隔）
+        processed = processed.replaceAll("\n{3,}", "\n\n");
+        
+        return processed.trim();
+    }
+    
+    /**
+     * 识别文本所属的简历字段类型（增强版）
      */
     private String identifyFieldType(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return "OTHER";
+        }
+        
         String lowerText = text.toLowerCase();
         
-        if (lowerText.contains("工作经历") || lowerText.contains("工作经验") || 
-            lowerText.contains("工作职责") || lowerText.contains("项目经验") ||
-            lowerText.contains("工作") || lowerText.contains("项目")) {
+        // 优先匹配明确的段落标记
+        if (lowerText.contains("【工作经历】") || lowerText.contains("【工作经验】") || 
+            lowerText.contains("【工作履历】") || lowerText.startsWith("工作经历") ||
+            lowerText.startsWith("工作经验") || lowerText.startsWith("工作履历")) {
             return "WORK_EXPERIENCE";
         }
-        if (lowerText.contains("教育背景") || lowerText.contains("学历") || 
-            lowerText.contains("毕业院校") || lowerText.contains("专业") ||
-            lowerText.contains("教育") || lowerText.contains("毕业")) {
+        
+        if (lowerText.contains("【项目经验】") || lowerText.contains("【项目经历】") ||
+            lowerText.startsWith("项目经验") || lowerText.startsWith("项目经历")) {
+            return "WORK_EXPERIENCE"; // 项目经验也归类为工作经历
+        }
+        
+        if (lowerText.contains("【教育背景】") || lowerText.contains("【教育经历】") ||
+            lowerText.contains("【学历】") || lowerText.startsWith("教育背景") ||
+            lowerText.startsWith("教育经历") || lowerText.startsWith("学历")) {
             return "EDUCATION";
         }
-        if (lowerText.contains("技能") || lowerText.contains("技术栈") || 
-            lowerText.contains("熟悉") || lowerText.contains("掌握") ||
-            lowerText.contains("精通")) {
+        
+        if (lowerText.contains("【技能】") || lowerText.contains("【专业技能】") ||
+            lowerText.contains("【技术栈】") || lowerText.startsWith("技能") ||
+            lowerText.startsWith("专业技能") || lowerText.startsWith("技术栈")) {
             return "SKILLS";
         }
-        if (lowerText.contains("联系方式") || lowerText.contains("邮箱") || 
-            lowerText.contains("电话") || lowerText.contains("手机") ||
-            lowerText.contains("email") || lowerText.contains("phone")) {
+        
+        if (lowerText.contains("【联系方式】") || lowerText.contains("【联系信息】") ||
+            lowerText.startsWith("联系方式") || lowerText.startsWith("联系信息")) {
             return "CONTACT";
         }
+        
+        // 如果没有明确的段落标记，使用关键词匹配
+        if (lowerText.contains("工作经历") || lowerText.contains("工作经验") || 
+            lowerText.contains("工作职责") || lowerText.contains("项目经验") ||
+            lowerText.contains("项目经历") || 
+            (lowerText.contains("工作") && (lowerText.contains("公司") || lowerText.contains("职位")))) {
+            return "WORK_EXPERIENCE";
+        }
+        
+        if (lowerText.contains("教育背景") || lowerText.contains("教育经历") || 
+            lowerText.contains("学历") || lowerText.contains("毕业院校") || 
+            lowerText.contains("专业") || lowerText.contains("毕业") ||
+            lowerText.contains("大学") || lowerText.contains("学院")) {
+            return "EDUCATION";
+        }
+        
+        if (lowerText.contains("技能") || lowerText.contains("技术栈") || 
+            lowerText.contains("熟悉") || lowerText.contains("掌握") ||
+            lowerText.contains("精通") || lowerText.contains("了解")) {
+            return "SKILLS";
+        }
+        
+        if (lowerText.contains("联系方式") || lowerText.contains("邮箱") || 
+            lowerText.contains("电话") || lowerText.contains("手机") ||
+            lowerText.contains("email") || lowerText.contains("phone") ||
+            lowerText.matches(".*@.*\\..*") || lowerText.matches(".*1[3-9]\\d{9}.*")) {
+            return "CONTACT";
+        }
+        
         return "OTHER";
     }
     
     /**
      * 批量存储chunks到向量数据库
+     * 优化：为每个chunk添加上下文信息以增强向量表示
      */
     private List<String> storeChunksToVectorDB(String resumeId, List<TextChunk> chunks) {
         log.debug("开始批量存储chunks到向量数据库，数量: {}", chunks.size());
         
-        // 提取文本内容
-        List<String> texts = chunks.stream()
-            .map(TextChunk::getText)
-            .collect(Collectors.toList());
+        // 增强文本：为每个chunk添加结构化前缀和上下文
+        List<String> enhancedTexts = new ArrayList<>();
+        for (int i = 0; i < chunks.size(); i++) {
+            TextChunk chunk = chunks.get(i);
+            String originalText = chunk.getText();
+            String enhancedText = enhanceChunkText(originalText, chunk.getFieldType(), i, chunks.size());
+            enhancedTexts.add(enhancedText);
+        }
         
-        // 批量向量化并存储
-        List<String> vectorIds = vectorDatabaseService.addBatch(texts);
+        // 批量向量化并存储（使用增强后的文本）
+        List<String> vectorIds = vectorDatabaseService.addBatch(enhancedTexts);
         
         // 更新chunk的ID
         if (vectorIds.size() != chunks.size()) {
@@ -216,7 +318,8 @@ public class ResumeParseServiceOptimized {
             String vectorId = vectorIds.get(i);
             chunks.get(i).setChunkId(vectorId);
             chunks.get(i).setResumeId(resumeId);
-            log.debug("设置Chunk ID: chunk[{}] -> vectorId: {}", i, vectorId);
+            log.debug("设置Chunk ID: chunk[{}] -> vectorId: {}, fieldType: {}", 
+                i, vectorId, chunks.get(i).getFieldType());
         }
         
         // 检查是否有chunks没有设置chunkId
@@ -230,6 +333,52 @@ public class ResumeParseServiceOptimized {
         log.debug("Chunks存储完成，向量ID数量: {}, Chunks数量: {}", vectorIds.size(), chunks.size());
         
         return vectorIds;
+    }
+    
+    /**
+     * 增强chunk文本，添加结构化信息以改善向量表示
+     * - 添加字段类型前缀
+     * - 保留原始文本（用于搜索时返回）
+     */
+    private String enhanceChunkText(String originalText, String fieldType, int index, int total) {
+        if (originalText == null || originalText.trim().isEmpty()) {
+            return originalText;
+        }
+        
+        // 构建增强文本
+        StringBuilder enhanced = new StringBuilder();
+        
+        // 1. 添加字段类型前缀（帮助模型理解上下文）
+        if (fieldType != null && !"OTHER".equals(fieldType)) {
+            String typeLabel = getFieldTypeLabel(fieldType);
+            enhanced.append("[").append(typeLabel).append("] ");
+        }
+        
+        // 2. 添加原始文本
+        enhanced.append(originalText);
+        
+        // 注意：我们不在向量化时添加位置信息，因为这可能会干扰语义搜索
+        // 位置信息已经保存在TextChunk的sequence字段中
+        
+        return enhanced.toString();
+    }
+    
+    /**
+     * 获取字段类型的中文标签
+     */
+    private String getFieldTypeLabel(String fieldType) {
+        switch (fieldType) {
+            case "WORK_EXPERIENCE":
+                return "工作经历";
+            case "EDUCATION":
+                return "教育背景";
+            case "SKILLS":
+                return "技能";
+            case "CONTACT":
+                return "联系方式";
+            default:
+                return "其他";
+        }
     }
     
     /**

@@ -66,23 +66,57 @@ public class PdfBox3DocumentParser implements DocumentParser {
     }
     
     /**
-     * 文本清理
-     * - 移除多余空白字符
+     * 文本清理和增强
      * - 规范化换行符
+     * - 移除多余空白字符
+     * - 保留段落结构
+     * - 处理特殊字符
+     * - 增强文本质量
      */
     private String cleanText(String text) {
         if (text == null || text.isEmpty()) {
             return "";
         }
         
-        // 规范化换行符
+        // 1. 规范化换行符
         text = text.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
         
-        // 移除多余的空行（保留单个换行符）
+        // 2. 移除特殊控制字符（保留可打印字符和常见空白字符）
+        text = text.replaceAll("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]", "");
+        
+        // 3. 规范化空白字符（多个空格合并为一个，但保留换行）
+        text = text.replaceAll("[ \\t]+", " "); // 多个空格/制表符合并为一个空格
+        
+        // 4. 处理段落边界（保留段落结构）
+        // 将多个连续换行符（3个以上）替换为双换行符（段落分隔）
         text = text.replaceAll("\n{3,}", "\n\n");
         
-        // 移除行首行尾空白
+        // 5. 移除行首行尾空白（但保留段落结构）
+        // 先按行处理，再合并
+        String[] lines = text.split("\n");
+        StringBuilder cleaned = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].trim();
+            if (!line.isEmpty()) {
+                cleaned.append(line);
+                // 如果下一行不为空，添加换行符
+                if (i < lines.length - 1 && !lines[i + 1].trim().isEmpty()) {
+                    cleaned.append("\n");
+                }
+            } else if (i < lines.length - 1 && !lines[i + 1].trim().isEmpty()) {
+                // 空行后跟非空行，保留段落分隔
+                cleaned.append("\n");
+            }
+        }
+        text = cleaned.toString();
+        
+        // 6. 移除文档首尾空白
         text = text.trim();
+        
+        // 7. 最终检查：确保文本不为空
+        if (text.isEmpty()) {
+            log.warn("文本清理后为空，可能PDF解析有问题");
+        }
         
         return text;
     }
