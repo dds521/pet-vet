@@ -21,6 +21,45 @@ spring:
           - data-id: pet-vet-rag-common.yml
             group: DEFAULT_GROUP
             refresh: true
+  # AI 配置（所有环境公共）
+  # 支持 OpenAI、DeepSeek 和 xAI Grok
+  # 推荐使用 DeepSeek（价格更便宜，国内访问更稳定）或 Grok（性能优秀）
+  ai:
+    # AI 提供商类型：openai、deepseek 或 grok（默认使用 deepseek）
+    provider:
+      type: ${AI_PROVIDER_TYPE:deepseek}
+    
+    # OpenAI 配置
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:gpt-4o}
+          temperature: ${OPENAI_TEMPERATURE:0.7}
+    
+    # DeepSeek 配置（推荐）
+    # DeepSeek 使用 OpenAI 兼容的 API，价格更便宜，国内访问更稳定
+    # 申请地址：https://platform.deepseek.com/
+    # ⚠️ 注意：API Key 必须通过环境变量 DEEPSEEK_API_KEY 配置，不要直接写在配置文件中
+    deepseek:
+      api-key: ${DEEPSEEK_API_KEY:}
+      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      chat:
+        options:
+          model: ${DEEPSEEK_MODEL:deepseek-chat}
+          temperature: ${DEEPSEEK_TEMPERATURE:0.7}
+    
+    # xAI Grok 配置
+    # Grok 是 xAI 开发的 AI 模型，使用 OpenAI 兼容的 API
+    # 申请地址：https://x.ai/
+    # ⚠️ 注意：API Key 必须通过环境变量 GROK_API_KEY 配置，不要直接写在配置文件中
+    grok:
+      api-key: ${GROK_API_KEY:}
+      base-url: ${GROK_BASE_URL:https://api.x.ai/v1}
+      chat:
+        options:
+          model: ${GROK_MODEL:grok-4-latest}
+          temperature: ${GROK_TEMPERATURE:0.7}
 
 # ============================================
 # RAG 配置
@@ -58,47 +97,3 @@ rag:
 # ============================================
 # 注意：RAG模块需要访问向量数据库，可以通过Feign调用embedding服务
 # 或者直接配置向量数据库连接（如果需要在RAG模块中直接访问）
-
-# ============================================
-# LLM 配置
-# ============================================
-# AI 配置（所有环境公共）
-# 支持 OpenAI、DeepSeek 和 xAI Grok
-# 推荐使用 DeepSeek（价格更便宜，国内访问更稳定）或 Grok（性能优秀）
-spring:
-  ai:
-    # AI 提供商类型：openai、deepseek 或 grok（默认使用 deepseek）
-    provider:
-      type: ${AI_PROVIDER_TYPE:deepseek}
-    
-    # OpenAI 配置
-    openai:
-      api-key: ${OPENAI_API_KEY:}
-      chat:
-        options:
-          model: ${OPENAI_MODEL:gpt-4o}
-          temperature: ${OPENAI_TEMPERATURE:0.7}
-    
-    # DeepSeek 配置（推荐）
-    # DeepSeek 使用 OpenAI 兼容的 API，价格更便宜，国内访问更稳定
-    # 申请地址：https://platform.deepseek.com/
-    # ⚠️ 注意：API Key 必须通过环境变量 DEEPSEEK_API_KEY 配置，不要直接写在配置文件中
-    deepseek:
-      api-key: ${DEEPSEEK_API_KEY:}
-      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
-      chat:
-        options:
-          model: ${DEEPSEEK_MODEL:deepseek-chat}
-          temperature: ${DEEPSEEK_TEMPERATURE:0.7}
-    
-    # xAI Grok 配置
-    # Grok 是 xAI 开发的 AI 模型，使用 OpenAI 兼容的 API
-    # 申请地址：https://x.ai/
-    # ⚠️ 注意：API Key 必须通过环境变量 GROK_API_KEY 配置，不要直接写在配置文件中
-    grok:
-      api-key: ${GROK_API_KEY:}
-      base-url: ${GROK_BASE_URL:https://api.x.ai/v1}
-      chat:
-        options:
-          model: ${GROK_MODEL:grok-4-latest}
-          temperature: ${GROK_TEMPERATURE:0.7}
