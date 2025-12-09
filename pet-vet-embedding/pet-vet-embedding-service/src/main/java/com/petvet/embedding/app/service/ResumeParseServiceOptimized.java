@@ -14,6 +14,7 @@ import dev.langchain4j.data.segment.TextSegment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -46,6 +47,7 @@ public class ResumeParseServiceOptimized {
     /**
      * 解析PDF简历文件（优化版，支持分批处理）
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResumeParseResp parseResume(MultipartFile file) throws IOException {
         log.info("开始解析简历文件（优化版）: {}", file.getOriginalFilename());
         
@@ -90,26 +92,40 @@ public class ResumeParseServiceOptimized {
         int batchSize = chunkConfig.getBatchSize();
         for (int i = 0; i < allChunks.size(); i += batchSize) {
             int end = Math.min(i + batchSize, allChunks.size());
-            List<TextChunk> batch = allChunks.subList(i, end);
+            // 创建新的列表副本，避免 subList 视图被 clear() 影响
+            List<TextChunk> batch = new ArrayList<>(allChunks.subList(i, end));
             
             log.info("处理第 {}/{} 批，数量: {}", (i / batchSize + 1), (allChunks.size() + batchSize - 1) / batchSize, batch.size());
             
-            // 批量向量化并存储
+            // 批量向量化并存储（此时会设置 chunkId）
             List<String> batchVectorIds = storeChunksToVectorDB(resumeId, batch);
             allVectorIds.addAll(batchVectorIds);
             
-            // 释放当前批次的内存引用
-            batch.clear();
+            // 更新 allChunks 中对应位置的 chunks（保持 chunkId 同步）
+            for (int j = 0; j < batch.size() && (i + j) < allChunks.size(); j++) {
+                allChunks.set(i + j, batch.get(j));
+            }
         }
         
         log.info("简历解析完成，ID: {}, Chunk数量: {}, Vector数量: {}", resumeId, allChunks.size(), allVectorIds.size());
         
-        // 7. 保存文本Chunks到数据库
-        textChunkService.saveBatch(allChunks);
-        
-        // 8. 保存简历元数据
+        // 7. 先保存简历元数据（必须在保存 text_chunk 之前，因为外键约束）
         ResumeMetadata metadata = buildMetadata(resumeId, fileInfo, file, allChunks.size(), allVectorIds);
+        log.debug("准备保存简历元数据，resumeId: {}", resumeId);
         metadataService.save(metadata);
+        log.debug("简历元数据保存成功，resumeId: {}", resumeId);
+        
+        // 8. 保存文本Chunks到数据库（必须在保存 resume_metadata 之后，因为外键约束）
+        log.info("准备保存所有Chunks到数据库，总数: {}", allChunks.size());
+        // 验证所有chunks都有chunkId
+        long chunksWithoutId = allChunks.stream()
+            .filter(chunk -> chunk.getChunkId() == null || chunk.getChunkId().trim().isEmpty())
+            .count();
+        if (chunksWithoutId > 0) {
+            log.warn("有 {} 个Chunks缺少chunkId，这些Chunks将不会被保存", chunksWithoutId);
+        }
+        textChunkService.saveBatch(allChunks);
+        log.info("所有Chunks保存完成");
         
         // 9. 转换为Resp返回
         return ResumeParseResp.builder()
@@ -192,12 +208,26 @@ public class ResumeParseServiceOptimized {
         List<String> vectorIds = vectorDatabaseService.addBatch(texts);
         
         // 更新chunk的ID
-        for (int i = 0; i < chunks.size() && i < vectorIds.size(); i++) {
-            chunks.get(i).setChunkId(vectorIds.get(i));
-            chunks.get(i).setResumeId(resumeId);
+        if (vectorIds.size() != chunks.size()) {
+            log.warn("向量ID数量 ({}) 与Chunks数量 ({}) 不匹配", vectorIds.size(), chunks.size());
         }
         
-        log.debug("Chunks存储完成，向量ID数量: {}", vectorIds.size());
+        for (int i = 0; i < chunks.size() && i < vectorIds.size(); i++) {
+            String vectorId = vectorIds.get(i);
+            chunks.get(i).setChunkId(vectorId);
+            chunks.get(i).setResumeId(resumeId);
+            log.debug("设置Chunk ID: chunk[{}] -> vectorId: {}", i, vectorId);
+        }
+        
+        // 检查是否有chunks没有设置chunkId
+        long chunksWithoutId = chunks.stream()
+            .filter(chunk -> chunk.getChunkId() == null || chunk.getChunkId().trim().isEmpty())
+            .count();
+        if (chunksWithoutId > 0) {
+            log.warn("有 {} 个Chunks没有设置chunkId", chunksWithoutId);
+        }
+        
+        log.debug("Chunks存储完成，向量ID数量: {}, Chunks数量: {}", vectorIds.size(), chunks.size());
         
         return vectorIds;
     }

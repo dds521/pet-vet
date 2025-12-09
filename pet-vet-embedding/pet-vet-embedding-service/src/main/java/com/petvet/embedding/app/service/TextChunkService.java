@@ -32,12 +32,23 @@ public class TextChunkService {
     @Transactional(rollbackFor = Exception.class)
     public void saveBatch(List<TextChunk> chunks) {
         if (chunks == null || chunks.isEmpty()) {
+            log.warn("TextChunkService.saveBatch: chunks 为空，跳过保存");
             return;
         }
         
+        log.debug("开始批量保存文本Chunks，输入数量: {}", chunks.size());
+        
         LocalDateTime now = LocalDateTime.now();
         List<TextChunkEntity> entities = chunks.stream()
-            .filter(chunk -> chunk.getChunkId() != null) // 过滤掉没有chunkId的
+            .filter(chunk -> {
+                if (chunk.getChunkId() == null || chunk.getChunkId().trim().isEmpty()) {
+                    log.warn("跳过保存：chunk 缺少 chunkId, resumeId: {}, text: {}", 
+                        chunk.getResumeId(), 
+                        chunk.getText() != null ? chunk.getText().substring(0, Math.min(50, chunk.getText().length())) : "null");
+                    return false;
+                }
+                return true;
+            })
             .map(chunk -> {
                 TextChunkEntity entity = convertToEntity(chunk);
                 entity.setCreateTime(now);
@@ -47,23 +58,35 @@ public class TextChunkService {
             .collect(Collectors.toList());
         
         if (entities.isEmpty()) {
-            log.warn("没有有效的Chunks需要保存（所有Chunks都缺少chunkId）");
+            log.warn("没有有效的Chunks需要保存（所有Chunks都缺少chunkId），输入数量: {}", chunks.size());
             return;
         }
         
+        log.debug("准备保存 {} 个有效的Chunks", entities.size());
+        
         // 批量插入或更新
+        int savedCount = 0;
+        int updatedCount = 0;
         for (TextChunkEntity entity : entities) {
-            TextChunkEntity existing = chunkMapper.selectById(entity.getChunkId());
-            if (existing != null) {
-                entity.setCreateTime(existing.getCreateTime()); // 保留原有创建时间
-                entity.setUpdateTime(now);
-                chunkMapper.updateById(entity);
-            } else {
-                chunkMapper.insert(entity);
+            try {
+                TextChunkEntity existing = chunkMapper.selectById(entity.getChunkId());
+                if (existing != null) {
+                    entity.setCreateTime(existing.getCreateTime()); // 保留原有创建时间
+                    entity.setUpdateTime(now);
+                    chunkMapper.updateById(entity);
+                    updatedCount++;
+                } else {
+                    chunkMapper.insert(entity);
+                    savedCount++;
+                }
+            } catch (Exception e) {
+                log.error("保存Chunk失败，chunkId: {}, resumeId: {}, 错误: {}", 
+                    entity.getChunkId(), entity.getResumeId(), e.getMessage(), e);
+                throw e; // 重新抛出异常，让事务回滚
             }
         }
         
-        log.info("批量保存文本Chunks，数量: {}", entities.size());
+        log.info("批量保存文本Chunks完成，总数: {}, 新增: {}, 更新: {}", entities.size(), savedCount, updatedCount);
     }
     
     /**
@@ -83,16 +106,30 @@ public class TextChunkService {
      */
     public Map<String, String> getTextsByChunkIds(List<String> chunkIds) {
         if (chunkIds == null || chunkIds.isEmpty()) {
+            log.warn("getTextsByChunkIds: chunkIds 为空");
             return new HashMap<>();
         }
         
+        log.debug("查询文本内容，chunkIds数量: {}, chunkIds: {}", chunkIds.size(), chunkIds);
+        
         List<TextChunkEntity> entities = chunkMapper.selectByChunkIds(chunkIds);
-        return entities.stream()
+        
+        log.debug("数据库查询结果，找到 {} 条记录", entities.size());
+        if (entities.isEmpty()) {
+            log.warn("数据库中没有找到任何匹配的chunks，查询的chunkIds: {}", chunkIds);
+        } else {
+            log.debug("找到的chunkIds: {}", entities.stream().map(TextChunkEntity::getChunkId).collect(Collectors.toList()));
+        }
+        
+        Map<String, String> result = entities.stream()
             .collect(Collectors.toMap(
                 TextChunkEntity::getChunkId,
                 TextChunkEntity::getText,
                 (existing, replacement) -> existing
             ));
+        
+        log.debug("返回文本内容Map，大小: {}", result.size());
+        return result;
     }
     
     /**
