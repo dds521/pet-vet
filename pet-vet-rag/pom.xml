@@ -17,4 +17,6 @@
 		<module>pet-vet-rag-api</module>
 		<module>pet-vet-rag-service</module>
 	</modules>
+	
+	<!-- 使用父 POM 的 langchain4j.version=1.9.1 -->
 </project>

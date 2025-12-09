@@ -22,6 +22,19 @@
 			<version>${project.version}</version>
 		</dependency>
 		
+		<!-- 依赖 RAG API 模块（用于调用 RAG 服务） -->
+		<dependency>
+			<groupId>com.example</groupId>
+			<artifactId>pet-vet-rag-api</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		
+		<!-- Feign 客户端 -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-openfeign</artifactId>
+		</dependency>
+		
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>

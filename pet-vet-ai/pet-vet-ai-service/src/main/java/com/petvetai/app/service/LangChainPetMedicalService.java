@@ -5,7 +5,7 @@ import com.petvetai.app.domain.Pet;
 import com.petvetai.app.domain.Symptom;
 import com.petvetai.app.mapper.PetMapper;
 import com.petvetai.app.mapper.SymptomMapper;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,21 +13,21 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 基于 LangChain4j 的宠物医疗服务
  * 
- * 使用 LangChain4j 框架进行 AI 对话处理
- * 支持更复杂的 AI 工作流，如 RAG、工具调用等
+ * 使用 LangChain4j 框架进行基础的 AI 对话处理
+ * 注意：RAG 功能由 pet-vet-rag 模块提供，请使用 RagPetMedicalService
  */
 @Service
 public class LangChainPetMedicalService {
 
-    private final ChatLanguageModel chatLanguageModel;
+    private final ChatModel chatModel;
     private final PetMapper petMapper;
     private final SymptomMapper symptomMapper;
 
     public LangChainPetMedicalService(
-            ChatLanguageModel chatLanguageModel,
+            ChatModel chatModel,
             PetMapper petMapper,
             SymptomMapper symptomMapper) {
-        this.chatLanguageModel = chatLanguageModel;
+        this.chatModel = chatModel;
         this.petMapper = petMapper;
         this.symptomMapper = symptomMapper;
     }
@@ -46,7 +46,7 @@ public class LangChainPetMedicalService {
         );
 
         // 使用 LangChain4j 进行 AI 对话
-        String aiResponse = chatLanguageModel.generate(prompt);
+        String aiResponse = chatModel.chat(prompt);
 
         // 解析响应
         String suggestion = aiResponse.contains("建议：") 
@@ -89,7 +89,7 @@ public class LangChainPetMedicalService {
         );
 
         // 使用 LangChain4j 进行 AI 对话
-        String aiResponse = chatLanguageModel.generate(prompt);
+        String aiResponse = chatModel.chat(prompt);
 
         // 解析响应
         String suggestion = aiResponse.contains("建议：") 

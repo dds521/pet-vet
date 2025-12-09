@@ -3,15 +3,18 @@ package com.petvetai.app;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.core.env.Environment;
 
 /**
  * Pet-Vet-AI 应用主类
  * 
  * 项目使用 LangChain4j 进行 AI 集成，支持 OpenAI、DeepSeek 和 xAI Grok
+ * RAG 功能由 pet-vet-rag 模块提供
  */
 @SpringBootApplication
 @MapperScan("com.petvetai.app.mapper")
+@EnableFeignClients(basePackages = {"com.petvet.ai.api.feign"})
 public class PetVetAiApplication {
 
 	public static void main(String[] args) {

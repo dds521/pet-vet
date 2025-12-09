@@ -47,13 +47,8 @@
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j</artifactId>
 			<version>${langchain4j.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>dev.langchain4j</groupId>
-					<artifactId>langchain4j-core</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
+		<!-- 显式引入 langchain4j-core 以确保 ChatModel 可用 -->
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-core</artifactId>
@@ -65,12 +60,13 @@
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-open-ai</artifactId>
 			<version>${langchain4j.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>dev.langchain4j</groupId>
-					<artifactId>langchain4j-core</artifactId>
-				</exclusion>
-			</exclusions>
+		</dependency>
+		
+		<!-- LangChain4j Spring Boot Starter (使用 beta 版本) -->
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j-spring-boot-starter</artifactId>
+			<version>${langchain4j.beta.version}</version>
 		</dependency>
 		
 		<!-- LangChain4j Ollama (免费，本地运行) -->
@@ -78,12 +74,6 @@
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-ollama</artifactId>
 			<version>${langchain4j.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>dev.langchain4j</groupId>
-					<artifactId>langchain4j-core</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		
 		<!-- Nacos 客户端依赖 -->

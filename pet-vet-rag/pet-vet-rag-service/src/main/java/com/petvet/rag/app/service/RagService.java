@@ -7,7 +7,7 @@ import com.petvet.rag.api.feign.EmbeddingServiceFeignClient;
 import com.petvet.rag.api.req.RagQueryReq;
 import com.petvet.rag.api.resp.RagQueryResp;
 import com.petvet.rag.app.config.LangChainConfig;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 public class RagService {
     
     private final EmbeddingServiceFeignClient embeddingServiceFeignClient;
-    private final ChatLanguageModel chatLanguageModel;
+    private final ChatModel chatModel;
     private final LangChainConfig langChainConfig;
     
     @Value("${rag.generation.prompt-template:基于以下上下文信息回答用户的问题。如果上下文中没有相关信息，请说明无法从提供的信息中找到答案。\n\n上下文信息：\n{context}\n\n用户问题：{question}\n\n请提供详细、准确的答案：}")
@@ -89,7 +89,8 @@ public class RagService {
             
             ApiResponse<ResumeSearchResp> response = embeddingServiceFeignClient.searchResume(searchReq);
             
-            if (response == null || response.getCode() != 200 || response.getData() == null) {
+            // 注意：pet-vet-embedding-api 的 ApiResponse 使用 success 字段，而不是 code 字段
+            if (response == null || response.getSuccess() == null || !response.getSuccess() || response.getData() == null) {
                 log.warn("向量检索失败，响应: {}", response);
                 return new ArrayList<>();
             }
@@ -155,7 +156,7 @@ public class RagService {
             log.debug("生成的提示词长度: {}", prompt.length());
             
             // 4. 选择模型（如果指定了模型名称，使用指定的模型；否则使用默认模型）
-            ChatLanguageModel model = chatLanguageModel;
+            ChatModel model = chatModel;
             if (modelName != null && !modelName.trim().isEmpty()) {
                 try {
                     model = langChainConfig.createModelByName(modelName);
@@ -166,7 +167,7 @@ public class RagService {
             }
             
             // 5. 调用LLM生成答案
-            String answer = model.generate(prompt);
+            String answer = model.chat(prompt);
             
             log.info("答案生成完成，答案长度: {}", answer != null ? answer.length() : 0);
             return answer;

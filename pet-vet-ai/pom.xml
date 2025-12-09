@@ -18,7 +18,5 @@
 		<module>pet-vet-ai-service</module>
 	</modules>
 	
-	<properties>
-		<langchain4j.version>0.34.0</langchain4j.version>
-	</properties>
+	<!-- 使用父 POM 的 langchain4j.version=1.9.1 -->
 </project>

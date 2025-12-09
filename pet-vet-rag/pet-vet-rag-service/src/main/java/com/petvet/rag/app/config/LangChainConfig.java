@@ -1,6 +1,6 @@
 package com.petvet.rag.app.config;
 
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Primary;
 /**
  * LangChain4j 配置类
  * 
- * 配置 LangChain4j 的 ChatLanguageModel
+ * 配置 LangChain4j 的 ChatModel
  * 支持多种 AI 提供商：OpenAI、DeepSeek、xAI Grok 等
  * 
  * DeepSeek 和 xAI Grok 都使用 OpenAI 兼容的 API，可以通过设置 baseUrl 来使用
@@ -59,15 +59,15 @@ public class LangChainConfig {
     private Double grokTemperature;
 
     /**
-     * 创建 ChatLanguageModel
+     * 创建 ChatModel
      * 根据配置自动选择 OpenAI、DeepSeek 或 Grok
      * 如果指定的 provider 没有 API key，会自动尝试其他可用的 provider
      * 
-     * @return ChatLanguageModel 实例
+     * @return ChatModel 实例
      */
     @Bean
     @Primary
-    public ChatLanguageModel chatLanguageModel() {
+    public ChatModel chatLanguageModel() {
         log.info("==========================================");
         log.info("RAG AI 配置信息:");
         log.info("  配置的 Provider: {}", providerType);
@@ -132,13 +132,13 @@ public class LangChainConfig {
     }
     
     /**
-     * 根据模型名称创建 ChatLanguageModel
+     * 根据模型名称创建 ChatModel
      * 用于动态选择不同的模型
      * 
      * @param modelName 模型名称（openai, deepseek, grok）
-     * @return ChatLanguageModel 实例
+     * @return ChatModel 实例
      */
-    public ChatLanguageModel createModelByName(String modelName) {
+    public ChatModel createModelByName(String modelName) {
         if (modelName == null || modelName.trim().isEmpty()) {
             return chatLanguageModel(); // 使用默认模型
         }
@@ -178,10 +178,10 @@ public class LangChainConfig {
     }
 
     /**
-     * 创建 DeepSeek ChatLanguageModel
+     * 创建 DeepSeek ChatModel
      * DeepSeek 使用 OpenAI 兼容的 API
      */
-    private ChatLanguageModel createDeepSeekModel() {
+    private ChatModel createDeepSeekModel() {
         return OpenAiChatModel.builder()
                 .apiKey(deepSeekApiKey)
                 .baseUrl(deepSeekBaseUrl)
@@ -191,9 +191,9 @@ public class LangChainConfig {
     }
 
     /**
-     * 创建 OpenAI ChatLanguageModel
+     * 创建 OpenAI ChatModel
      */
-    private ChatLanguageModel createOpenAiModel() {
+    private ChatModel createOpenAiModel() {
         return OpenAiChatModel.builder()
                 .apiKey(openAiApiKey)
                 .modelName(openAiModel)
@@ -202,10 +202,10 @@ public class LangChainConfig {
     }
 
     /**
-     * 创建 xAI Grok ChatLanguageModel
+     * 创建 xAI Grok ChatModel
      * Grok 使用 OpenAI 兼容的 API
      */
-    private ChatLanguageModel createGrokModel() {
+    private ChatModel createGrokModel() {
         return OpenAiChatModel.builder()
                 .apiKey(grokApiKey)
                 .baseUrl(grokBaseUrl)

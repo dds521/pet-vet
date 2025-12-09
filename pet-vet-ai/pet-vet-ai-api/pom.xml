@@ -27,6 +27,13 @@
 			<optional>true</optional>
 		</dependency>
 		
+		<!-- 依赖 RAG API 模块 -->
+		<dependency>
+			<groupId>com.example</groupId>
+			<artifactId>pet-vet-rag-api</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		
 		<!-- Tools -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
