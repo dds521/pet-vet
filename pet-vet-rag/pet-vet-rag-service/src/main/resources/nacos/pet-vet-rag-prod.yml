@@ -1,0 +1,15 @@
+# ============================================
+# PetVetRAG 生产环境配置
+# ============================================
+
+# 生产环境特定配置
+rag:
+  retrieval:
+    default-max-results: 10
+    default-min-score: 0.7
+  generation:
+    default-enable-generation: true
+    default-model-name: deepseek  # 生产环境使用 DeepSeek（推荐，价格更便宜）
+    # 生产环境建议使用更稳定的模型
+    temperature: 0.7
+    max-tokens: 1500

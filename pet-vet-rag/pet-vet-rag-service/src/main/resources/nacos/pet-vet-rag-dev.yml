@@ -1,0 +1,12 @@
+# ============================================
+# PetVetRAG 开发环境配置
+# ============================================
+
+# 开发环境特定配置
+rag:
+  retrieval:
+    default-max-results: 5
+    default-min-score: 0.6
+  generation:
+    default-enable-generation: true
+    default-model-name: ollama  # 开发环境可以使用本地Ollama

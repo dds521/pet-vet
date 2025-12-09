@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: pet-vet-rag
+  profiles:
+    active: dev
+  config:
+    # Spring Boot 3.x 需要显式导入 Nacos 配置
+    import:
+      - optional:nacos:pet-vet-rag-common.yml?group=DEFAULT_GROUP
+      - optional:nacos:pet-vet-rag-${spring.profiles.active}.yml?group=DEFAULT_GROUP
+
+server:
+  port: 48083
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+# RAG 配置
+rag:
+  retrieval:
+    # 默认最大检索结果数
+    default-max-results: 10
+    # 默认最小相似度分数
+    default-min-score: 0.7
+    # 默认上下文窗口大小（用于生成答案时包含的上下文chunk数量）
+    default-context-window-size: 5
+  generation:
+    # 是否默认启用生成
+    default-enable-generation: true
+    # 默认模型名称
+    default-model-name: gpt-3.5-turbo
+    # 生成温度（0.0-2.0，越高越随机）
+    temperature: 0.7
+    # 最大token数
+    max-tokens: 1000

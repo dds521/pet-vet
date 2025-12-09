@@ -31,6 +31,7 @@
 		<module>pet-vet-ai</module>
 		<module>pet-vet-embedding</module>
 		<module>pet-vet-mcp</module>
+		<module>pet-vet-rag</module>
 	</modules>
 	
 	<dependencyManagement>

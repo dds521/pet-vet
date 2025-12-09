@@ -1,0 +1,12 @@
+# ============================================
+# PetVetRAG 测试环境配置
+# ============================================
+
+# 测试环境特定配置
+rag:
+  retrieval:
+    default-max-results: 8
+    default-min-score: 0.65
+  generation:
+    default-enable-generation: true
+    default-model-name: deepseek  # 测试环境使用 DeepSeek
