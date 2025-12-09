@@ -158,6 +158,16 @@ public class TextChunkService {
     }
     
     /**
+     * 删除所有文本Chunks
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public int deleteAll() {
+        int deleted = chunkMapper.delete(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>());
+        log.info("删除所有文本Chunks，数量: {}", deleted);
+        return deleted;
+    }
+    
+    /**
      * 将TextChunk转换为数据库实体
      */
     private TextChunkEntity convertToEntity(TextChunk chunk) {

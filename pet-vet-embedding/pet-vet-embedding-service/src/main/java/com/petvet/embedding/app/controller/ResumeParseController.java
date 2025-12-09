@@ -276,6 +276,76 @@ public class ResumeParseController {
     }
     
     /**
+     * 删除所有数据
+     * 删除向量数据库中集合的所有数据，同时删除 resume_metadata 和 text_chunk 表中的所有数据
+     * 
+     * 警告：此操作不可逆，请谨慎使用
+     */
+    @DeleteMapping("/all")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteAll() {
+        try {
+            log.warn("开始删除所有数据，包括向量数据库、resume_metadata 和 text_chunk 表");
+            
+            // 1. 先查询所有简历元数据，获取所有向量ID
+            List<ResumeMetadataResp> allMetadata = metadataService.getAll();
+            List<String> allVectorIds = new ArrayList<>();
+            for (ResumeMetadataResp metadata : allMetadata) {
+                if (metadata.getVectorIds() != null) {
+                    allVectorIds.addAll(metadata.getVectorIds());
+                }
+            }
+            
+            log.info("查询到 {} 条简历元数据，共 {} 个向量ID", allMetadata.size(), allVectorIds.size());
+            
+            // 2. 删除向量数据库中的所有向量
+            int vectorDeletedCount = 0;
+            if (!allVectorIds.isEmpty()) {
+                try {
+                    vectorDatabaseService.deleteAll(allVectorIds);
+                    vectorDeletedCount = allVectorIds.size();
+                } catch (Exception e) {
+                    log.error("删除向量数据库数据失败", e);
+                    // 继续执行，不中断流程
+                }
+            }
+            
+            // 3. 删除 text_chunk 表中的所有数据
+            int chunkDeletedCount = 0;
+            try {
+                chunkDeletedCount = textChunkService.deleteAll();
+            } catch (Exception e) {
+                log.error("删除 text_chunk 表数据失败", e);
+                throw e; // 如果删除失败，抛出异常
+            }
+            
+            // 4. 删除 resume_metadata 表中的所有数据
+            int metadataDeletedCount = 0;
+            try {
+                metadataDeletedCount = metadataService.deleteAll();
+            } catch (Exception e) {
+                log.error("删除 resume_metadata 表数据失败", e);
+                throw e; // 如果删除失败，抛出异常
+            }
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("vectorDeletedCount", vectorDeletedCount);
+            result.put("chunkDeletedCount", chunkDeletedCount);
+            result.put("metadataDeletedCount", metadataDeletedCount);
+            result.put("totalResumeCount", allMetadata.size());
+            
+            log.info("删除所有数据完成 - 向量: {}, Chunks: {}, 元数据: {}", 
+                vectorDeletedCount, chunkDeletedCount, metadataDeletedCount);
+            
+            return ResponseEntity.ok(ApiResponse.success(result, "所有数据删除成功"));
+            
+        } catch (Exception e) {
+            log.error("删除所有数据失败", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.fail("删除失败: " + e.getMessage()));
+        }
+    }
+    
+    /**
      * 文件验证
      */
     private void validateFile(MultipartFile file) {

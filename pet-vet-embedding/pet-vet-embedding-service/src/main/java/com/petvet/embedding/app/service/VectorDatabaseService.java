@@ -161,4 +161,48 @@ public class VectorDatabaseService {
 		ids.forEach(embeddingStore::remove);
 		log.debug("批量向量已删除，数量: {}", ids.size());
 	}
+
+	/**
+	 * 删除所有向量
+	 * 注意：此方法会删除向量数据库中集合的所有数据
+	 * 由于 EmbeddingStore 接口没有直接删除所有的方法，需要通过查询所有向量ID后批量删除
+	 * 
+	 * @param allVectorIds 所有向量ID列表（从 resume_metadata 表获取）
+	 */
+	public void deleteAll(List<String> allVectorIds) {
+		if (allVectorIds == null || allVectorIds.isEmpty()) {
+			log.info("没有向量需要删除");
+			return;
+		}
+		
+		log.info("开始删除向量数据库中所有向量，数量: {}", allVectorIds.size());
+		
+		// 批量删除，避免一次性删除太多导致超时
+		int batchSize = 1000;
+		int totalDeleted = 0;
+		int failCount = 0;
+		
+		for (int i = 0; i < allVectorIds.size(); i += batchSize) {
+			int end = Math.min(i + batchSize, allVectorIds.size());
+			List<String> batch = allVectorIds.subList(i, end);
+			
+			try {
+				batch.forEach(id -> {
+					try {
+						embeddingStore.remove(id);
+					} catch (Exception e) {
+						log.warn("删除向量失败，ID: {}", id, e);
+					}
+				});
+				totalDeleted += batch.size();
+				log.debug("批量删除向量进度: {}/{}", totalDeleted, allVectorIds.size());
+			} catch (Exception e) {
+				failCount += batch.size();
+				log.error("批量删除向量失败，批次: {}-{}", i, end, e);
+			}
+		}
+		
+		log.info("删除向量数据库所有向量完成，总数: {}, 成功: {}, 失败: {}", 
+			allVectorIds.size(), totalDeleted, failCount);
+	}
 }

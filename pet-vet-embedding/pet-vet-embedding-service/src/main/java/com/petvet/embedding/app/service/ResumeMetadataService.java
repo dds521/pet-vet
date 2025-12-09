@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 简历元数据服务
@@ -95,6 +96,27 @@ public class ResumeMetadataService {
             return false;
         }
         return metadataMapper.selectById(resumeId) != null;
+    }
+    
+    /**
+     * 查询所有简历元数据
+     * 用于获取所有向量ID以便删除向量数据库中的数据
+     */
+    public List<ResumeMetadataResp> getAll() {
+        List<ResumeMetadataEntity> entities = metadataMapper.selectList(new LambdaQueryWrapper<>());
+        return entities.stream()
+            .map(this::convertToResp)
+            .collect(Collectors.toList());
+    }
+    
+    /**
+     * 删除所有简历元数据
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public int deleteAll() {
+        int deleted = metadataMapper.delete(new LambdaQueryWrapper<>());
+        log.info("删除所有简历元数据，数量: {}", deleted);
+        return deleted;
     }
     
     /**
