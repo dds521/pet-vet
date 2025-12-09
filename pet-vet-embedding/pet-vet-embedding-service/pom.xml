@@ -125,15 +125,24 @@
 			<version>${langchain4j.beta.version}</version>
 		</dependency>
 		
-		<!-- 如果需要强制使用特定版本的 milvus-sdk-java，可以取消下面的注释 -->
-		<!-- 注意: 手动指定版本可能导致兼容性问题，建议使用 langchain4j-milvus 自带的版本 -->
-		<!-- 
+		<!-- 显式添加 gRPC 依赖，确保 milvus-sdk-java 可以正常连接 Zilliz -->
+		<!-- 注意: milvus-sdk-java:2.5.9 的 POM 中可能没有正确声明 gRPC 依赖 -->
+		<!-- 使用与 langchain4j-qdrant 相同的 gRPC 版本 (1.59.1) 以确保兼容性 -->
 		<dependency>
-			<groupId>io.milvus</groupId>
-			<artifactId>milvus-sdk-java</artifactId>
-			<version>2.5.9</version>
+			<groupId>io.grpc</groupId>
+			<artifactId>grpc-netty-shaded</artifactId>
+			<version>1.59.1</version>
 		</dependency>
-		-->
+		<dependency>
+			<groupId>io.grpc</groupId>
+			<artifactId>grpc-protobuf</artifactId>
+			<version>1.59.1</version>
+		</dependency>
+		<dependency>
+			<groupId>io.grpc</groupId>
+			<artifactId>grpc-stub</artifactId>
+			<version>1.59.1</version>
+		</dependency>
 		
 		<!-- Nacos 客户端依赖 -->
 		<dependency>

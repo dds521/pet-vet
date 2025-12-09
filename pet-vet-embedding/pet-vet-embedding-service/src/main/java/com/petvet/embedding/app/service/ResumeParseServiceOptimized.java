@@ -5,6 +5,7 @@ import com.petvet.embedding.api.dto.ResumeMetadata;
 import com.petvet.embedding.api.resp.ResumeParseResp;
 import com.petvet.embedding.app.config.ResumeChunkConfig;
 import com.petvet.embedding.app.domain.TextChunk;
+import com.petvet.embedding.app.service.TextChunkService;
 import com.petvet.embedding.app.util.PdfBox3DocumentParser;
 import com.petvet.embedding.app.util.ResumeFileNameParser;
 import dev.langchain4j.data.document.Document;
@@ -38,6 +39,7 @@ public class ResumeParseServiceOptimized {
     private final ResumeFileNameParser fileNameParser;
     private final VectorDatabaseService vectorDatabaseService;
     private final ResumeMetadataService metadataService;
+    private final TextChunkService textChunkService;
     private final ResumeChunkConfig chunkConfig;
     private final PdfBox3DocumentParser pdfDocumentParser;
     
@@ -102,11 +104,14 @@ public class ResumeParseServiceOptimized {
         
         log.info("简历解析完成，ID: {}, Chunk数量: {}, Vector数量: {}", resumeId, allChunks.size(), allVectorIds.size());
         
-        // 7. 保存简历元数据
+        // 7. 保存文本Chunks到数据库
+        textChunkService.saveBatch(allChunks);
+        
+        // 8. 保存简历元数据
         ResumeMetadata metadata = buildMetadata(resumeId, fileInfo, file, allChunks.size(), allVectorIds);
         metadataService.save(metadata);
         
-        // 8. 转换为Resp返回
+        // 9. 转换为Resp返回
         return ResumeParseResp.builder()
             .resumeId(resumeId)
             .chunkCount(allChunks.size())

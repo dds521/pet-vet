@@ -34,7 +34,7 @@ vector:
     # 1. 网络问题（防火墙/代理阻止 gRPC 连接）
     # 2. IP 未加入 Zilliz 白名单
     # 3. Token 不正确或已过期
-    type: ${VECTOR_DB_TYPE:qdrant}
+    type: ${VECTOR_DB_TYPE:zilliz}
     # 向量维度（根据使用的 embedding 模型确定）
     # - OpenAI text-embedding-3-small: 1536维
     # - Hugging Face bge-small-zh-v1.5: 384维

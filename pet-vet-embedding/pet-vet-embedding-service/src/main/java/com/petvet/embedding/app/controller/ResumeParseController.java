@@ -8,6 +8,7 @@ import com.petvet.embedding.api.resp.ResumeParseResp;
 import com.petvet.embedding.api.resp.ResumeSearchResp;
 import com.petvet.embedding.app.service.ResumeMetadataService;
 import com.petvet.embedding.app.service.ResumeParseService;
+import com.petvet.embedding.app.service.TextChunkService;
 import com.petvet.embedding.app.service.VectorDatabaseService;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +37,7 @@ public class ResumeParseController {
     private final ResumeParseService resumeParseService;
     private final ResumeMetadataService metadataService;
     private final VectorDatabaseService vectorDatabaseService;
+    private final TextChunkService textChunkService;
     
     /**
      * 上传并解析PDF简历
@@ -98,13 +101,29 @@ public class ResumeParseController {
             // 搜索相似向量
             List<EmbeddingMatch<TextSegment>> matches = vectorDatabaseService.findSimilar(queryText, maxResults, minScore);
             
+            // 提取所有chunkId
+            List<String> chunkIds = matches.stream()
+                .map(match -> match.embeddingId())
+                .collect(Collectors.toList());
+            
+            // 从数据库批量查询文本内容
+            Map<String, String> chunkTexts = textChunkService.getTextsByChunkIds(chunkIds);
+            
             // 构建返回结果
             List<ResumeSearchResp.SearchItem> results = matches.stream()
-                .map(match -> ResumeSearchResp.SearchItem.builder()
-                    .chunkId(match.embeddingId())
-                    .score(match.score())
-                    .text(match.embedded() != null ? match.embedded().text() : null)
-                    .build())
+                .map(match -> {
+                    String chunkId = match.embeddingId();
+                    // 优先从数据库获取文本，如果数据库中没有，则尝试从向量数据库结果获取
+                    String text = chunkTexts.get(chunkId);
+                    if (text == null && match.embedded() != null) {
+                        text = match.embedded().text();
+                    }
+                    return ResumeSearchResp.SearchItem.builder()
+                        .chunkId(chunkId)
+                        .score(match.score())
+                        .text(text)
+                        .build();
+                })
                 .collect(Collectors.toList());
             
             ResumeSearchResp searchResult = ResumeSearchResp.builder()
@@ -143,6 +162,9 @@ public class ResumeParseController {
                     }
                 }
             }
+            
+            // 删除文本Chunks
+            textChunkService.deleteByResumeId(resumeId);
             
             // 删除元数据
             metadataService.delete(resumeId);

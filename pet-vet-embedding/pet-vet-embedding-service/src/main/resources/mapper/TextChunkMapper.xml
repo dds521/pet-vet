@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.petvet.embedding.app.mapper.TextChunkMapper">
+    
+    <!-- 根据简历ID查询所有Chunks -->
+    <select id="selectByResumeId" resultType="com.petvet.embedding.app.domain.TextChunkEntity">
+        SELECT * FROM text_chunk
+        WHERE resume_id = #{resumeId}
+        ORDER BY sequence ASC
+    </select>
+    
+    <!-- 根据Chunk ID列表批量查询 -->
+    <select id="selectByChunkIds" resultType="com.petvet.embedding.app.domain.TextChunkEntity">
+        SELECT * FROM text_chunk
+        WHERE chunk_id IN
+        <foreach collection="chunkIds" item="chunkId" open="(" separator="," close=")">
+            #{chunkId}
+        </foreach>
+    </select>
+    
+    <!-- 根据简历ID删除所有Chunks -->
+    <delete id="deleteByResumeId">
+        DELETE FROM text_chunk
+        WHERE resume_id = #{resumeId}
+    </delete>
+    
+</mapper>

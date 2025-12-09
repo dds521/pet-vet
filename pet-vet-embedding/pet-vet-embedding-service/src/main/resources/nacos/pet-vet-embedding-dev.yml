@@ -63,5 +63,5 @@ vector:
     zilliz:
       host: https://in03-404be71e0f75d6e.serverless.aws-eu-central-1.cloud.zilliz.com
       port: 19530
-      collection-name: pet-vet-embeddings
+      collection-name: pet_vet_embeddings
 
