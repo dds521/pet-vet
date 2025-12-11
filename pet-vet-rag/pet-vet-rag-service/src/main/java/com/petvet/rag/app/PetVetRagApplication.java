@@ -1,5 +1,6 @@
 package com.petvet.rag.app;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
@@ -8,10 +9,12 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  * PetVetRAG 应用启动类
  * 用于增强型检索（RAG - Retrieval-Augmented Generation）
  * 
- * @author PetVetRAG Team
+ * @author daidasheng
+ * @date 2024-12-11
  */
 @SpringBootApplication
-@EnableFeignClients(basePackages = {"com.petvet.rag.api.feign", "com.petvet.embedding.api.feign"})
+@EnableFeignClients(basePackages = {"com.petvet.embedding.api.feign"})
+@MapperScan("com.petvet.rag.app.mapper")
 public class PetVetRagApplication {
 
 	public static void main(String[] args) {

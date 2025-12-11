@@ -2,13 +2,16 @@
 
 # ============================================
 # 将 PetVetRAG 配置文件上传到 Nacos
-# 适用于本地 Nacos（无需认证）
+# 支持本地 Nacos（无需认证）和带认证的 Nacos
 # ============================================
 
 # 配置参数
 NACOS_SERVER="${NACOS_SERVER_ADDR:-127.0.0.1:8848}"
+NACOS_USERNAME="${NACOS_USERNAME:-nacos}"
+NACOS_PASSWORD="${NACOS_PASSWORD:-nacos}"
 NAMESPACE="${NACOS_NAMESPACE:-}"
 GROUP="DEFAULT_GROUP"
+USE_AUTH="${NACOS_USE_AUTH:-false}"
 
 # 脚本目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -37,13 +40,35 @@ error() {
 # 检查 Nacos 服务是否可用
 check_nacos() {
     info "检查 Nacos 服务连接..."
-    if curl -s "http://${NACOS_SERVER}/nacos/" > /dev/null 2>&1; then
+    if curl -s "http://${NACOS_SERVER}/nacos/" > /dev/null 2>&1 || curl -s "http://${NACOS_SERVER}/nacos/v1/console/health" > /dev/null 2>&1; then
         info "✓ Nacos 服务连接成功: http://${NACOS_SERVER}"
     else
         error "✗ 无法连接到 Nacos 服务: http://${NACOS_SERVER}"
         error "   请确保 Nacos 服务正在运行"
         exit 1
     fi
+}
+
+# 获取访问令牌（如果需要认证）
+get_access_token() {
+    if [ "$USE_AUTH" != "true" ]; then
+        echo ""
+        return 0
+    fi
+    
+    local response=$(curl -s -X POST "http://${NACOS_SERVER}/nacos/v1/auth/login" \
+        -d "username=${NACOS_USERNAME}&password=${NACOS_PASSWORD}")
+    
+    local token=$(echo "$response" | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4)
+    
+    if [ -z "$token" ]; then
+        warn "获取访问令牌失败，将尝试不使用认证上传"
+        warn "响应: $response"
+        echo ""
+        return 1
+    fi
+    
+    echo "$token"
 }
 
 # 上传单个配置文件
@@ -58,23 +83,43 @@ upload_file() {
     
     info "📤 上传: ${data_id}"
     
-    # 读取文件内容
-    local content=$(cat "$file_path")
-    
-    # 构建请求参数
-    local url="http://${NACOS_SERVER}/nacos/v1/cs/configs"
-    local params="dataId=${data_id}&group=${GROUP}"
-    
-    if [ -n "$NAMESPACE" ]; then
-        params="${params}&namespaceId=${NAMESPACE}"
+    # 获取访问令牌（如果需要）
+    local token=""
+    if [ "$USE_AUTH" = "true" ]; then
+        token=$(get_access_token)
     fi
     
-    # 使用 curl 的 --data-urlencode 进行 URL 编码
-    local response=$(curl -s -X POST "$url" \
-        --data-urlencode "dataId=${data_id}" \
-        --data-urlencode "group=${GROUP}" \
-        --data-urlencode "content=${content}" \
-        ${NAMESPACE:+--data-urlencode "namespaceId=${NAMESPACE}"})
+    # 构建 curl 参数数组
+    local curl_args=(
+        -s
+        -X POST
+        "http://${NACOS_SERVER}/nacos/v1/cs/configs"
+        --data-urlencode "dataId=${data_id}"
+        --data-urlencode "group=${GROUP}"
+    )
+    
+    # 添加命名空间参数
+    if [ -n "$NAMESPACE" ]; then
+        curl_args+=(--data-urlencode "namespaceId=${NAMESPACE}")
+    fi
+    
+    # 添加访问令牌参数
+    if [ -n "$token" ]; then
+        curl_args+=(--data-urlencode "accessToken=${token}")
+    fi
+    
+    # 使用临时文件来传递内容，避免命令行长度限制和特殊字符问题
+    local temp_file=$(mktemp)
+    cat "$file_path" > "$temp_file"
+    
+    # 添加内容参数（从文件读取）
+    curl_args+=(--data-urlencode "content@${temp_file}")
+    
+    # 执行上传
+    local response=$(curl "${curl_args[@]}")
+    
+    # 清理临时文件
+    rm -f "$temp_file"
     
     if [ "$response" = "true" ]; then
         info "  ✓ 成功: ${data_id}"
@@ -95,6 +140,11 @@ main() {
     info "Nacos 服务器: ${NACOS_SERVER}"
     info "命名空间: ${NAMESPACE:-public}"
     info "分组: ${GROUP}"
+    if [ "$USE_AUTH" = "true" ]; then
+        info "认证: 启用 (用户名: ${NACOS_USERNAME})"
+    else
+        info "认证: 禁用"
+    fi
     info "配置目录: ${CONFIG_DIR}"
     echo -e "${BLUE}============================================${NC}"
     echo ""

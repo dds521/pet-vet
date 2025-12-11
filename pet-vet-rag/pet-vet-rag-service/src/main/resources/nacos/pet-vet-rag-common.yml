@@ -93,6 +93,15 @@ rag:
       请提供详细、准确的答案：
 
 # ============================================
+# MyBatis-Plus 基础配置（所有环境公共）
+# ============================================
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.petvet.rag.app.domain
+  configuration:
+    map-underscore-to-camel-case: true
+
+# ============================================
 # 向量数据库配置（复用embedding模块的配置）
 # ============================================
 # 注意：RAG模块需要访问向量数据库，可以通过Feign调用embedding服务

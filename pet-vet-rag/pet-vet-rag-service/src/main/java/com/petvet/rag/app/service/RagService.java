@@ -1,9 +1,9 @@
 package com.petvet.rag.app.service;
 
 import com.petvet.embedding.api.dto.ApiResponse;
+import com.petvet.embedding.api.feign.ResumeParseFeignClient;
 import com.petvet.embedding.api.req.ResumeSearchReq;
 import com.petvet.embedding.api.resp.ResumeSearchResp;
-import com.petvet.rag.api.feign.EmbeddingServiceFeignClient;
 import com.petvet.rag.api.req.RagQueryReq;
 import com.petvet.rag.api.resp.RagQueryResp;
 import com.petvet.rag.app.config.LangChainConfig;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RagService {
     
-    private final EmbeddingServiceFeignClient embeddingServiceFeignClient;
+    private final ResumeParseFeignClient resumeParseFeignClient;
     private final ChatModel chatModel;
     private final LangChainConfig langChainConfig;
     
@@ -87,7 +87,7 @@ public class RagService {
                 .minScore(minScore)
                 .build();
             
-            ApiResponse<ResumeSearchResp> response = embeddingServiceFeignClient.searchResume(searchReq);
+            ApiResponse<ResumeSearchResp> response = resumeParseFeignClient.searchResume(searchReq);
             
             // 注意：pet-vet-embedding-api 的 ApiResponse 使用 success 字段，而不是 code 字段
             if (response == null || response.getSuccess() == null || !response.getSuccess() || response.getData() == null) {

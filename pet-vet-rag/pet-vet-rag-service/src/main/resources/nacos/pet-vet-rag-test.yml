@@ -2,6 +2,34 @@
 # PetVetRAG 测试环境配置
 # ============================================
 
+# 数据源配置（测试环境）
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:pet_vet_rag}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&connectTimeout=3000&socketTimeout=3000
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root12345678}
+  
+  # Redis 配置（测试环境）
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DB:1}
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+      timeout: 3000ms  # Redis 连接超时 3 秒
+
+# MyBatis-Plus 配置（测试环境）
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 测试环境打印 SQL
+
 # 测试环境特定配置
 rag:
   retrieval:
@@ -10,3 +38,11 @@ rag:
   generation:
     default-enable-generation: true
     default-model-name: deepseek  # 测试环境使用 DeepSeek
+
+# 日志配置（测试环境）
+logging:
+  level:
+    root: INFO
+    com.petvet.rag.app.mapper: DEBUG
+    com.alibaba.nacos: INFO
+    com.alibaba.cloud.nacos: INFO
