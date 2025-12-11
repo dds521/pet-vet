@@ -45,9 +45,9 @@ public class RagValidationService {
      * 执行 RAG 验证
      * 
      * @param request 验证请求
-     * @return 验证响应
      * @author daidasheng
      * @date 2024-12-11
+     * @return 验证响应
      */
     public RagValidationResp validate(RagValidationReq request) {
         long startTime = System.currentTimeMillis();

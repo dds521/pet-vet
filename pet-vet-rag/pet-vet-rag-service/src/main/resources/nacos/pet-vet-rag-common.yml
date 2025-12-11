@@ -65,6 +65,14 @@ spring:
 # RAG 配置
 # ============================================
 rag:
+  # 记忆管理配置
+  memory:
+    # 对话窗口大小（保留最近N轮对话，每轮包含USER和ASSISTANT两条消息）
+    window-size: 10
+    # Redis过期时间（天）
+    ttl-days: 30
+  
+  # 检索配置
   retrieval:
     # 默认最大检索结果数
     default-max-results: 10
@@ -72,6 +80,16 @@ rag:
     default-min-score: 0.7
     # 默认上下文窗口大小（用于生成答案时包含的上下文chunk数量）
     default-context-window-size: 5
+    # 检索质量阈值（低于此值，不使用检索结果）
+    min-retrieval-score: 0.6
+    # 强制使用知识库的关键词（如果查询包含这些词，必须检索）
+    force-retrieval-keywords: "疾病,症状,诊断,治疗,疫苗,感染,炎症,手术,药物"
+    # 跳过检索的关键词（如果查询包含这些词，不检索）
+    skip-retrieval-keywords: "你好,谢谢,再见,哈哈"
+    # 默认策略（true: 默认检索，false: 默认不检索）
+    default-retrieval: true
+  
+  # 生成配置
   generation:
     # 是否默认启用生成
     default-enable-generation: true

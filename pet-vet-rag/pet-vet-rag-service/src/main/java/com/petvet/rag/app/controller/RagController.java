@@ -67,9 +67,9 @@ public class RagController {
      * 执行RAG验证，支持长期记忆和用户历史记录
      * 
      * @param request 验证请求
-     * @return 验证响应
      * @author daidasheng
      * @date 2024-12-11
+     * @return 验证响应
      */
     @PostMapping("/validate")
     public ResponseEntity<ApiResponse<RagValidationResp>> validate(@RequestBody RagValidationReq request) {
