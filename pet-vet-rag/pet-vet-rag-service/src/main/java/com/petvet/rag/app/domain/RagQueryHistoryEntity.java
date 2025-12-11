@@ -72,6 +72,21 @@ public class RagQueryHistoryEntity {
     private String userId;
     
     /**
+     * 检索到的文档（JSON格式）
+     */
+    private String retrievedDocuments;
+    
+    /**
+     * 对话上下文（历史对话摘要，JSON格式）
+     */
+    private String conversationContext;
+    
+    /**
+     * 置信度分数（0.0-1.0）
+     */
+    private Double confidence;
+    
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;
