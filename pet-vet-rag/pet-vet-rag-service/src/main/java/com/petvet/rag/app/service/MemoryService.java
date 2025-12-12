@@ -51,8 +51,7 @@ public class MemoryService {
             Object value = redisTemplate.opsForValue().get(key);
             if (value != null) {
                 ConversationMemory memory = objectMapper.convertValue(value, ConversationMemory.class);
-                log.debug("从Redis加载对话记忆，用户: {}, 会话: {}, 消息数: {}", 
-                    userId, sessionId, memory.getMessages().size());
+                log.debug("从Redis加载对话记忆，用户: {}, 会话: {}, 消息数: {}", userId, sessionId, memory.getMessages().size());
                 return memory;
             }
         } catch (Exception e) {

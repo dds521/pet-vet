@@ -33,8 +33,8 @@ public class QueryClassifier {
      * @param query 用户查询
      * @param conversationHistory 对话历史（可选）
      * @return 是否需要检索
-     * @author daidasheng
      * @date 2024-12-11
+     * @author daidasheng
      */
     public boolean needRetrieval(String query, Object conversationHistory) {
         if (query == null || query.trim().isEmpty()) {
@@ -72,8 +72,8 @@ public class QueryClassifier {
      * 
      * @param query 查询文本（已转小写）
      * @return 是否是闲聊
-     * @author daidasheng
      * @date 2024-12-11
+     * @author daidasheng
      */
     private boolean isCasualChat(String query) {
         List<String> chatKeywords = Arrays.asList(
@@ -90,8 +90,8 @@ public class QueryClassifier {
      * 
      * @param query 查询文本（已转小写）
      * @return 是否包含强制检索关键词
-     * @author daidasheng
      * @date 2024-12-11
+     * @author daidasheng
      */
     private boolean containsForceRetrievalKeywords(String query) {
         List<String> domainTerms = Arrays.asList(
@@ -108,8 +108,8 @@ public class QueryClassifier {
      * 
      * @param query 查询文本（已转小写）
      * @return 是否是通用知识查询
-     * @author daidasheng
      * @date 2024-12-11
+     * @author daidasheng
      */
     private boolean isGeneralKnowledge(String query) {
         // 简单的通用知识查询模式
