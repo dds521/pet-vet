@@ -55,16 +55,12 @@ public class RagValidationService {
         try {
             // 1. 参数处理
             String userId = request.getUserId();
-            String sessionId = StringUtils.hasText(request.getSessionId()) 
-                ? request.getSessionId() 
-                : generateSessionId();
+            String sessionId = StringUtils.hasText(request.getSessionId()) ? request.getSessionId() : generateSessionId();
             String query = request.getQuery();
             int maxResults = request.getMaxResults() != null ? request.getMaxResults() : 5;
             double minScore = request.getMinScore() != null ? request.getMinScore() : 0.7;
-            boolean enableGeneration = request.getEnableGeneration() != null 
-                ? request.getEnableGeneration() : true;
-            int contextWindowSize = request.getContextWindowSize() != null 
-                ? request.getContextWindowSize() : 5;
+            boolean enableGeneration = request.getEnableGeneration() != null ? request.getEnableGeneration() : true;
+            int contextWindowSize = request.getContextWindowSize() != null ? request.getContextWindowSize() : 5;
             
             log.info("开始RAG验证，用户: {}, 会话: {}, 查询: {}", userId, sessionId, query);
             

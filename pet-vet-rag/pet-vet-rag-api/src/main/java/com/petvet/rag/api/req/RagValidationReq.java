@@ -54,4 +54,9 @@ public class RagValidationReq {
      * 上下文窗口大小（默认5）
      */
     private Integer contextWindowSize;
+    
+    /**
+     * 模型名称（可选，用于动态选择模型，如 deepseek、openai、grok）
+     */
+    private String modelName;
 }
