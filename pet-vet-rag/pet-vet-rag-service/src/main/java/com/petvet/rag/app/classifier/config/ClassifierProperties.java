@@ -2,16 +2,16 @@ package com.petvet.rag.app.classifier.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 /**
  * 分类器配置属性
  * 绑定 rag.classifier.* 配置项
  * 
+ * 注意：不使用 @Component，通过 @EnableConfigurationProperties 在 ClassifierConfig 中启用
+ * 
  * @author daidasheng
  * @date 2024-12-15
  */
-@Component
 @ConfigurationProperties(prefix = "rag.classifier")
 @Data
 public class ClassifierProperties {
