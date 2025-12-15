@@ -47,8 +47,7 @@ public class RagService {
         // 1. 参数处理
         int maxResults = request.getMaxResults() != null ? request.getMaxResults() : 10;
         double minScore = request.getMinScore() != null ? request.getMinScore() : 0.7;
-        boolean enableGeneration = request.getEnableGeneration() != null 
-            ? request.getEnableGeneration() : true;
+        boolean enableGeneration = request.getEnableGeneration() != null ? request.getEnableGeneration() : true;
         
         // 2. 检索阶段（Retrieval）
         List<RagQueryResp.RetrievedDocument> retrievedDocuments = retrieve(request.getQuery(), maxResults, minScore);
@@ -87,6 +86,7 @@ public class RagService {
                 .minScore(minScore)
                 .build();
             
+            log.debug("调用 embedding 服务进行向量检索，请求: {}", searchReq);
             ApiResponse<ResumeSearchResp> response = resumeParseFeignClient.searchResume(searchReq);
             
             // 注意：pet-vet-embedding-api 的 ApiResponse 使用 success 字段，而不是 code 字段
@@ -115,8 +115,18 @@ public class RagService {
             log.info("检索完成，找到 {} 个相关文档", documents.size());
             return documents;
             
+        } catch (feign.FeignException.BadGateway e) {
+            log.error("向量检索失败 - 502 Bad Gateway，可能是 embedding 服务不可用或负载均衡问题。错误信息: {}", e.getMessage());
+            log.error("请检查：1) embedding 服务是否正常运行 2) 服务注册是否正常 3) 负载均衡器配置是否正确");
+            return new ArrayList<>();
+        } catch (feign.FeignException.ServiceUnavailable e) {
+            log.error("向量检索失败 - 503 Service Unavailable，embedding 服务暂时不可用。错误信息: {}", e.getMessage());
+            return new ArrayList<>();
+        } catch (feign.FeignException e) {
+            log.error("向量检索失败 - Feign 异常，状态码: {}, 错误信息: {}", e.status(), e.getMessage());
+            return new ArrayList<>();
         } catch (Exception e) {
-            log.error("向量检索失败", e);
+            log.error("向量检索失败 - 未知异常", e);
             return new ArrayList<>();
         }
     }

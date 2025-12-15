@@ -87,13 +87,11 @@ public class ResumeParseController {
      * 语义搜索简历
      */
     @PostMapping("/search")
-    public ResponseEntity<ApiResponse<ResumeSearchResp>> searchResume(
-            @RequestBody ResumeSearchReq request) {
+    public ResponseEntity<ApiResponse<ResumeSearchResp>> searchResume(@RequestBody ResumeSearchReq request) {
         
         try {
             if (request == null || request.getQuery() == null || request.getQuery().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                    .body(ApiResponse.fail("查询文本不能为空"));
+                return ResponseEntity.badRequest().body(ApiResponse.fail("查询文本不能为空"));
             }
             
             String queryText = request.getQuery();

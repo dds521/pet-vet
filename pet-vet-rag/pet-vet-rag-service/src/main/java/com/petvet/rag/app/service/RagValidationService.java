@@ -1,5 +1,6 @@
 package com.petvet.rag.app.service;
 
+import com.petvet.rag.api.req.RagQueryReq;
 import com.petvet.rag.api.req.RagValidationReq;
 import com.petvet.rag.api.resp.RagQueryResp;
 import com.petvet.rag.api.resp.RagValidationResp;
@@ -153,7 +154,7 @@ public class RagValidationService {
             
             if (needRetrieval) {
                 // 4. 向量检索
-                RagQueryResp ragResult = ragService.query(com.petvet.rag.api.req.RagQueryReq.builder()
+                RagQueryResp ragResult = ragService.query(RagQueryReq.builder()
                     .query(query)
                     .maxResults(maxResults)
                     .minScore(minScore)

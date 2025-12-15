@@ -9,11 +9,18 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
         namespace: ${NACOS_NAMESPACE:}
         group: DEFAULT_GROUP
+        # 服务注册配置
+        ip: ${NACOS_DISCOVERY_IP:}  # 如果为空，自动获取本机IP
+        # 注意：port 会自动使用 server.port 的值，无需手动配置
+        # 健康检查配置
+        heart-beat-interval: 5000  # 心跳间隔（毫秒）
+        heart-beat-timeout: 15000  # 心跳超时（毫秒）
+        ip-delete-timeout: 30000   # IP删除超时（毫秒）
       config:
-        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
         namespace: ${NACOS_NAMESPACE:}
         group: DEFAULT_GROUP
         file-extension: yml
@@ -21,6 +28,34 @@ spring:
           - data-id: pet-vet-rag-common.yml
             group: DEFAULT_GROUP
             refresh: true
+    # LoadBalancer 配置（用于 Feign 客户端服务发现）
+    loadbalancer:
+      cache:
+        enabled: true
+        ttl: 35s  # 服务实例缓存时间
+        capacity: 256  # 缓存容量
+    # OpenFeign 配置（Spring Cloud OpenFeign 2023.0.1）
+    openfeign:
+      client:
+        config:
+          # 默认配置（适用于所有 Feign 客户端）
+          default:
+            connect-timeout: 10000  # 连接超时时间（毫秒），10秒
+            read-timeout: 120000    # 读取超时时间（毫秒），120秒（向量检索可能需要较长时间）
+            logger-level: BASIC     # 日志级别：NONE, BASIC, HEADERS, FULL
+          # pet-vet-embedding 服务特定配置
+          pet-vet-embedding:
+            connect-timeout: 10000  # 连接超时时间（毫秒），10秒
+            read-timeout: 120000    # 读取超时时间（毫秒），120秒（向量检索可能需要较长时间）
+            logger-level: BASIC     # 日志级别：NONE, BASIC, HEADERS, FULL
+      # 启用请求和响应压缩
+      compression:
+        request:
+          enabled: true
+          mime-types: application/json,application/xml,text/xml
+          min-request-size: 2048
+        response:
+          enabled: true
   # AI 配置（所有环境公共）
   # 支持 OpenAI、DeepSeek 和 xAI Grok
   # 推荐使用 DeepSeek（价格更便宜，国内访问更稳定）或 Grok（性能优秀）
