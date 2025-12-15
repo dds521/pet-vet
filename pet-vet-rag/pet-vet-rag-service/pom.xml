@@ -114,6 +114,19 @@
 			<artifactId>commons-pool2</artifactId>
 		</dependency>
 		
+		<!-- QLExpress 规则引擎 -->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>QLExpress</artifactId>
+			<version>3.3.2</version>
+		</dependency>
+		
+		<!-- Caffeine 本地缓存 -->
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
+		
 		<!-- Tools -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>

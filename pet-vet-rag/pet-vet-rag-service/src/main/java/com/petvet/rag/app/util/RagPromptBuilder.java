@@ -1,5 +1,7 @@
 package com.petvet.rag.app.util;
 
+import com.petvet.rag.api.resp.RagValidationResp;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
@@ -67,51 +69,25 @@ public class RagPromptBuilder {
         }
         
         return context.stream()
-            .map((text, index) -> String.format("文档%d：\n%s", index + 1, text))
+            .map(text -> String.format("文档%d：\n%s", text))
             .collect(Collectors.joining("\n\n"));
     }
     
     /**
      * 构建带评分的上下文文本
      * 
-     * @param context 上下文列表（包含文本和评分）
+     * @param documents 文档列表
      * @return 格式化后的上下文文本
      * @author daidasheng
      * @date 2024-12-11
      */
-    public static String buildContextTextWithScore(List<ContextItem> context) {
-        if (context == null || context.isEmpty()) {
+    public static String buildContextTextWithScore(List<RagValidationResp.RetrievedDocument> documents) {
+        if (documents == null || documents.isEmpty()) {
             return "无相关上下文信息";
         }
         
-        return context.stream()
-            .map((item, index) -> String.format(
-                "文档%d（相似度: %.2f）：\n%s", 
-                index + 1, 
-                item.getScore() != null ? item.getScore() : 0.0,
-                item.getText()
-            ))
+        return documents.stream()
+            .map(document -> String.format("文档%s（相似度: %.2f）：\n%s", document.getChunkId(), document.getScore() != null ? document.getScore() : 0.0, document.getText()))
             .collect(Collectors.joining("\n\n"));
-    }
-    
-    /**
-     * 上下文项（包含文本和评分）
-     */
-    public static class ContextItem {
-        private String text;
-        private Double score;
-        
-        public ContextItem(String text, Double score) {
-            this.text = text;
-            this.score = score;
-        }
-        
-        public String getText() {
-            return text;
-        }
-        
-        public Double getScore() {
-            return score;
-        }
     }
 }

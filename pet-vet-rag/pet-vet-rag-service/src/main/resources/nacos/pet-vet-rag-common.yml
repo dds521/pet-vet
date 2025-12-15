@@ -65,6 +65,25 @@ spring:
 # RAG 配置
 # ============================================
 rag:
+  classifier:
+    # 混合方案总开关
+    hybrid:
+      enabled: false  # 设置为 true 启用混合方案
+    
+    # 缓存层配置
+    cache:
+      enabled: true
+      max-size: 1000
+      expire-minutes: 5
+    
+    # 规则层配置
+    rule:
+      enabled: true
+    
+    # 兜底策略配置
+    fallback:
+      enabled: true
+
   # 记忆管理配置
   memory:
     # 对话窗口大小（保留最近N轮对话，每轮包含USER和ASSISTANT两条消息）
