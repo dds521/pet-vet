@@ -3,6 +3,8 @@ package com.petvet.rag.app.service;
 import com.petvet.rag.api.req.RagValidationReq;
 import com.petvet.rag.api.resp.RagQueryResp;
 import com.petvet.rag.api.resp.RagValidationResp;
+import com.petvet.rag.app.classifier.config.ClassifierProperties;
+import com.petvet.rag.app.classifier.model.ClassificationResult;
 import com.petvet.rag.app.config.LangChainConfig;
 import dev.langchain4j.model.chat.ChatModel;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +33,9 @@ public class RagValidationService {
     private final RagService ragService;
     private final MemoryService memoryService;
     private final HistoryService historyService;
-    private final QueryClassifier queryClassifier;
+    private final QueryClassifier queryClassifier; // 原有分类器
+    private final HybridQueryClassifier hybridQueryClassifier; // 混合方案分类器
+    private final ClassifierProperties classifierProperties; // 分类器配置
     private final ChatModel chatModel;
     private final LangChainConfig langChainConfig;
     
@@ -68,8 +72,80 @@ public class RagValidationService {
             MemoryService.ConversationMemory memory = memoryService.loadConversation(userId, sessionId);
             log.debug("加载历史记忆，消息数: {}", memory.getMessages().size());
             
-            // 3. 判断是否需要检索知识库
-            boolean needRetrieval = queryClassifier.needRetrieval(query, memory);
+            // 3. 判断是否需要检索知识库（支持新旧方案对比验证）
+            ClassificationResult classificationResult = null;
+            boolean needRetrieval;
+            String classifierType = "original"; // 记录使用的分类器类型
+            Boolean originalResult = null; // 用于对比验证
+            
+            // 判断是否启用对比模式
+            boolean enableCompare = classifierProperties.getCompareMode() != null && classifierProperties.getCompareMode();
+            boolean useHybrid = classifierProperties.getHybrid().getEnabled() != null && classifierProperties.getHybrid().getEnabled();
+            
+            if (enableCompare && useHybrid) {
+                // 对比模式：同时运行新旧方案
+                originalResult = queryClassifier.needRetrieval(query, memory);
+                try {
+                    classificationResult = hybridQueryClassifier.classify(query, memory);
+                    if (classificationResult != null && classificationResult.getNeedRetrieval() != null) {
+                        needRetrieval = classificationResult.getNeedRetrieval();
+                        classifierType = "hybrid";
+                        
+                        // 对比结果
+                        boolean isSame = originalResult.equals(needRetrieval);
+                        log.info("【对比验证】query: {}, 原有方案: {}, 混合方案: {}, 结果一致: {}, 策略: {}, 置信度: {}, 耗时: {}ms",
+                            query, originalResult, needRetrieval, isSame,
+                            classificationResult.getStrategyName(), classificationResult.getConfidence(),
+                            classificationResult.getCostTime());
+                        
+                        if (!isSame) {
+                            log.warn("【对比验证】新旧方案结果不一致！query: {}, 原有: {}, 混合: {}, 策略: {}, 原因: {}",
+                                query, originalResult, needRetrieval, classificationResult.getStrategyName(),
+                                classificationResult.getReason());
+                        }
+                    } else {
+                        // 混合方案返回null，使用原有结果
+                        needRetrieval = originalResult;
+                        log.warn("混合方案返回null，使用原有结果, query: {}, needRetrieval: {}", query, needRetrieval);
+                    }
+                } catch (Exception e) {
+                    // 异常时使用原有结果
+                    needRetrieval = originalResult;
+                    log.error("混合方案执行失败，使用原有结果, query: {}", query, e);
+                }
+            } else if (useHybrid) {
+                // 仅使用混合方案
+                try {
+                    classificationResult = hybridQueryClassifier.classify(query, memory);
+                    if (classificationResult != null && classificationResult.getNeedRetrieval() != null) {
+                        needRetrieval = classificationResult.getNeedRetrieval();
+                        classifierType = "hybrid";
+                        log.info("使用混合方案分类, query: {}, needRetrieval: {}, strategy: {}, confidence: {}, cost: {}ms",
+                            query, needRetrieval, classificationResult.getStrategyName(),
+                            classificationResult.getConfidence(), classificationResult.getCostTime());
+                    } else {
+                        // 降级到原有实现
+                        needRetrieval = queryClassifier.needRetrieval(query, memory);
+                        log.warn("混合方案返回null，降级到原有实现, query: {}", query);
+                    }
+                } catch (Exception e) {
+                    // 异常时降级到原有实现
+                    needRetrieval = queryClassifier.needRetrieval(query, memory);
+                    log.error("混合方案执行失败，降级到原有实现, query: {}", query, e);
+                }
+            } else {
+                // 使用原有实现
+                needRetrieval = queryClassifier.needRetrieval(query, memory);
+                log.debug("使用原有分类器, query: {}, needRetrieval: {}", query, needRetrieval);
+            }
+            
+            // 记录分类结果详情用于验证
+            if (classificationResult != null) {
+                log.info("分类结果详情 - query: {}, classifier: {}, needRetrieval: {}, strategy: {}, confidence: {}, cacheHit: {}, cost: {}ms",
+                    query, classifierType, needRetrieval, classificationResult.getStrategyName(),
+                    classificationResult.getConfidence(), classificationResult.getCacheHit(),
+                    classificationResult.getCostTime());
+            }
             
             List<RagValidationResp.RetrievedDocument> retrievedDocuments = new ArrayList<>();
             String answer = null;
@@ -437,4 +513,6 @@ public class RagValidationService {
     private String generateSessionId() {
         return "session_" + UUID.randomUUID().toString().replace("-", "");
     }
+
+    
 }

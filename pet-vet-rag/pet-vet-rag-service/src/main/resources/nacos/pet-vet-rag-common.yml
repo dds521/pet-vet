@@ -70,6 +70,9 @@ rag:
     hybrid:
       enabled: false  # 设置为 true 启用混合方案
     
+    # 对比验证模式（同时运行新旧方案进行对比，用于验证）
+    compare-mode: false  # 设置为 true 启用对比验证模式（需要 hybrid.enabled=true）
+    
     # 缓存层配置
     cache:
       enabled: true

@@ -34,8 +34,7 @@ public class HybridClassificationOrchestrator {
     public void init() {
         // 策略已通过Spring自动注入到责任链中
         // 这里可以添加额外的初始化逻辑
-        log.info("混合分类编排器初始化完成，策略数量: {}", 
-            classificationChain.getStrategies().size());
+        log.info("混合分类编排器初始化完成，策略数量: {}", classificationChain.getStrategies().size());
     }
     
     /**
