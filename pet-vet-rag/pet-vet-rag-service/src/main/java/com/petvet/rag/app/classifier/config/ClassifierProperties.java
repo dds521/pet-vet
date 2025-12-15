@@ -22,6 +22,12 @@ public class ClassifierProperties {
     private Hybrid hybrid = new Hybrid();
     
     /**
+     * 对比验证模式
+     * 同时运行新旧方案进行对比，用于验证
+     */
+    private Boolean compareMode = false;
+    
+    /**
      * 缓存层配置
      */
     private Cache cache = new Cache();
