@@ -34,21 +34,6 @@ public class RuleLayerStrategy implements ClassificationStrategy {
     @Value("${rag.retrieval.skip-retrieval-keywords:你好,谢谢,再见,哈哈}")
     private String skipRetrievalKeywords;
     
-    /**
-     * 构造函数
-     * 注意：当前版本为简单实现，规则逻辑硬编码，未使用QLExpress脚本执行
-     * 后续版本可以将规则配置为QLExpress脚本，通过ExpressRunner.execute()执行
-     * 
-     * @author daidasheng
-     * @date 2024-12-15
-     */
-    public RuleLayerStrategy() {
-        // 当前版本不需要初始化ExpressRunner
-        // 后续扩展时，可以在这里初始化：
-        // ExpressRunner expressRunner = new ExpressRunner();
-        // 然后通过 expressRunner.execute(ruleScript, context, null, true, false) 执行规则脚本
-    }
-    
     @Override
     public boolean matches(String query, MemoryService.ConversationMemory memory) {
         // 规则层总是匹配

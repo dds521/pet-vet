@@ -6,7 +6,6 @@ import com.petvet.rag.app.classifier.config.ClassifierProperties;
 import com.petvet.rag.app.classifier.model.ClassificationResult;
 import com.petvet.rag.app.classifier.strategy.ClassificationStrategy;
 import com.petvet.rag.app.service.MemoryService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -120,3 +119,4 @@ public class CacheLayerStrategy implements ClassificationStrategy {
         return properties.getCache().getEnabled() != null && properties.getCache().getEnabled();
     }
 }
+

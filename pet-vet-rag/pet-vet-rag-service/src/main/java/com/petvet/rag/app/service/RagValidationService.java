@@ -200,8 +200,7 @@ public class RagValidationService {
             long queryTime = System.currentTimeMillis() - startTime;
             
             // 10. 异步保存历史记录
-            saveHistoryAsync(userId, sessionId, request, answer, retrievedDocuments, 
-                conversationHistory, queryTime, confidence);
+            saveHistoryAsync(userId, sessionId, request, answer, retrievedDocuments, conversationHistory, queryTime, confidence);
             
             // 11. 构建响应
             return RagValidationResp.builder()
