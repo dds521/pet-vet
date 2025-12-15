@@ -50,3 +50,7 @@ logging:
     com.alibaba.cloud.nacos.client.config: DEBUG
     com.alibaba.nacos.shaded.io.grpc: WARN
     dev.langchain4j: DEBUG
+    # Feign 和 LoadBalancer 详细日志（用于诊断服务发现问题）
+    feign: DEBUG
+    org.springframework.cloud.loadbalancer: DEBUG
+    org.springframework.cloud.openfeign: DEBUG

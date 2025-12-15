@@ -87,6 +87,7 @@ public class RagService {
                 .build();
             
             log.debug("调用 embedding 服务进行向量检索，请求: {}", searchReq);
+            log.debug("Feign 客户端服务名称: pet-vet-embedding, Nacos group: DEFAULT_GROUP");
             ApiResponse<ResumeSearchResp> response = resumeParseFeignClient.searchResume(searchReq);
             
             // 注意：pet-vet-embedding-api 的 ApiResponse 使用 success 字段，而不是 code 字段

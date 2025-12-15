@@ -18,7 +18,7 @@ spring:
       config:
         # Nacos 连接配置（必须保留，用于连接 Nacos）
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
-        namespace: ${NACOS_NAMESPACE:}
+        namespace: ${NACOS_NAMESPACE:public}
         group: ${NACOS_GROUP:DEFAULT_GROUP}
         refresh-enabled: true
         # Spring Boot 3.x + Spring Cloud Alibaba 2023.x: 禁用 import-check（使用 spring.config.import）
@@ -40,7 +40,8 @@ spring:
         namespace: ${NACOS_NAMESPACE:}
         group: ${NACOS_GROUP:DEFAULT_GROUP}
         # 服务注册配置
-        ip: ${NACOS_DISCOVERY_IP:}  # 如果为空，自动获取本机IP
+        # 本地开发请显式绑定可达 IP，避免注册不可达的内网地址
+        ip: ${NACOS_DISCOVERY_IP:127.0.0.1}
         # 注意：port 会自动使用 server.port 的值，无需手动配置
         # 健康检查配置
         heart-beat-interval: 5000  # 心跳间隔（毫秒）

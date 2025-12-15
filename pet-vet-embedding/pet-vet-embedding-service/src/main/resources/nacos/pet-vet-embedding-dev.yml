@@ -14,8 +14,18 @@ spring:
   cloud:
     nacos:
       discovery:
-        namespace: ${NACOS_NAMESPACE:dev}
+        # Nacos 服务发现配置（必须保留，用于连接 Nacos）
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:public}
         group: ${NACOS_GROUP:DEFAULT_GROUP}
+        # 服务注册配置
+        # 本地开发请显式绑定可达 IP，避免注册不可达的内网地址
+        ip: ${NACOS_DISCOVERY_IP:127.0.0.1}
+        # 注意：port 会自动使用 server.port 的值，无需手动配置
+        # 健康检查配置
+        heart-beat-interval: 5000  # 心跳间隔（毫秒）
+        heart-beat-timeout: 15000  # 心跳超时（毫秒）
+        ip-delete-timeout: 30000   # IP删除超时（毫秒）
   
   # 数据源配置（开发环境）
   datasource:

@@ -10,10 +10,11 @@ spring:
     nacos:
       discovery:
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
-        namespace: ${NACOS_NAMESPACE:}
+        namespace: ${NACOS_NAMESPACE:public}
         group: DEFAULT_GROUP
         # 服务注册配置
-        ip: ${NACOS_DISCOVERY_IP:}  # 如果为空，自动获取本机IP
+        # 本地开发请显式绑定可达 IP，避免注册不可达的内网地址
+        ip: ${NACOS_DISCOVERY_IP:127.0.0.1}
         # 注意：port 会自动使用 server.port 的值，无需手动配置
         # 健康检查配置
         heart-beat-interval: 5000  # 心跳间隔（毫秒）
@@ -41,13 +42,16 @@ spring:
           # 默认配置（适用于所有 Feign 客户端）
           default:
             connect-timeout: 10000  # 连接超时时间（毫秒），10秒
-            read-timeout: 120000    # 读取超时时间（毫秒），120秒（向量检索可能需要较长时间）
+            read-timeout: 300000    # 读取超时时间（毫秒），300秒（向量检索可能需要较长时间，特别是 Zilliz 连接时）
             logger-level: BASIC     # 日志级别：NONE, BASIC, HEADERS, FULL
           # pet-vet-embedding 服务特定配置
+          # 注意：服务名称必须与 Nacos 中注册的服务名称一致
+          # Nacos 中服务名称格式为 group@@serviceName，但 Feign 客户端只需使用 serviceName
+          # LoadBalancer 会根据 Nacos discovery 配置的 group 自动解析
           pet-vet-embedding:
             connect-timeout: 10000  # 连接超时时间（毫秒），10秒
-            read-timeout: 120000    # 读取超时时间（毫秒），120秒（向量检索可能需要较长时间）
-            logger-level: BASIC     # 日志级别：NONE, BASIC, HEADERS, FULL
+            read-timeout: 300000    # 读取超时时间（毫秒），300秒（向量检索可能需要较长时间，特别是 Zilliz 连接时）
+            logger-level: FULL      # 日志级别：FULL（开发环境用于诊断，生产环境建议使用 BASIC）
       # 启用请求和响应压缩
       compression:
         request:
