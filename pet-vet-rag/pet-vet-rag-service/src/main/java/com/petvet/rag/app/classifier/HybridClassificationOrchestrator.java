@@ -3,9 +3,11 @@ package com.petvet.rag.app.classifier;
 import com.petvet.rag.app.classifier.chain.ClassificationChain;
 import com.petvet.rag.app.classifier.model.ClassificationResult;
 import com.petvet.rag.app.classifier.strategy.impl.CacheLayerStrategy;
+import com.petvet.rag.app.classifier.strategy.impl.RedisCacheLayerStrategy;
 import com.petvet.rag.app.service.MemoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
@@ -13,6 +15,7 @@ import jakarta.annotation.PostConstruct;
 /**
  * 混合分类编排器
  * 协调各个策略，处理缓存更新
+ * 支持 Redis 分布式缓存和本地缓存
  * 
  * @author daidasheng
  * @date 2024-12-15
@@ -24,6 +27,9 @@ public class HybridClassificationOrchestrator {
     
     private final ClassificationChain classificationChain;
     private final CacheLayerStrategy cacheLayerStrategy;
+    
+    @Autowired(required = false)
+    private RedisCacheLayerStrategy redisCacheLayerStrategy;
     
     /**
      * 初始化策略链
@@ -57,7 +63,12 @@ public class HybridClassificationOrchestrator {
             if (result != null && !Boolean.TRUE.equals(result.getCacheHit())) {
                 // 只有高置信度的结果才缓存
                 if (result.getConfidence() != null && result.getConfidence() >= 0.8) {
-                    cacheLayerStrategy.cacheResult(query, result);
+                    // 优先使用 Redis 缓存策略，如果未启用则使用本地缓存策略
+                    if (redisCacheLayerStrategy != null && redisCacheLayerStrategy.isEnabled()) {
+                        redisCacheLayerStrategy.cacheResult(query, result);
+                    } else {
+                        cacheLayerStrategy.cacheResult(query, result);
+                    }
                 }
             }
             

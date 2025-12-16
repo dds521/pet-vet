@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetVet 服务架构设计文档</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #7f8c8d;
+            margin-top: 20px;
+        }
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border: 1px solid #e0e0e0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: "Courier New", monospace;
+        }
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 30px;
+        }
+        .summary {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PetVet 服务架构设计文档</h1>
+        
+        <h2>1. 系统架构图</h2>
+        
+        <h3>1.1 整体架构</h3>
+        <div class="mermaid">
+graph TB
+    subgraph "上游业务层"
+        A[业务应用] --> B[pet-vet-ai]
+    end
+    
+    subgraph "RAG 增强检索层"
+        B --> C[pet-vet-rag]
+        C --> D[查询分类器]
+        C --> E[记忆管理服务]
+        C --> F[历史记录服务]
+        C --> G[LLM 生成服务]
+    end
+    
+    subgraph "向量化服务层"
+        C --> H[pet-vet-embedding]
+        H --> I[Embedding 模型]
+        H --> J[向量数据库服务]
+    end
+    
+    subgraph "工具服务层"
+        C --> K[pet-vet-mcp]
+        K --> L[MCP 服务器管理]
+        K --> M[工具调用服务]
+        K --> N[资源服务]
+    end
+    
+    subgraph "外部服务"
+        I --> O[Cohere API<br/>默认模型]
+        I --> P[Hugging Face<br/>免费模型]
+        I --> Q[OpenAI API<br/>可选]
+        I --> R[Ollama<br/>本地模型]
+        
+        J --> S[Zilliz<br/>默认向量库]
+        J --> T[Qdrant<br/>可选向量库]
+        
+        G --> U[DeepSeek API<br/>默认LLM]
+        G --> V[OpenAI API<br/>可选]
+        G --> W[xAI Grok<br/>可选]
+        
+        L --> X[filesystem MCP]
+        L --> Y[trendradar MCP]
+        L --> Z[自定义 MCP]
+    end
+    
+    subgraph "数据存储"
+        E --> AA[(Redis<br/>对话记忆)]
+        F --> BB[(MySQL<br/>历史记录)]
+        J --> CC[(向量数据)]
+    end
+    
+    style C fill:#e1f5ff
+    style H fill:#fff4e1
+    style K fill:#e8f5e9
+    style I fill:#f3e5f5
+    style J fill:#f3e5f5
+    style G fill:#fff9c4
+        </div>
+
+        <h3>1.2 服务详细架构</h3>
+        
+        <h4>1.2.1 pet-vet-embedding 服务架构</h4>
+        <div class="mermaid">
+graph LR
+    subgraph "pet-vet-embedding 服务"
+        A[REST API<br/>Controller] --> B[EmbeddingService<br/>向量化服务]
+        A --> C[VectorDatabaseService<br/>向量数据库服务]
+        
+        B --> D[EmbeddingModel<br/>向量模型]
+        C --> D
+        C --> E[EmbeddingStore<br/>向量存储接口]
+        
+        D --> F{模型类型选择}
+        F -->|默认| G[Cohere<br/>embed-english-v3.0<br/>1024维]
+        F --> H[Hugging Face<br/>bge-small-zh-v1.5<br/>384维]
+        F --> I[OpenAI<br/>text-embedding-3-small<br/>1536维]
+        F --> J[Ollama<br/>nomic-embed-text<br/>768维]
+        
+        E --> K{向量数据库选择}
+        K -->|默认| L[Zilliz<br/>Serverless]
+        K --> M[Qdrant<br/>Cloud]
+    end
+    
+    style B fill:#e1f5ff
+    style C fill:#e1f5ff
+    style D fill:#fff4e1
+    style E fill:#fff4e1
+        </div>
+        
+        <p><strong>关键组件说明：</strong></p>
+        <ul>
+            <li><strong>EmbeddingService</strong>: 负责文本向量化，支持单文本和批量向量化</li>
+            <li><strong>VectorDatabaseService</strong>: 负责向量存储和检索，提供相似度搜索功能</li>
+            <li><strong>EmbeddingModel</strong>: 向量模型抽象，支持多种模型提供商</li>
+            <li><strong>EmbeddingStore</strong>: 向量存储抽象，支持多种向量数据库</li>
+        </ul>
+        
+        <p><strong>支持的向量模型：</strong></p>
+        <ul>
+            <li><strong>Cohere</strong> (默认): <code>embed-english-v3.0</code> (1024维) - 有免费额度，性能好</li>
+            <li><strong>Hugging Face</strong>: <code>BAAI/bge-small-zh-v1.5</code> (384维) - 完全免费，推荐中文场景</li>
+            <li><strong>OpenAI</strong>: <code>text-embedding-3-small</code> (1536维) - 需要 API Key，性能优秀</li>
+            <li><strong>Ollama</strong>: <code>nomic-embed-text</code> (768维) - 完全免费，本地运行</li>
+        </ul>
+        
+        <p><strong>支持的向量数据库：</strong></p>
+        <ul>
+            <li><strong>Zilliz</strong> (默认): Serverless 云服务，支持 TLS 连接</li>
+            <li><strong>Qdrant</strong>: Cloud 云服务，可作为备选方案</li>
+        </ul>
+
+        <h4>1.2.2 pet-vet-rag 服务架构</h4>
+        <div class="mermaid">
+graph TB
+    subgraph "pet-vet-rag 服务"
+        A[REST API<br/>Controller] --> B[RagValidationService<br/>核心业务服务]
+        A --> C[RagService<br/>基础RAG服务]
+        
+        B --> C
+        B --> D[QueryClassifier<br/>查询分类器]
+        B --> E[MemoryService<br/>记忆管理]
+        B --> F[HistoryService<br/>历史记录]
+        B --> G[LangChainConfig<br/>LLM配置]
+        
+        C --> H[ResumeParseFeignClient<br/>调用embedding服务]
+        
+        D --> I[HybridQueryClassifier<br/>混合分类器]
+        D --> J[规则分类器]
+        D --> K[缓存层]
+        
+        E --> L[(Redis<br/>对话记忆)]
+        F --> M[(MySQL<br/>历史记录)]
+        
+        G --> N{ChatModel选择}
+        N -->|默认| O[DeepSeek API]
+        N --> P[OpenAI API]
+        N --> Q[xAI Grok]
+    end
+    
+    style B fill:#e1f5ff
+    style C fill:#e1f5ff
+    style D fill:#fff4e1
+    style E fill:#fff4e1
+    style F fill:#fff4e1
+        </div>
+        
+        <p><strong>关键组件说明：</strong></p>
+        <ul>
+            <li><strong>RagValidationService</strong>: 核心业务服务，整合检索、生成、记忆管理等功能</li>
+            <li><strong>RagService</strong>: 基础 RAG 服务，提供检索和生成能力</li>
+            <li><strong>QueryClassifier</strong>: 查询分类器，判断是否需要检索知识库</li>
+            <li><strong>MemoryService</strong>: 对话记忆管理，维护用户会话上下文</li>
+            <li><strong>HistoryService</strong>: 历史记录管理，持久化查询历史</li>
+            <li><strong>LangChainConfig</strong>: LLM 配置管理，支持多种大模型</li>
+        </ul>
+        
+        <p><strong>支持的 LLM 模型：</strong></p>
+        <ul>
+            <li><strong>DeepSeek</strong> (默认): <code>deepseek-chat</code> - 价格便宜，国内访问稳定</li>
+            <li><strong>OpenAI</strong>: <code>gpt-4o</code> - 性能优秀，需要 API Key</li>
+            <li><strong>xAI Grok</strong>: <code>grok-4-latest</code> - 性能优秀，使用 OpenAI 兼容 API</li>
+        </ul>
+
+        <h4>1.2.3 pet-vet-mcp 服务架构</h4>
+        <div class="mermaid">
+graph TB
+    subgraph "pet-vet-mcp 服务"
+        A[REST API<br/>Controller] --> B[McpServerManagerService<br/>服务器管理]
+        A --> C[McpToolService<br/>工具调用服务]
+        A --> D[McpResourceService<br/>资源服务]
+        
+        B --> E[McpClientManager<br/>客户端管理]
+        C --> E
+        D --> E
+        
+        E --> F[MCP 服务器列表]
+        
+        F --> G[filesystem MCP<br/>文件系统工具]
+        F --> H[trendradar MCP<br/>趋势分析工具]
+        F --> I[自定义 MCP<br/>业务工具]
+        
+        E --> J[McpSyncClient<br/>同步客户端]
+    end
+    
+    style B fill:#e8f5e9
+    style C fill:#e8f5e9
+    style D fill:#e8f5e9
+    style E fill:#fff4e1
+        </div>
+        
+        <p><strong>关键组件说明：</strong></p>
+        <ul>
+            <li><strong>McpServerManagerService</strong>: MCP 服务器注册和管理</li>
+            <li><strong>McpToolService</strong>: MCP 工具调用服务，支持调用各种 MCP 工具</li>
+            <li><strong>McpResourceService</strong>: MCP 资源服务，支持获取 MCP 资源</li>
+            <li><strong>McpClientManager</strong>: MCP 客户端管理，维护与 MCP 服务器的连接</li>
+        </ul>
+        
+        <p><strong>已配置的 MCP 服务器：</strong></p>
+        <ul>
+            <li><strong>filesystem</strong>: 文件系统操作工具（开源）</li>
+            <li><strong>trendradar</strong>: 趋势分析工具（开源）</li>
+            <li><strong>自定义 MCP</strong>: 可扩展的业务工具</li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <h2>2. 数据交互流程图</h2>
+        
+        <h3>2.1 RAG 查询完整流程</h3>
+        <div class="mermaid">
+sequenceDiagram
+    participant Client as 客户端/业务应用
+    participant RAG as pet-vet-rag
+    participant Classifier as 查询分类器
+    participant Memory as 记忆管理
+    participant Embedding as pet-vet-embedding
+    participant VectorDB as 向量数据库
+    participant LLM as 大语言模型
+    participant History as 历史记录
+    participant Redis as Redis
+    participant MySQL as MySQL
+    
+    Client->>RAG: 1. 发送查询请求
+    RAG->>Memory: 2. 加载对话记忆
+    Memory->>Redis: 查询历史对话
+    Redis-->>Memory: 返回对话历史
+    Memory-->>RAG: 返回记忆对象
+    
+    RAG->>Classifier: 3. 判断是否需要检索
+    Classifier->>Classifier: 规则匹配/混合分类
+    Classifier-->>RAG: 返回分类结果
+    
+    alt 需要检索知识库
+        RAG->>Embedding: 4. 调用向量检索接口
+        Embedding->>Embedding: 5. 将查询文本向量化
+        Embedding->>VectorDB: 6. 向量相似度搜索
+        VectorDB-->>Embedding: 返回相似文档
+        Embedding-->>RAG: 返回检索结果
+        
+        RAG->>RAG: 7. 检查检索质量
+        alt 检索质量满足要求
+            RAG->>LLM: 8. RAG模式生成答案<br/>(知识库+历史对话)
+            LLM-->>RAG: 返回生成的答案
+        else 检索质量不满足
+            RAG->>LLM: 8. 纯LLM模式生成答案<br/>(仅历史对话)
+            LLM-->>RAG: 返回生成的答案
+        end
+    else 不需要检索
+        RAG->>LLM: 8. 纯LLM模式生成答案<br/>(仅历史对话)
+        LLM-->>RAG: 返回生成的答案
+    end
+    
+    RAG->>Memory: 9. 更新对话记忆
+    Memory->>Redis: 保存新对话
+    RAG->>History: 10. 异步保存历史记录
+    History->>MySQL: 持久化历史数据
+    
+    RAG-->>Client: 11. 返回完整响应<br/>(答案+检索结果+历史)
+        </div>
+
+        <h3>2.2 向量化存储流程</h3>
+        <div class="mermaid">
+sequenceDiagram
+    participant Client as 客户端/业务应用
+    participant Embedding as pet-vet-embedding
+    participant EmbeddingModel as 向量模型
+    participant VectorDB as 向量数据库
+    
+    Client->>Embedding: 1. 发送文本向量化请求
+    Embedding->>EmbeddingModel: 2. 调用向量模型
+    EmbeddingModel->>EmbeddingModel: 3. 文本向量化处理
+    alt 使用 Cohere
+        EmbeddingModel->>Cohere: API调用
+        Cohere-->>EmbeddingModel: 返回向量(1024维)
+    else 使用 Hugging Face
+        EmbeddingModel->>HuggingFace: 本地模型推理
+        HuggingFace-->>EmbeddingModel: 返回向量(384维)
+    else 使用 OpenAI
+        EmbeddingModel->>OpenAI: API调用
+        OpenAI-->>EmbeddingModel: 返回向量(1536维)
+    else 使用 Ollama
+        EmbeddingModel->>Ollama: 本地API调用
+        Ollama-->>EmbeddingModel: 返回向量(768维)
+    end
+    EmbeddingModel-->>Embedding: 返回向量结果
+    
+    Embedding->>VectorDB: 4. 存储向量
+    alt 使用 Zilliz
+        Embedding->>Zilliz: gRPC连接
+        Zilliz-->>Embedding: 存储成功
+    else 使用 Qdrant
+        Embedding->>Qdrant: HTTP/gRPC连接
+        Qdrant-->>Embedding: 存储成功
+    end
+    VectorDB-->>Embedding: 返回存储ID
+    Embedding-->>Client: 5. 返回向量化结果
+        </div>
+
+        <h3>2.3 向量检索流程</h3>
+        <div class="mermaid">
+sequenceDiagram
+    participant RAG as pet-vet-rag
+    participant Embedding as pet-vet-embedding
+    participant EmbeddingModel as 向量模型
+    participant VectorDB as 向量数据库
+    
+    RAG->>Embedding: 1. 发送检索请求<br/>(查询文本+参数)
+    Embedding->>EmbeddingModel: 2. 将查询文本向量化
+    EmbeddingModel->>EmbeddingModel: 向量化处理
+    EmbeddingModel-->>Embedding: 返回查询向量
+    
+    Embedding->>VectorDB: 3. 向量相似度搜索
+    alt 使用 Zilliz
+        Embedding->>Zilliz: gRPC相似度搜索<br/>(maxResults, minScore)
+        Zilliz->>Zilliz: 计算余弦相似度
+        Zilliz-->>Embedding: 返回Top-K结果<br/>(ID+文本+相似度分数)
+    else 使用 Qdrant
+        Embedding->>Qdrant: HTTP/gRPC相似度搜索
+        Qdrant->>Qdrant: 计算相似度
+        Qdrant-->>Embedding: 返回Top-K结果
+    end
+    VectorDB-->>Embedding: 返回检索结果列表
+    
+    Embedding->>Embedding: 4. 格式化结果
+    Embedding-->>RAG: 5. 返回检索文档列表<br/>(chunkId+text+score)
+        </div>
+
+        <h3>2.4 MCP 工具调用流程</h3>
+        <div class="mermaid">
+sequenceDiagram
+    participant RAG as pet-vet-rag
+    participant MCP as pet-vet-mcp
+    participant Manager as 服务器管理
+    participant Client as MCP客户端
+    participant MCPServer as MCP服务器
+    
+    RAG->>MCP: 1. 调用MCP工具请求<br/>(serverName+toolName+args)
+    MCP->>Manager: 2. 获取服务器信息
+    Manager-->>MCP: 返回服务器配置
+    
+    MCP->>Client: 3. 获取或创建客户端
+    Client->>Client: 检查连接状态
+    alt 客户端未初始化
+        Client->>MCPServer: 建立连接
+        MCPServer-->>Client: 连接成功
+    end
+    
+    MCP->>Client: 4. 构建工具调用请求
+    Client->>MCPServer: 5. 发送工具调用<br/>(CallToolRequest)
+    MCPServer->>MCPServer: 6. 执行工具逻辑
+    MCPServer-->>Client: 返回执行结果<br/>(CallToolResult)
+    Client-->>MCP: 返回结果
+    
+    MCP->>MCP: 7. 格式化响应
+    MCP-->>RAG: 8. 返回工具执行结果
+        </div>
+
+        <h3>2.5 查询分类决策流程</h3>
+        <div class="mermaid">
+flowchart TD
+    A[接收查询请求] --> B[加载对话记忆]
+    B --> C{是否启用混合分类器?}
+    
+    C -->|是| D[执行混合分类]
+    C -->|否| E[执行原有分类器]
+    
+    D --> F{对比模式?}
+    F -->|是| G[同时运行新旧方案]
+    F -->|否| H[仅运行混合方案]
+    
+    G --> I[对比结果]
+    H --> J[获取分类结果]
+    E --> J
+    
+    J --> K{需要检索?}
+    I --> K
+    
+    K -->|是| L[执行向量检索]
+    K -->|否| M[跳过检索]
+    
+    L --> N{检索质量满足?}
+    N -->|是| O[RAG模式生成<br/>知识库+历史]
+    N -->|否| P[纯LLM模式生成<br/>仅历史]
+    
+    M --> P
+    
+    O --> Q[更新记忆]
+    P --> Q
+    Q --> R[保存历史记录]
+    R --> S[返回响应]
+    
+    style D fill:#e1f5ff
+    style E fill:#fff4e1
+    style L fill:#e8f5e9
+    style O fill:#fff9c4
+    style P fill:#fff9c4
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>3. 技术栈说明</h2>
+        
+        <h3>3.1 pet-vet-embedding 服务</h3>
+        <table>
+            <tr>
+                <th>组件</th>
+                <th>技术选型</th>
+                <th>说明</th>
+            </tr>
+            <tr>
+                <td>向量模型</td>
+                <td>Cohere (默认)</td>
+                <td>embed-english-v3.0, 1024维</td>
+            </tr>
+            <tr>
+                <td>向量模型</td>
+                <td>Hugging Face</td>
+                <td>BAAI/bge-small-zh-v1.5, 384维</td>
+            </tr>
+            <tr>
+                <td>向量模型</td>
+                <td>OpenAI</td>
+                <td>text-embedding-3-small, 1536维</td>
+            </tr>
+            <tr>
+                <td>向量模型</td>
+                <td>Ollama</td>
+                <td>nomic-embed-text, 768维</td>
+            </tr>
+            <tr>
+                <td>向量数据库</td>
+                <td>Zilliz (默认)</td>
+                <td>Serverless 云服务</td>
+            </tr>
+            <tr>
+                <td>向量数据库</td>
+                <td>Qdrant</td>
+                <td>Cloud 云服务</td>
+            </tr>
+            <tr>
+                <td>框架</td>
+                <td>Spring Boot</td>
+                <td>Java 微服务框架</td>
+            </tr>
+            <tr>
+                <td>向量化库</td>
+                <td>LangChain4j</td>
+                <td>Java 向量化库</td>
+            </tr>
+        </table>
+
+        <h3>3.2 pet-vet-rag 服务</h3>
+        <table>
+            <tr>
+                <th>组件</th>
+                <th>技术选型</th>
+                <th>说明</th>
+            </tr>
+            <tr>
+                <td>LLM 模型</td>
+                <td>DeepSeek (默认)</td>
+                <td>deepseek-chat, 价格便宜</td>
+            </tr>
+            <tr>
+                <td>LLM 模型</td>
+                <td>OpenAI</td>
+                <td>gpt-4o, 性能优秀</td>
+            </tr>
+            <tr>
+                <td>LLM 模型</td>
+                <td>xAI Grok</td>
+                <td>grok-4-latest, 性能优秀</td>
+            </tr>
+            <tr>
+                <td>服务调用</td>
+                <td>Feign</td>
+                <td>调用 embedding 服务</td>
+            </tr>
+            <tr>
+                <td>记忆存储</td>
+                <td>Redis</td>
+                <td>对话记忆缓存</td>
+            </tr>
+            <tr>
+                <td>历史存储</td>
+                <td>MySQL</td>
+                <td>历史记录持久化</td>
+            </tr>
+            <tr>
+                <td>框架</td>
+                <td>Spring Boot</td>
+                <td>Java 微服务框架</td>
+            </tr>
+            <tr>
+                <td>LLM 库</td>
+                <td>LangChain4j</td>
+                <td>Java LLM 集成库</td>
+            </tr>
+        </table>
+
+        <h3>3.3 pet-vet-mcp 服务</h3>
+        <table>
+            <tr>
+                <th>组件</th>
+                <th>技术选型</th>
+                <th>说明</th>
+            </tr>
+            <tr>
+                <td>MCP 协议</td>
+                <td>Model Context Protocol</td>
+                <td>标准 MCP 协议</td>
+            </tr>
+            <tr>
+                <td>MCP 客户端</td>
+                <td>MCP Java SDK</td>
+                <td>官方 Java SDK</td>
+            </tr>
+            <tr>
+                <td>框架</td>
+                <td>Spring Boot</td>
+                <td>Java 微服务框架</td>
+            </tr>
+            <tr>
+                <td>工具管理</td>
+                <td>动态注册</td>
+                <td>支持动态注册 MCP 服务器</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="container">
+        <h2>4. 数据流转说明</h2>
+        
+        <h3>4.1 向量化数据流转</h3>
+        <ol>
+            <li><strong>文本输入</strong> → EmbeddingService</li>
+            <li><strong>向量化</strong> → EmbeddingModel (Cohere/Hugging Face/OpenAI/Ollama)</li>
+            <li><strong>向量存储</strong> → EmbeddingStore (Zilliz/Qdrant)</li>
+            <li><strong>向量检索</strong> → 相似度搜索 → 返回 Top-K 结果</li>
+        </ol>
+
+        <h3>4.2 RAG 数据流转</h3>
+        <ol>
+            <li><strong>用户查询</strong> → RagValidationService</li>
+            <li><strong>记忆加载</strong> → MemoryService → Redis</li>
+            <li><strong>查询分类</strong> → QueryClassifier → 判断是否需要检索</li>
+            <li><strong>向量检索</strong> → RagService → EmbeddingService → VectorDB</li>
+            <li><strong>答案生成</strong> → LLM (DeepSeek/OpenAI/Grok)</li>
+            <li><strong>记忆更新</strong> → MemoryService → Redis</li>
+            <li><strong>历史保存</strong> → HistoryService → MySQL</li>
+        </ol>
+
+        <h3>4.3 MCP 工具数据流转</h3>
+        <ol>
+            <li><strong>工具调用请求</strong> → McpToolService</li>
+            <li><strong>服务器管理</strong> → McpServerManagerService</li>
+            <li><strong>客户端连接</strong> → McpClientManager → MCP Server</li>
+            <li><strong>工具执行</strong> → MCP Server → 返回结果</li>
+            <li><strong>结果返回</strong> → 格式化响应 → 返回给调用方</li>
+        </ol>
+    </div>
+
+    <div class="container">
+        <h2>5. 服务交互接口</h2>
+        
+        <h3>5.1 pet-vet-embedding 服务接口</h3>
+        <ul>
+            <li><strong>POST /api/embedding/embed</strong>: 文本向量化</li>
+            <li><strong>POST /api/embedding/search</strong>: 向量相似度搜索</li>
+            <li><strong>POST /api/resume/parse</strong>: 简历解析和向量化</li>
+            <li><strong>POST /api/resume/search</strong>: 简历向量检索</li>
+        </ul>
+
+        <h3>5.2 pet-vet-rag 服务接口</h3>
+        <ul>
+            <li><strong>POST /api/rag/query</strong>: 基础 RAG 查询</li>
+            <li><strong>POST /api/rag/validate</strong>: RAG 验证查询（包含记忆管理）</li>
+            <li><strong>GET /api/rag/health</strong>: 健康检查</li>
+        </ul>
+
+        <h3>5.3 pet-vet-mcp 服务接口</h3>
+        <ul>
+            <li><strong>POST /api/mcp/servers/register</strong>: 注册 MCP 服务器</li>
+            <li><strong>GET /api/mcp/servers</strong>: 获取所有服务器</li>
+            <li><strong>POST /api/mcp/tools/call</strong>: 调用 MCP 工具</li>
+            <li><strong>GET /api/mcp/servers/{serverName}/tools</strong>: 列出服务器工具</li>
+            <li><strong>POST /api/mcp/resources/get</strong>: 获取资源</li>
+            <li><strong>GET /api/mcp/servers/{serverName}/resources</strong>: 列出服务器资源</li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <h2>6. 配置说明</h2>
+        
+        <h3>6.1 向量模型配置</h3>
+        <p>通过环境变量 <code>EMBEDDING_MODEL_TYPE</code> 选择模型类型：</p>
+        <ul>
+            <li><code>cohere</code> (默认)</li>
+            <li><code>hugging-face</code></li>
+            <li><code>openai</code></li>
+            <li><code>ollama</code></li>
+        </ul>
+
+        <h3>6.2 向量数据库配置</h3>
+        <p>通过环境变量 <code>VECTOR_DB_TYPE</code> 选择数据库类型：</p>
+        <ul>
+            <li><code>zilliz</code> (默认)</li>
+            <li><code>qdrant</code></li>
+        </ul>
+
+        <h3>6.3 LLM 模型配置</h3>
+        <p>通过环境变量 <code>AI_PROVIDER_TYPE</code> 选择 LLM 提供商：</p>
+        <ul>
+            <li><code>deepseek</code> (默认)</li>
+            <li><code>openai</code></li>
+            <li><code>grok</code></li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <div class="summary">
+            <h2>7. 总结</h2>
+            <p>本架构设计采用分层架构，实现了：</p>
+            <ol>
+                <li><strong>基础服务层 (pet-vet-embedding)</strong>: 提供向量化和向量存储能力，支持多种模型和数据库</li>
+                <li><strong>增强服务层 (pet-vet-rag)</strong>: 提供 RAG 增强检索，整合知识库和 LLM</li>
+                <li><strong>工具服务层 (pet-vet-mcp)</strong>: 提供 MCP 工具调用能力，支持扩展</li>
+            </ol>
+            <p>三层服务相互配合，为上层业务提供完整的 AI 能力支持。</p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+    </script>
+</body>
+</html>

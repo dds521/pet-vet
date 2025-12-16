@@ -72,6 +72,21 @@ public class ClassifierProperties {
          * 缓存过期时间（分钟）
          */
         private Integer expireMinutes = 5;
+        
+        /**
+         * 是否启用 Redis 分布式缓存
+         */
+        private Boolean redisEnabled = false;
+        
+        /**
+         * Redis 缓存 Key 前缀
+         */
+        private String redisKeyPrefix = "rag:classifier:cache:";
+        
+        /**
+         * Redis 缓存过期时间（分钟），如果为 null 则使用 expireMinutes
+         */
+        private Integer redisExpireMinutes;
     }
     
     /**

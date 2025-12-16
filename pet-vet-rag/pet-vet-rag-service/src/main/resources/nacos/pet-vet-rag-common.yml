@@ -117,6 +117,10 @@ rag:
       enabled: true
       max-size: 1000
       expire-minutes: 5
+      # Redis 分布式缓存配置
+      redis-enabled: false  # 设置为 true 启用 Redis 分布式缓存
+      redis-key-prefix: "rag:classifier:cache:"  # Redis Key 前缀
+      redis-expire-minutes: 5  # Redis 缓存过期时间（分钟），如果为 null 则使用 expire-minutes
     
     # 规则层配置
     rule:
