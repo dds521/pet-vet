@@ -98,11 +98,9 @@ public class RuleLayerStrategy implements ClassificationStrategy {
     /**
      * 执行闲聊规则
      */
-    private boolean executeCasualChatRule(String query, IExpressContext<String, Object> context, 
-                                         ClassificationResult result) throws Exception {
+    private boolean executeCasualChatRule(String query, IExpressContext<String, Object> context, ClassificationResult result) throws Exception {
         List<String> chatKeywords = Arrays.asList(
-            skipRetrievalKeywords != null ? skipRetrievalKeywords.split(",") : 
-            new String[]{"你好", "谢谢", "再见", "哈哈"}
+            skipRetrievalKeywords != null ? skipRetrievalKeywords.split(",") : new String[]{"你好", "谢谢", "再见", "哈哈"}
         );
         
         String lowerQuery = query.toLowerCase();
