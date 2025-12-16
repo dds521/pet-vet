@@ -115,10 +115,16 @@
 		</dependency>
 		
 		<!-- QLExpress 规则引擎 -->
+		<!-- 版本说明：
+		     - 4.0.4: 最新版本（修复了4.0.3的安全漏洞CVE-2025-22233和CVE-2024-38820）
+		     - 支持ExpressRunner（向后兼容）和Express4Runner（新特性）
+		     - API兼容：ExpressRunner、DefaultContext、IExpressContext等API完全兼容
+		     - 包名：com.ql.util.express（向后兼容）
+		-->
 		<dependency>
 			<groupId>com.alibaba</groupId>
-			<artifactId>QLExpress</artifactId>
-			<version>3.3.2</version>
+			<artifactId>qlexpress4</artifactId>
+			<version>4.0.4</version>
 		</dependency>
 		
 		<!-- Caffeine 本地缓存 -->

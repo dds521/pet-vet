@@ -1,6 +1,5 @@
 package com.petvet.rag.app.classifier.strategy.impl;
 
-import com.ql.util.express.IExpressContext;
 import com.petvet.rag.app.classifier.config.ClassifierProperties;
 import com.petvet.rag.app.classifier.engine.RuleEngine;
 import com.petvet.rag.app.classifier.engine.RuleLoader;
@@ -13,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 规则层策略
@@ -47,8 +47,8 @@ public class RuleLayerStrategy implements ClassificationStrategy {
         long startTime = System.currentTimeMillis();
         
         try {
-            // 构建执行上下文
-            IExpressContext<String, Object> context = ruleEngine.createContext();
+            // 构建执行上下文（QLExpress 4.0.4使用Map作为上下文）
+            Map<String, Object> context = ruleEngine.createContext();
             context.put("query", query);
             context.put("lowerQuery", query.toLowerCase());
             context.put("memory", memory);
