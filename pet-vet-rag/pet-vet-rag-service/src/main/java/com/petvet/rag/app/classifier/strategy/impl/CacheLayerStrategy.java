@@ -74,9 +74,7 @@ public class CacheLayerStrategy implements ClassificationStrategy {
      * @param result 分类结果
      */
     public void cacheResult(String query, ClassificationResult result) {
-        if (properties.getCache().getEnabled() != null 
-            && properties.getCache().getEnabled() 
-            && result != null) {
+        if (properties.getCache().getEnabled() != null && properties.getCache().getEnabled() && result != null) {
             String cacheKey = buildCacheKey(query);
             cache.put(cacheKey, result);
             log.debug("缓存分类结果, key: {}, result: {}", cacheKey, result);
