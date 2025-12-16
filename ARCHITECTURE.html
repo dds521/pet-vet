@@ -89,11 +89,20 @@
         <div class="mermaid">
 graph TB
     subgraph "上游业务层"
-        A[业务应用] --> B[pet-vet-ai]
+        A1[PC端] --> B[pet-vet-ai]
+        A2[小程序] --> B
+    end
+    
+    subgraph "业务服务层"
+        B --> B1[用户认证服务]
+        B --> B2[地址匹配服务]
+        B --> B3[宠物信息管理]
+        B --> B4[订单管理]
+        B --> B5[RAG查询服务]
     end
     
     subgraph "RAG 增强检索层"
-        B --> C[pet-vet-rag]
+        B5 --> C[pet-vet-rag]
         C --> D[查询分类器]
         C --> E[记忆管理服务]
         C --> F[历史记录服务]
@@ -137,6 +146,7 @@ graph TB
         J --> CC[(向量数据)]
     end
     
+    style B fill:#e3f2fd
     style C fill:#e1f5ff
     style H fill:#fff4e1
     style K fill:#e8f5e9
@@ -298,7 +308,9 @@ graph TB
         <h3>2.1 RAG 查询完整流程</h3>
         <div class="mermaid">
 sequenceDiagram
-    participant Client as 客户端/业务应用
+    participant PC as PC端
+    participant MiniApp as 小程序
+    participant AI as pet-vet-ai
     participant RAG as pet-vet-rag
     participant Classifier as 查询分类器
     participant Memory as 记忆管理
@@ -309,42 +321,46 @@ sequenceDiagram
     participant Redis as Redis
     participant MySQL as MySQL
     
-    Client->>RAG: 1. 发送查询请求
-    RAG->>Memory: 2. 加载对话记忆
+    PC->>AI: 1. 发送查询请求
+    MiniApp->>AI: 1. 发送查询请求
+    AI->>RAG: 2. 调用RAG查询服务
+    RAG->>Memory: 3. 加载对话记忆
     Memory->>Redis: 查询历史对话
     Redis-->>Memory: 返回对话历史
     Memory-->>RAG: 返回记忆对象
     
-    RAG->>Classifier: 3. 判断是否需要检索
+    RAG->>Classifier: 4. 判断是否需要检索
     Classifier->>Classifier: 规则匹配/混合分类
     Classifier-->>RAG: 返回分类结果
     
     alt 需要检索知识库
-        RAG->>Embedding: 4. 调用向量检索接口
-        Embedding->>Embedding: 5. 将查询文本向量化
-        Embedding->>VectorDB: 6. 向量相似度搜索
+        RAG->>Embedding: 5. 调用向量检索接口
+        Embedding->>Embedding: 6. 将查询文本向量化
+        Embedding->>VectorDB: 7. 向量相似度搜索
         VectorDB-->>Embedding: 返回相似文档
         Embedding-->>RAG: 返回检索结果
         
-        RAG->>RAG: 7. 检查检索质量
+        RAG->>RAG: 8. 检查检索质量
         alt 检索质量满足要求
-            RAG->>LLM: 8. RAG模式生成答案<br/>(知识库+历史对话)
+            RAG->>LLM: 9. RAG模式生成答案<br/>(知识库+历史对话)
             LLM-->>RAG: 返回生成的答案
         else 检索质量不满足
-            RAG->>LLM: 8. 纯LLM模式生成答案<br/>(仅历史对话)
+            RAG->>LLM: 9. 纯LLM模式生成答案<br/>(仅历史对话)
             LLM-->>RAG: 返回生成的答案
         end
     else 不需要检索
-        RAG->>LLM: 8. 纯LLM模式生成答案<br/>(仅历史对话)
+        RAG->>LLM: 9. 纯LLM模式生成答案<br/>(仅历史对话)
         LLM-->>RAG: 返回生成的答案
     end
     
-    RAG->>Memory: 9. 更新对话记忆
+    RAG->>Memory: 10. 更新对话记忆
     Memory->>Redis: 保存新对话
-    RAG->>History: 10. 异步保存历史记录
+    RAG->>History: 11. 异步保存历史记录
     History->>MySQL: 持久化历史数据
     
-    RAG-->>Client: 11. 返回完整响应<br/>(答案+检索结果+历史)
+    RAG-->>AI: 12. 返回完整响应<br/>(答案+检索结果+历史)
+    AI-->>PC: 13. 返回响应
+    AI-->>MiniApp: 13. 返回响应
         </div>
 
         <h3>2.2 向量化存储流程</h3>
@@ -447,42 +463,47 @@ sequenceDiagram
         <h3>2.5 查询分类决策流程</h3>
         <div class="mermaid">
 flowchart TD
-    A[接收查询请求] --> B[加载对话记忆]
-    B --> C{是否启用混合分类器?}
+    A[PC端/小程序请求] --> B[pet-vet-ai接收]
+    B --> C[pet-vet-ai调用RAG服务]
+    C --> D[加载对话记忆]
+    D --> E{是否启用混合分类器?}
     
-    C -->|是| D[执行混合分类]
-    C -->|否| E[执行原有分类器]
+    E -->|是| F[执行混合分类]
+    E -->|否| G[执行原有分类器]
     
-    D --> F{对比模式?}
-    F -->|是| G[同时运行新旧方案]
-    F -->|否| H[仅运行混合方案]
+    F --> H{对比模式?}
+    H -->|是| I[同时运行新旧方案]
+    H -->|否| J[仅运行混合方案]
     
-    G --> I[对比结果]
-    H --> J[获取分类结果]
-    E --> J
+    I --> K[对比结果]
+    J --> L[获取分类结果]
+    G --> L
     
-    J --> K{需要检索?}
-    I --> K
+    L --> M{需要检索?}
+    K --> M
     
-    K -->|是| L[执行向量检索]
-    K -->|否| M[跳过检索]
+    M -->|是| N[执行向量检索]
+    M -->|否| O[跳过检索]
     
-    L --> N{检索质量满足?}
-    N -->|是| O[RAG模式生成<br/>知识库+历史]
-    N -->|否| P[纯LLM模式生成<br/>仅历史]
+    N --> P{检索质量满足?}
+    P -->|是| Q[RAG模式生成<br/>知识库+历史]
+    P -->|否| R[纯LLM模式生成<br/>仅历史]
     
-    M --> P
+    O --> R
     
-    O --> Q[更新记忆]
-    P --> Q
-    Q --> R[保存历史记录]
-    R --> S[返回响应]
+    Q --> S[更新记忆]
+    R --> S
+    S --> T[保存历史记录]
+    T --> U[返回给pet-vet-ai]
+    U --> V[返回给PC端/小程序]
     
-    style D fill:#e1f5ff
-    style E fill:#fff4e1
-    style L fill:#e8f5e9
-    style O fill:#fff9c4
-    style P fill:#fff9c4
+    style B fill:#e3f2fd
+    style C fill:#e3f2fd
+    style F fill:#e1f5ff
+    style G fill:#fff4e1
+    style N fill:#e8f5e9
+    style Q fill:#fff9c4
+    style R fill:#fff9c4
         </div>
     </div>
 
@@ -630,13 +651,15 @@ flowchart TD
 
         <h3>4.2 RAG 数据流转</h3>
         <ol>
-            <li><strong>用户查询</strong> → RagValidationService</li>
+            <li><strong>PC端/小程序请求</strong> → pet-vet-ai</li>
+            <li><strong>pet-vet-ai接收</strong> → 调用RagValidationService</li>
             <li><strong>记忆加载</strong> → MemoryService → Redis</li>
             <li><strong>查询分类</strong> → QueryClassifier → 判断是否需要检索</li>
             <li><strong>向量检索</strong> → RagService → EmbeddingService → VectorDB</li>
             <li><strong>答案生成</strong> → LLM (DeepSeek/OpenAI/Grok)</li>
             <li><strong>记忆更新</strong> → MemoryService → Redis</li>
             <li><strong>历史保存</strong> → HistoryService → MySQL</li>
+            <li><strong>返回响应</strong> → pet-vet-ai → PC端/小程序</li>
         </ol>
 
         <h3>4.3 MCP 工具数据流转</h3>
