@@ -7,6 +7,7 @@ import com.petvet.rag.api.resp.RagValidationResp;
 import com.petvet.rag.app.classifier.config.ClassifierProperties;
 import com.petvet.rag.app.classifier.model.ClassificationResult;
 import com.petvet.rag.app.config.LangChainConfig;
+import com.petvet.rag.app.domain.RagQueryHistoryEntity;
 import dev.langchain4j.model.chat.ChatModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -486,7 +487,7 @@ public class RagValidationService {
                                   RagValidationResp.ConversationHistory conversationHistory,
                                   Long queryTime, Double confidence) {
         try {
-            com.petvet.rag.app.domain.RagQueryHistoryEntity entity = historyService.buildHistoryEntity(
+            RagQueryHistoryEntity entity = historyService.buildHistoryEntity(
                 userId, sessionId,
                 request.getQuery(), answer,
                 documents.size(),

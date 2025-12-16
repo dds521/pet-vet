@@ -47,12 +47,9 @@ public class HistoryService {
             // 保存到数据库
             historyMapper.insert(entity);
             
-            log.debug("历史记录保存成功，用户: {}, 会话: {}, ID: {}", 
-                entity.getUserId(), entity.getSessionId(), entity.getId());
-                
+            log.debug("历史记录保存成功，用户: {}, 会话: {}, ID: {}", entity.getUserId(), entity.getSessionId(), entity.getId());
         } catch (Exception e) {
-            log.error("历史记录保存失败，用户: {}, 会话: {}", 
-                entity.getUserId(), entity.getSessionId(), e);
+            log.error("历史记录保存失败，用户: {}, 会话: {}", entity.getUserId(), entity.getSessionId(), e);
         }
     }
     
