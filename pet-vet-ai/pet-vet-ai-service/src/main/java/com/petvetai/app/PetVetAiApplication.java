@@ -9,12 +9,18 @@ import org.springframework.core.env.Environment;
 /**
  * Pet-Vet-AI 应用主类
  * 
- * 项目使用 LangChain4j 进行 AI 集成，支持 OpenAI、DeepSeek 和 xAI Grok
- * RAG 功能由 pet-vet-rag 模块提供
+ * 顶层服务，供 APP 端、PC 端使用
+ * 所有 AI 能力（向量化、RAG、LLM）均通过以下服务提供：
+ * - pet-vet-rag: RAG 增强检索服务
+ * - pet-vet-embedding: 向量化服务
+ * - pet-vet-mcp: MCP 工具服务
+ * 
+ * @author PetVetAI Team
+ * @date 2024-12-16
  */
 @SpringBootApplication
 @MapperScan("com.petvetai.app.mapper")
-@EnableFeignClients(basePackages = {"com.petvet.ai.api.feign"})
+@EnableFeignClients(basePackages = {"com.petvet.rag.api.feign"})
 public class PetVetAiApplication {
 
 	public static void main(String[] args) {

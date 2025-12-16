@@ -1,6 +1,6 @@
 package com.petvetai.app.service;
 
-import com.petvet.ai.api.feign.RagServiceFeignClient;
+import com.petvet.rag.api.feign.RagServiceFeignClient;
 import com.petvet.rag.api.dto.ApiResponse;
 import com.petvet.rag.api.req.RagQueryReq;
 import com.petvet.rag.api.resp.RagQueryResp;

@@ -53,11 +53,52 @@ seata:
       log-table: undo_log
 
 # Spring Cloud Alibaba 配置（所有环境公共）
-# AI 配置（所有环境公共）
-# 支持 OpenAI、DeepSeek 和 xAI Grok
-# 推荐使用 DeepSeek（价格更便宜，国内访问更稳定）或 Grok（性能优秀）
+# 注意：AI 相关配置（LLM、向量化、RAG）已迁移到 pet-vet-rag 和 pet-vet-embedding 服务
+# 本服务仅作为顶层服务，通过 Feign 调用其他服务的 API
 spring:
   cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:public}
+        group: DEFAULT_GROUP
+        # 服务注册配置
+        # 本地开发请显式绑定可达 IP，避免注册不可达的内网地址
+        ip: ${NACOS_DISCOVERY_IP:127.0.0.1}
+        # 注意：port 会自动使用 server.port 的值，无需手动配置
+        # 健康检查配置
+        heart-beat-interval: 5000  # 心跳间隔（毫秒）
+        heart-beat-timeout: 15000  # 心跳超时（毫秒）
+        ip-delete-timeout: 30000   # IP删除超时（毫秒）
+      config:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: DEFAULT_GROUP
+        file-extension: yml
+        shared-configs:
+          - data-id: pet-vet-ai-common.yml
+            group: DEFAULT_GROUP
+            refresh: true
+    # LoadBalancer 配置（用于 Feign 客户端服务发现）
+    loadbalancer:
+      cache:
+        enabled: true
+        ttl: 35s  # 服务实例缓存时间
+        capacity: 256  # 缓存容量
+    # OpenFeign 配置
+    openfeign:
+      client:
+        config:
+          # 默认配置（适用于所有 Feign 客户端）
+          default:
+            connect-timeout: 10000  # 连接超时时间（毫秒），10秒
+            read-timeout: 300000    # 读取超时时间（毫秒），300秒
+            logger-level: BASIC     # 日志级别：NONE, BASIC, HEADERS, FULL
+          # pet-vet-rag 服务特定配置
+          pet-vet-rag:
+            connect-timeout: 10000
+            read-timeout: 300000
+            logger-level: BASIC
     alibaba:
       seata:
         tx-service-group: default_tx_group
@@ -133,42 +174,6 @@ spring:
             rule-type: param-flow
             # 数据格式：JSON
             # 示例：[{"resource":"/api/test","paramIdx":0,"count":10,"grade":1}]
-  ai:
-    # AI 提供商类型：openai、deepseek 或 grok（默认使用 deepseek）
-    provider:
-      type: ${AI_PROVIDER_TYPE:deepseek}
-    
-    # OpenAI 配置
-    openai:
-      api-key: ${OPENAI_API_KEY:}
-      chat:
-        options:
-          model: ${OPENAI_MODEL:gpt-4o}
-          temperature: ${OPENAI_TEMPERATURE:0.7}
-    
-    # DeepSeek 配置（推荐）
-    # DeepSeek 使用 OpenAI 兼容的 API，价格更便宜，国内访问更稳定
-    # 申请地址：https://platform.deepseek.com/
-    # ⚠️ 注意：API Key 必须通过环境变量 DEEPSEEK_API_KEY 配置，不要直接写在配置文件中
-    deepseek:
-      api-key: ${DEEPSEEK_API_KEY:}
-      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
-      chat:
-        options:
-          model: ${DEEPSEEK_MODEL:deepseek-chat}
-          temperature: ${DEEPSEEK_TEMPERATURE:0.7}
-    
-    # xAI Grok 配置
-    # Grok 是 xAI 开发的 AI 模型，使用 OpenAI 兼容的 API
-    # 申请地址：https://x.ai/
-    # ⚠️ 注意：API Key 必须通过环境变量 GROK_API_KEY 配置，不要直接写在配置文件中
-    grok:
-      api-key: ${GROK_API_KEY:}
-      base-url: ${GROK_BASE_URL:https://api.x.ai/v1}
-      chat:
-        options:
-          model: ${GROK_MODEL:grok-4-latest}
-          temperature: ${GROK_TEMPERATURE:0.7}
 
 # RocketMQ 基础配置（所有环境公共，producer.group 在各环境配置中指定）
 rocketmq:

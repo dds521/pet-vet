@@ -1,4 +1,4 @@
-package com.petvet.ai.api.feign;
+package com.petvet.rag.api.feign;
 
 import com.petvet.rag.api.dto.ApiResponse;
 import com.petvet.rag.api.req.RagQueryReq;
@@ -11,7 +11,8 @@ import org.springframework.stereotype.Component;
  * RAG 服务 Feign 客户端降级工厂
  * 当 RAG 服务不可用时提供降级处理
  * 
- * @author PetVetAI Team
+ * @author PetVetRAG Team
+ * @date 2024-12-16
  */
 @Slf4j
 @Component

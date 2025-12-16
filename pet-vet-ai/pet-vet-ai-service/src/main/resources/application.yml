@@ -12,3 +12,8 @@ spring:
     name: pet-vet-ai
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev} # 默认激活 dev，可通过启动参数或环境变量覆盖
+  config:
+    # Spring Boot 3.x 需要显式导入 Nacos 配置
+    import:
+      - optional:nacos:pet-vet-ai-common.yml?group=DEFAULT_GROUP
+      - optional:nacos:pet-vet-ai-${spring.profiles.active}.yml?group=DEFAULT_GROUP

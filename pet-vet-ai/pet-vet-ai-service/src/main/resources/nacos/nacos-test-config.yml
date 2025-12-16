@@ -78,6 +78,5 @@ logging:
     # 降低 gRPC 相关类的日志级别，避免 ClassNotFoundException 警告
     com.alibaba.nacos.shaded.io.grpc: WARN  # gRPC 相关警告忽略
     com.alibaba.nacos.shaded.io.grpc.internal.ManagedChannelImplBuilder: WARN  # gRPC 通道构建器警告忽略
-    dev.langchain4j: INFO  # LangChain4j 日志
     com.petvetai.app.service.EmailReaderService: DEBUG  # 邮件读取服务日志
 

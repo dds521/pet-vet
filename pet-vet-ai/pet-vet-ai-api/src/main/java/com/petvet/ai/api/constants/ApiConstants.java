@@ -8,7 +8,7 @@ public class ApiConstants {
 	/**
 	 * API 基础路径
 	 */
-	public static final String API_PREFIX = "/api/pet-vet-ai";
+	public static final String API_PREFIX = "/api/pet";
 	
 	/**
 	 * 服务名称

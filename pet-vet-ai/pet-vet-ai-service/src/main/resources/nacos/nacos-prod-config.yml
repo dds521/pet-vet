@@ -54,5 +54,4 @@ logging:
   level:
     root: WARN # 生产环境只记录警告以上
     com.petvetai.app: INFO # 业务日志保留 INFO
-    dev.langchain4j: WARN  # LangChain4j 只记录警告以上
 
