@@ -1,7 +1,11 @@
 package com.petvet.rag.app.classifier.config;
 
+import com.petvet.rag.app.classifier.model.RuleDefinition;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 分类器配置属性
@@ -98,6 +102,12 @@ public class ClassifierProperties {
          * 是否启用规则层
          */
         private Boolean enabled = true;
+        
+        /**
+         * 规则定义列表
+         * 支持通过配置文件动态配置规则
+         */
+        private List<RuleDefinition> rules = new ArrayList<>();
     }
     
     /**

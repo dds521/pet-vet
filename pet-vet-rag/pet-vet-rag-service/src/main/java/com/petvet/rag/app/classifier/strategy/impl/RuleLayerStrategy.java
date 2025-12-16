@@ -1,22 +1,24 @@
 package com.petvet.rag.app.classifier.strategy.impl;
 
-import com.ql.util.express.DefaultContext;
 import com.ql.util.express.IExpressContext;
 import com.petvet.rag.app.classifier.config.ClassifierProperties;
+import com.petvet.rag.app.classifier.engine.RuleEngine;
+import com.petvet.rag.app.classifier.engine.RuleLoader;
 import com.petvet.rag.app.classifier.model.ClassificationResult;
+import com.petvet.rag.app.classifier.model.RuleDefinition;
 import com.petvet.rag.app.classifier.strategy.ClassificationStrategy;
 import com.petvet.rag.app.service.MemoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * 规则层策略
  * 使用QLExpress执行规则判断
+ * 
+ * 真正使用QLExpress规则引擎执行配置化的规则表达式
  * 
  * @author daidasheng
  * @date 2024-12-15
@@ -27,12 +29,8 @@ import java.util.List;
 public class RuleLayerStrategy implements ClassificationStrategy {
     
     private final ClassifierProperties properties;
-    
-    @Value("${rag.retrieval.force-retrieval-keywords:疾病,症状,诊断,治疗,疫苗,感染,炎症,手术,药物}")
-    private String forceRetrievalKeywords;
-    
-    @Value("${rag.retrieval.skip-retrieval-keywords:你好,谢谢,再见,哈哈}")
-    private String skipRetrievalKeywords;
+    private final RuleEngine ruleEngine;
+    private final RuleLoader ruleLoader;
     
     @Override
     public boolean matches(String query, MemoryService.ConversationMemory memory) {
@@ -49,8 +47,8 @@ public class RuleLayerStrategy implements ClassificationStrategy {
         long startTime = System.currentTimeMillis();
         
         try {
-            // 构建上下文（QLExpress使用DefaultContext）
-            IExpressContext<String, Object> context = new DefaultContext<>();
+            // 构建执行上下文
+            IExpressContext<String, Object> context = ruleEngine.createContext();
             context.put("query", query);
             context.put("lowerQuery", query.toLowerCase());
             context.put("memory", memory);
@@ -64,29 +62,49 @@ public class RuleLayerStrategy implements ClassificationStrategy {
                 .build();
             context.put("result", result);
             
-            // 执行规则（按优先级顺序）
-            // 1. 闲聊规则
-            if (executeCasualChatRule(query, context, result)) {
-                long costTime = System.currentTimeMillis() - startTime;
-                result.setCostTime(costTime);
-                return result;
+            // 获取所有规则（已按优先级排序）
+            List<RuleDefinition> rules = ruleLoader.getRules();
+            
+            // 按优先级顺序执行规则
+            for (RuleDefinition rule : rules) {
+                try {
+                    // 1. 执行规则表达式，判断是否匹配
+                    boolean matched = ruleEngine.executeBoolean(rule.getExpression(), context);
+                    
+                    if (matched) {
+                        log.debug("规则 {} 匹配成功, 表达式: {}", rule.getName(), rule.getExpression());
+                        
+                        // 2. 执行规则动作
+                        if (rule.getAction() != null && !rule.getAction().trim().isEmpty()) {
+                            // 执行动作表达式（设置result属性等）
+                            String actionExpression = rule.getAction();
+                            Object actionResult = ruleEngine.execute(actionExpression, context);
+                            
+                            // 如果动作返回true，表示规则处理完成
+                            if (actionResult instanceof Boolean && (Boolean) actionResult) {
+                                long costTime = System.currentTimeMillis() - startTime;
+                                result.setCostTime(costTime);
+                                log.debug("规则 {} 执行完成, 结果: needRetrieval={}, confidence={}, reason={}, cost={}ms",
+                                    rule.getName(), result.getNeedRetrieval(), result.getConfidence(),
+                                    result.getReason(), costTime);
+                                return result;
+                            }
+                        } else {
+                            // 如果没有动作表达式，默认返回匹配结果
+                            long costTime = System.currentTimeMillis() - startTime;
+                            result.setCostTime(costTime);
+                            log.debug("规则 {} 匹配但无动作表达式, 返回默认结果", rule.getName());
+                            return result;
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("规则 {} 执行失败, 继续下一个规则, 错误: {}", rule.getName(), e.getMessage());
+                    // 继续执行下一个规则
+                }
             }
             
-            // 2. 强制检索规则
-            if (executeForceRetrievalRule(query, context, result)) {
-                long costTime = System.currentTimeMillis() - startTime;
-                result.setCostTime(costTime);
-                return result;
-            }
-            
-            // 3. 通用知识规则
-            if (executeGeneralKnowledgeRule(query, context, result)) {
-                long costTime = System.currentTimeMillis() - startTime;
-                result.setCostTime(costTime);
-                return result;
-            }
-            
-            // 规则不匹配，返回null继续下一个策略
+            // 所有规则都不匹配，返回null继续下一个策略
+            log.debug("所有规则都不匹配, query: {}", query);
             return null;
             
         } catch (Exception e) {
@@ -95,71 +113,6 @@ public class RuleLayerStrategy implements ClassificationStrategy {
         }
     }
     
-    /**
-     * 执行闲聊规则
-     */
-    private boolean executeCasualChatRule(String query, IExpressContext<String, Object> context, ClassificationResult result) throws Exception {
-        List<String> chatKeywords = Arrays.asList(
-            skipRetrievalKeywords != null ? skipRetrievalKeywords.split(",") : new String[]{"你好", "谢谢", "再见", "哈哈"}
-        );
-        
-        String lowerQuery = query.toLowerCase();
-        for (String keyword : chatKeywords) {
-            if (lowerQuery.contains(keyword.toLowerCase().trim())) {
-                result.setNeedRetrieval(false);
-                result.setConfidence(0.9);
-                result.setReason("识别为闲聊: " + keyword);
-                log.debug("闲聊规则匹配: {}", keyword);
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    /**
-     * 执行强制检索规则
-     */
-    private boolean executeForceRetrievalRule(String query, IExpressContext<String, Object> context,
-                                             ClassificationResult result) throws Exception {
-        List<String> domainTerms = Arrays.asList(
-            forceRetrievalKeywords != null ? forceRetrievalKeywords.split(",") :
-            new String[]{"疾病", "症状", "诊断", "治疗", "疫苗", "感染", "炎症", "手术", "药物"}
-        );
-        
-        String lowerQuery = query.toLowerCase();
-        for (String term : domainTerms) {
-            if (lowerQuery.contains(term.toLowerCase().trim())) {
-                result.setNeedRetrieval(true);
-                result.setConfidence(0.95);
-                result.setReason("包含领域关键词: " + term);
-                log.debug("强制检索规则匹配: {}", term);
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    /**
-     * 执行通用知识规则
-     */
-    private boolean executeGeneralKnowledgeRule(String query, IExpressContext<String, Object> context,
-                                               ClassificationResult result) throws Exception {
-        String[] generalPatterns = {
-            "什么是", "介绍一下", "简单说", "解释一下"
-        };
-        
-        String lowerQuery = query.toLowerCase();
-        for (String pattern : generalPatterns) {
-            if (lowerQuery.contains(pattern)) {
-                result.setNeedRetrieval(false);
-                result.setConfidence(0.8);
-                result.setReason("识别为通用知识查询: " + pattern);
-                log.debug("通用知识规则匹配: {}", pattern);
-                return true;
-            }
-        }
-        return false;
-    }
     
     @Override
     public int getPriority() {
