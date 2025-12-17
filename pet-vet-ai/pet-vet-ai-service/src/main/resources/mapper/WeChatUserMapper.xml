@@ -3,15 +3,15 @@
 <mapper namespace="com.petvetai.app.mapper.WeChatUserMapper">
     
     <!-- 根据openId查询用户 -->
-    <select id="selectByOpenId" resultType="com.petvetai.app.domain.WeChatUser">
-        SELECT * FROM wechat_users
+    <select id="selectByOpenId" resultType="com.petvetai.app.domain.VetAiWeChatUser">
+        SELECT * FROM vet_ai_wechat_user
         WHERE open_id = #{openId}
         LIMIT 1
     </select>
     
     <!-- 根据unionId查询用户 -->
-    <select id="selectByUnionId" resultType="com.petvetai.app.domain.WeChatUser">
-        SELECT * FROM wechat_users
+    <select id="selectByUnionId" resultType="com.petvetai.app.domain.VetAiWeChatUser">
+        SELECT * FROM vet_ai_wechat_user
         WHERE union_id = #{unionId}
         LIMIT 1
     </select>

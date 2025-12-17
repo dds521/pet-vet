@@ -1,7 +1,7 @@
 package com.petvetai.app.service.seata;
 
-import com.petvetai.app.domain.Account;
-import com.petvetai.app.domain.Order;
+import com.petvetai.app.domain.VetAiAccount;
+import com.petvetai.app.domain.VetAiOrder;
 import com.petvetai.app.mapper.AccountMapper;
 import com.petvetai.app.mapper.OrderMapper;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -47,12 +47,12 @@ public class SeataAtService {
         
         // 1. 创建订单
         String orderNo = "ORDER_" + UUID.randomUUID().toString().replace("-", "");
-        Order order = new Order(petId, orderNo, amount);
+        VetAiOrder order = new VetAiOrder(petId, orderNo, amount);
         orderMapper.insert(order);
         log.info("创建订单成功：orderNo={}, amount={}", orderNo, amount);
         
         // 2. 查询账户
-        Account account = accountMapper.selectById(userId);
+        VetAiAccount account = accountMapper.selectById(userId);
         if (account == null) {
             throw new RuntimeException("账户不存在");
         }
@@ -81,7 +81,7 @@ public class SeataAtService {
         
         // 1. 创建订单
         String orderNo = "ORDER_" + UUID.randomUUID().toString().replace("-", "");
-        Order order = new Order(petId, orderNo, amount);
+        VetAiOrder order = new VetAiOrder(petId, orderNo, amount);
         orderMapper.insert(order);
         log.info("创建订单成功：orderNo={}", orderNo);
         

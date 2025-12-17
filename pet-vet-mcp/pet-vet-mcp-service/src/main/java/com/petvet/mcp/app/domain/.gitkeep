@@ -1,0 +1,11 @@
+# Domain 实体对象目录
+# 
+# 说明：
+# 1. 当前 pet-vet-mcp 服务使用内存存储（ConcurrentHashMap）管理 MCP 服务器信息
+# 2. 如果未来需要持久化 MCP 服务器信息到数据库，可以在此目录下创建实体类
+# 3. 实体类应继承 com.petvet.common.domain.BaseEntity
+# 4. 表名应使用 vet_mcp_ 前缀，例如：vet_mcp_server_info
+# 
+# 示例实体类结构：
+# - McpServerInfoEntity: MCP 服务器信息实体（如果需要持久化）
+# - McpServerConnectionLogEntity: MCP 服务器连接日志实体（如果需要记录连接历史）

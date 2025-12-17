@@ -1,7 +1,7 @@
 package com.petvet.embedding.app.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.petvet.embedding.app.domain.ResumeMetadataEntity;
+import com.petvet.embedding.app.domain.VetEmbeddingResumeMetadataEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -12,5 +12,5 @@ import org.apache.ibatis.annotations.Mapper;
  * @author PetVetEmbedding Team
  */
 @Mapper
-public interface ResumeMetadataMapper extends BaseMapper<ResumeMetadataEntity> {
+public interface ResumeMetadataMapper extends BaseMapper<VetEmbeddingResumeMetadataEntity> {
 }

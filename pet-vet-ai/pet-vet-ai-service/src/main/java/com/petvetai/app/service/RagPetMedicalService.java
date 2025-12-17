@@ -5,8 +5,8 @@ import com.petvet.rag.api.dto.ApiResponse;
 import com.petvet.rag.api.req.RagQueryReq;
 import com.petvet.rag.api.resp.RagQueryResp;
 import com.petvetai.app.domain.Diagnosis;
-import com.petvetai.app.domain.Pet;
-import com.petvetai.app.domain.Symptom;
+import com.petvetai.app.domain.VetAiPet;
+import com.petvetai.app.domain.VetAiSymptom;
 import com.petvetai.app.mapper.PetMapper;
 import com.petvetai.app.mapper.SymptomMapper;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +40,7 @@ public class RagPetMedicalService {
      */
     @Transactional
     public Diagnosis analyzeSymptomWithRag(Long petId, String symptomDesc) {
-        Pet pet = petMapper.selectById(petId);
+        VetAiPet pet = petMapper.selectById(petId);
         if (pet == null) {
             throw new RuntimeException("Pet not found");
         }
@@ -89,7 +89,7 @@ public class RagPetMedicalService {
             Diagnosis diagnosis = new Diagnosis(suggestion, confidence);
             
             // 保存症状记录
-            Symptom symptom = new Symptom(symptomDesc, pet.getId());
+            VetAiSymptom symptom = new VetAiSymptom(symptomDesc, pet.getId());
             symptomMapper.insert(symptom);
             
             log.info("RAG 诊断完成，宠物ID: {}, 检索到 {} 个相关文档, 置信度: {}", 

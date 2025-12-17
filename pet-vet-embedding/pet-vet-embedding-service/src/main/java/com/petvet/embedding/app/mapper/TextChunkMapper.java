@@ -1,7 +1,7 @@
 package com.petvet.embedding.app.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.petvet.embedding.app.domain.TextChunkEntity;
+import com.petvet.embedding.app.domain.VetEmbeddingTextChunkEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -15,7 +15,7 @@ import java.util.List;
  * @author PetVetEmbedding Team
  */
 @Mapper
-public interface TextChunkMapper extends BaseMapper<TextChunkEntity> {
+public interface TextChunkMapper extends BaseMapper<VetEmbeddingTextChunkEntity> {
     
     /**
      * 根据简历ID查询所有Chunks
@@ -23,7 +23,7 @@ public interface TextChunkMapper extends BaseMapper<TextChunkEntity> {
      * @param resumeId 简历ID
      * @return Chunk列表
      */
-    List<TextChunkEntity> selectByResumeId(@Param("resumeId") String resumeId);
+    List<VetEmbeddingTextChunkEntity> selectByResumeId(@Param("resumeId") String resumeId);
     
     /**
      * 根据Chunk ID列表批量查询
@@ -31,7 +31,7 @@ public interface TextChunkMapper extends BaseMapper<TextChunkEntity> {
      * @param chunkIds Chunk ID列表
      * @return Chunk列表
      */
-    List<TextChunkEntity> selectByChunkIds(@Param("chunkIds") List<String> chunkIds);
+    List<VetEmbeddingTextChunkEntity> selectByChunkIds(@Param("chunkIds") List<String> chunkIds);
     
     /**
      * 根据简历ID删除所有Chunks

@@ -2,7 +2,7 @@ package com.petvet.embedding.app.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.petvet.embedding.app.domain.TextChunk;
-import com.petvet.embedding.app.domain.TextChunkEntity;
+import com.petvet.embedding.app.domain.VetEmbeddingTextChunkEntity;
 import com.petvet.embedding.app.mapper.TextChunkMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ public class TextChunkService {
         log.debug("开始批量保存文本Chunks，输入数量: {}", chunks.size());
         
         LocalDateTime now = LocalDateTime.now();
-        List<TextChunkEntity> entities = chunks.stream()
+        List<VetEmbeddingTextChunkEntity> entities = chunks.stream()
             .filter(chunk -> {
                 if (chunk.getChunkId() == null || chunk.getChunkId().trim().isEmpty()) {
                     log.warn("跳过保存：chunk 缺少 chunkId, resumeId: {}, text: {}", 
@@ -50,7 +50,7 @@ public class TextChunkService {
                 return true;
             })
             .map(chunk -> {
-                TextChunkEntity entity = convertToEntity(chunk);
+                VetEmbeddingTextChunkEntity entity = convertToEntity(chunk);
                 entity.setCreateTime(now);
                 entity.setUpdateTime(now);
                 return entity;
@@ -67,9 +67,9 @@ public class TextChunkService {
         // 批量插入或更新
         int savedCount = 0;
         int updatedCount = 0;
-        for (TextChunkEntity entity : entities) {
+        for (VetEmbeddingTextChunkEntity entity : entities) {
             try {
-                TextChunkEntity existing = chunkMapper.selectById(entity.getChunkId());
+                VetEmbeddingTextChunkEntity existing = chunkMapper.selectById(entity.getChunkId());
                 if (existing != null) {
                     entity.setCreateTime(existing.getCreateTime()); // 保留原有创建时间
                     entity.setUpdateTime(now);
@@ -97,7 +97,7 @@ public class TextChunkService {
             return null;
         }
         
-        TextChunkEntity entity = chunkMapper.selectById(chunkId);
+        VetEmbeddingTextChunkEntity entity = chunkMapper.selectById(chunkId);
         return entity != null ? entity.getText() : null;
     }
     
@@ -112,19 +112,19 @@ public class TextChunkService {
         
         log.debug("查询文本内容，chunkIds数量: {}, chunkIds: {}", chunkIds.size(), chunkIds);
         
-        List<TextChunkEntity> entities = chunkMapper.selectByChunkIds(chunkIds);
+        List<VetEmbeddingTextChunkEntity> entities = chunkMapper.selectByChunkIds(chunkIds);
         
         log.debug("数据库查询结果，找到 {} 条记录", entities.size());
         if (entities.isEmpty()) {
             log.warn("数据库中没有找到任何匹配的chunks，查询的chunkIds: {}", chunkIds);
         } else {
-            log.debug("找到的chunkIds: {}", entities.stream().map(TextChunkEntity::getChunkId).collect(Collectors.toList()));
+            log.debug("找到的chunkIds: {}", entities.stream().map(VetEmbeddingTextChunkEntity::getChunkId).collect(Collectors.toList()));
         }
         
         Map<String, String> result = entities.stream()
             .collect(Collectors.toMap(
-                TextChunkEntity::getChunkId,
-                TextChunkEntity::getText,
+                VetEmbeddingTextChunkEntity::getChunkId,
+                VetEmbeddingTextChunkEntity::getText,
                 (existing, replacement) -> existing
             ));
         
@@ -140,7 +140,7 @@ public class TextChunkService {
             return List.of();
         }
         
-        List<TextChunkEntity> entities = chunkMapper.selectByResumeId(resumeId);
+        List<VetEmbeddingTextChunkEntity> entities = chunkMapper.selectByResumeId(resumeId);
         return entities.stream()
             .map(this::convertToDomain)
             .collect(Collectors.toList());
@@ -170,8 +170,8 @@ public class TextChunkService {
     /**
      * 将TextChunk转换为数据库实体
      */
-    private TextChunkEntity convertToEntity(TextChunk chunk) {
-        return TextChunkEntity.builder()
+    private VetEmbeddingTextChunkEntity convertToEntity(TextChunk chunk) {
+        return VetEmbeddingTextChunkEntity.builder()
             .chunkId(chunk.getChunkId())
             .resumeId(chunk.getResumeId())
             .text(chunk.getText())
@@ -185,7 +185,7 @@ public class TextChunkService {
     /**
      * 将数据库实体转换为TextChunk
      */
-    private TextChunk convertToDomain(TextChunkEntity entity) {
+    private TextChunk convertToDomain(VetEmbeddingTextChunkEntity entity) {
         return TextChunk.builder()
             .chunkId(entity.getChunkId())
             .resumeId(entity.getResumeId())

@@ -1,6 +1,6 @@
 package com.petvetai.app.controller;
 
-import com.petvetai.app.domain.WeChatUser;
+import com.petvetai.app.domain.VetAiWeChatUser;
 import com.petvetai.app.service.WeChatAuthService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +50,7 @@ public class WeChatAuthController {
             response.put("token", result.getToken());
             
             // 用户信息（不包含敏感信息）
-            WeChatUser user = result.getUser();
+            VetAiWeChatUser user = result.getUser();
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("id", user.getId());
             userInfo.put("openId", user.getOpenId());

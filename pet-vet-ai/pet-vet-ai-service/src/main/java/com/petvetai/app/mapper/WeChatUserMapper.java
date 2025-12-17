@@ -1,7 +1,7 @@
 package com.petvetai.app.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.petvetai.app.domain.WeChatUser;
+import com.petvetai.app.domain.VetAiWeChatUser;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -14,7 +14,7 @@ import org.apache.ibatis.annotations.Param;
  * @date 2024-01-01
  */
 @Mapper
-public interface WeChatUserMapper extends BaseMapper<WeChatUser> {
+public interface WeChatUserMapper extends BaseMapper<VetAiWeChatUser> {
     
     /**
      * 根据openId查询用户
@@ -22,7 +22,7 @@ public interface WeChatUserMapper extends BaseMapper<WeChatUser> {
      * @param openId 微信openId
      * @return 微信用户信息
      */
-    WeChatUser selectByOpenId(@Param("openId") String openId);
+    VetAiWeChatUser selectByOpenId(@Param("openId") String openId);
     
     /**
      * 根据unionId查询用户
@@ -30,6 +30,6 @@ public interface WeChatUserMapper extends BaseMapper<WeChatUser> {
      * @param unionId 微信unionId
      * @return 微信用户信息
      */
-    WeChatUser selectByUnionId(@Param("unionId") String unionId);
+    VetAiWeChatUser selectByUnionId(@Param("unionId") String unionId);
 }
 

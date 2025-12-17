@@ -3,12 +3,12 @@ package com.petvet.rag.app.domain;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.petvet.common.domain.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 /**
  * RAG 查询历史记录实体类
@@ -16,14 +16,15 @@ import java.time.LocalDateTime;
  * 用于数据库持久化存储 RAG 查询历史记录
  * 
  * @author daidasheng
- * @date 2024-12-11
+ * @date 2024-12-19
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("rag_query_history")
-public class RagQueryHistoryEntity {
+@EqualsAndHashCode(callSuper = true)
+@TableName("vet_rag_query_history")
+public class VetRagQueryHistoryEntity extends BaseEntity {
     
     /**
      * 查询ID（主键，自增）
@@ -85,14 +86,4 @@ public class RagQueryHistoryEntity {
      * 置信度分数（0.0-1.0）
      */
     private Double confidence;
-    
-    /**
-     * 创建时间
-     */
-    private LocalDateTime createTime;
-    
-    /**
-     * 更新时间
-     */
-    private LocalDateTime updateTime;
 }

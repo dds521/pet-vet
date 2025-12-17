@@ -1,7 +1,7 @@
 package com.petvetai.app.service.seata;
 
-import com.petvetai.app.domain.Account;
-import com.petvetai.app.domain.Order;
+import com.petvetai.app.domain.VetAiAccount;
+import com.petvetai.app.domain.VetAiOrder;
 import com.petvetai.app.mapper.AccountMapper;
 import com.petvetai.app.mapper.OrderMapper;
 import io.seata.rm.tcc.api.BusinessActionContext;
@@ -65,7 +65,7 @@ public class SeataTccService {
         try {
             // Try 阶段：完成业务检查，预留资源
             // 1. 检查账户余额
-            Account account = accountMapper.selectById(userId);
+            VetAiAccount account = accountMapper.selectById(userId);
             if (account == null) {
                 throw new RuntimeException("账户不存在");
             }
@@ -86,7 +86,7 @@ public class SeataTccService {
             
             // 3. 创建订单（状态为 PENDING，等待确认）
             String orderNo = "ORDER_" + UUID.randomUUID().toString().replace("-", "");
-            Order order = new Order(petId, orderNo, amount);
+            VetAiOrder order = new VetAiOrder(petId, orderNo, amount);
             order.setStatus("PENDING"); // 待确认状态
             orderMapper.insert(order);
             
@@ -130,7 +130,7 @@ public class SeataTccService {
             BigDecimal frozenAmount = new BigDecimal(frozenAmountObj.toString());
             
             // 1. 更新订单状态为已支付
-            Order order = orderMapper.selectById(orderId);
+            VetAiOrder order = orderMapper.selectById(orderId);
             if (order != null) {
                 order.setStatus("PAID");
                 orderMapper.updateById(order);
@@ -138,7 +138,7 @@ public class SeataTccService {
             }
             
             // 2. 扣减账户余额（使用 Try 阶段冻结的金额）
-            Account account = accountMapper.selectById(userId);
+            VetAiAccount account = accountMapper.selectById(userId);
             if (account != null) {
                 account.setBalance(account.getBalance().subtract(frozenAmount));
                 accountMapper.updateById(account);
@@ -173,7 +173,7 @@ public class SeataTccService {
             
             // 1. 更新订单状态为已取消
             if (orderId != null) {
-                Order order = orderMapper.selectById(orderId);
+                VetAiOrder order = orderMapper.selectById(orderId);
                 if (order != null) {
                     order.setStatus("CANCELLED");
                     orderMapper.updateById(order);

@@ -1,6 +1,6 @@
 package com.petvetai.app.service;
 
-import com.petvetai.app.domain.TransactionLog;
+import com.petvetai.app.domain.VetAiTransactionLog;
 import com.petvetai.app.mapper.TransactionLogMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.LocalTransactionState;
@@ -181,7 +181,7 @@ public class RocketMQTransactionService {
             String messageBody = new String(msg.getBody(), StandardCharsets.UTF_8);
             
             // 保存事务日志到数据库
-            TransactionLog transactionLog = new TransactionLog(transactionId, topic, tag, messageBody);
+            VetAiTransactionLog transactionLog = new VetAiTransactionLog(transactionId, topic, tag, messageBody);
             transactionLogMapper.insert(transactionLog);
             log.info("事务日志已保存到数据库，ID: {}", transactionLog.getId());
             
@@ -193,7 +193,6 @@ public class RocketMQTransactionService {
             
             // 更新状态为已提交
             transactionLog.setStatus("COMMITTED");
-            transactionLog.setUpdateTime(LocalDateTime.now());
             transactionLogMapper.updateById(transactionLog);
             log.info("数据库操作成功，事务日志已更新");
             

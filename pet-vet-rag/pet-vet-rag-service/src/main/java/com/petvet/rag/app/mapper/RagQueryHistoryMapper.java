@@ -1,7 +1,7 @@
 package com.petvet.rag.app.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.petvet.rag.app.domain.RagQueryHistoryEntity;
+import com.petvet.rag.app.domain.VetRagQueryHistoryEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,7 +13,7 @@ import org.apache.ibatis.annotations.Mapper;
  * @date 2024-12-11
  */
 @Mapper
-public interface RagQueryHistoryMapper extends BaseMapper<RagQueryHistoryEntity> {
+public interface RagQueryHistoryMapper extends BaseMapper<VetRagQueryHistoryEntity> {
     // 可以在此添加自定义查询方法
     // 复杂查询可以在对应的 XML 文件中实现
 }

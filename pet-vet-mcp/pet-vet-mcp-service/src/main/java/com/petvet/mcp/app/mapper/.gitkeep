@@ -1,0 +1,9 @@
+# Mapper 接口目录
+# 
+# 说明：
+# 1. 当前 pet-vet-mcp 服务使用内存存储，暂不需要 Mapper 接口
+# 2. 如果未来需要持久化 MCP 服务器信息到数据库，可以在此目录下创建 Mapper 接口
+# 3. Mapper 接口应继承 com.baomidou.mybatisplus.core.mapper.BaseMapper<T>
+# 
+# 示例 Mapper 接口：
+# - McpServerInfoMapper: MCP 服务器信息 Mapper（如果需要持久化）

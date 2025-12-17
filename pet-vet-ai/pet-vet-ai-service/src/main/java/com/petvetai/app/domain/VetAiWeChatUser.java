@@ -3,7 +3,9 @@ package com.petvetai.app.domain;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.petvet.common.domain.BaseEntity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -14,13 +16,14 @@ import java.time.LocalDateTime;
  * 用于存储微信小程序用户的登录信息
  * 包括openId、unionId、sessionKey等微信相关字段
  * 
- * @author PetVetAI Team
- * @date 2024-01-01
+ * @author daidasheng
+ * @date 2024-12-19
  */
 @Data
 @NoArgsConstructor
-@TableName("wechat_users")
-public class WeChatUser {
+@EqualsAndHashCode(callSuper = true)
+@TableName("vet_ai_wechat_user")
+public class VetAiWeChatUser extends BaseEntity {
     
     /**
      * 主键ID，自增
@@ -84,16 +87,6 @@ public class WeChatUser {
     private String language;
     
     /**
-     * 创建时间
-     */
-    private LocalDateTime createTime;
-    
-    /**
-     * 更新时间
-     */
-    private LocalDateTime updateTime;
-    
-    /**
      * 最后登录时间
      */
     private LocalDateTime lastLoginTime;
@@ -107,12 +100,12 @@ public class WeChatUser {
      * 构造函数
      * 
      * @param openId 微信openId
+     * @author daidasheng
+     * @date 2024-12-19
      */
-    public WeChatUser(String openId) {
+    public VetAiWeChatUser(String openId) {
         this.openId = openId;
         this.status = 1; // 默认启用
-        this.createTime = LocalDateTime.now();
-        this.updateTime = LocalDateTime.now();
         this.lastLoginTime = LocalDateTime.now();
     }
 }

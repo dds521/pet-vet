@@ -3,9 +3,11 @@ package com.petvet.embedding.app.domain;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.petvet.common.domain.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -15,14 +17,16 @@ import java.time.LocalDateTime;
  * 
  * 用于数据库持久化存储简历元数据信息
  * 
- * @author PetVetEmbedding Team
+ * @author daidasheng
+ * @date 2024-12-19
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("resume_metadata")
-public class ResumeMetadataEntity {
+@EqualsAndHashCode(callSuper = true)
+@TableName("vet_embedding_resume_metadata")
+public class VetEmbeddingResumeMetadataEntity extends BaseEntity {
     
     /**
      * 简历ID（主键）
@@ -48,7 +52,7 @@ public class ResumeMetadataEntity {
     /**
      * 版本标识（从文件名提取，如：new）
      */
-    private String version;
+    private String versionTag;
     
     /**
      * 联系方式（邮箱、电话等）
@@ -75,14 +79,4 @@ public class ResumeMetadataEntity {
      * 注意：在数据库中以JSON字符串形式存储，查询时自动反序列化为List
      */
     private String vectorIdsJson;
-    
-    /**
-     * 创建时间
-     */
-    private LocalDateTime createTime;
-    
-    /**
-     * 更新时间
-     */
-    private LocalDateTime updateTime;
 }

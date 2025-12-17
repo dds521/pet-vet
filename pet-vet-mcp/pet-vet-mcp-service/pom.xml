@@ -13,6 +13,13 @@
 	<description>PetVetMCP Service: MCP 服务器管理服务实现</description>
 	
 	<dependencies>
+		<!-- 依赖公共模块 -->
+		<dependency>
+			<groupId>com.example</groupId>
+			<artifactId>pet-vet-common</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		
 		<!-- 依赖 API 模块 -->
 		<dependency>
 			<groupId>com.example</groupId>

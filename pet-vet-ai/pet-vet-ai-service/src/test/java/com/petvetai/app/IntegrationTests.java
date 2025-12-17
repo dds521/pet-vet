@@ -1,6 +1,6 @@
 package com.petvetai.app;
 
-import com.petvetai.app.domain.Pet;
+import com.petvetai.app.domain.VetAiPet;
 import com.petvetai.app.mapper.PetMapper;
 import com.petvetai.app.service.MqProducerService;
 import org.junit.jupiter.api.Test;
@@ -30,11 +30,11 @@ class IntegrationTests {
         // 注意：需要本地 MySQL 运行且有 pet_vet_ai 库，否则此测试会失败
         // 实际 CI/CD 中应使用 Testcontainers
         try {
-            Pet pet = new Pet("TestDog", "Husky", 3);
+            VetAiPet pet = new VetAiPet("TestDog", "Husky", 3);
             petMapper.insert(pet);
             assertNotNull(pet.getId());
             
-            Pet fetched = petMapper.selectById(pet.getId());
+            VetAiPet fetched = petMapper.selectById(pet.getId());
             assertEquals("TestDog", fetched.getName());
             
             // 清理

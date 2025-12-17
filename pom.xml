@@ -28,6 +28,7 @@
 	</properties>
 	
 	<modules>
+		<module>pet-vet-common</module>
 		<module>pet-vet-ai</module>
 		<module>pet-vet-embedding</module>
 		<module>pet-vet-mcp</module>

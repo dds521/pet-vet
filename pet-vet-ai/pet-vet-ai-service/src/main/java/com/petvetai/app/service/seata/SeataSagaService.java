@@ -1,6 +1,6 @@
 package com.petvetai.app.service.seata;
 
-import com.petvetai.app.domain.Order;
+import com.petvetai.app.domain.VetAiOrder;
 import com.petvetai.app.mapper.OrderMapper;
 import io.seata.saga.engine.StateMachineEngine;
 import io.seata.saga.statelang.domain.StateMachineInstance;
@@ -84,7 +84,7 @@ public class SeataSagaService {
      */
     private String createOrderStep(Long petId, BigDecimal amount) {
         String orderNo = "ORDER_" + UUID.randomUUID().toString().replace("-", "");
-        Order order = new Order(petId, orderNo, amount);
+        VetAiOrder order = new VetAiOrder(petId, orderNo, amount);
         order.setStatus("PENDING");
         orderMapper.insert(order);
         return orderNo;

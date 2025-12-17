@@ -1,14 +1,13 @@
 package com.petvet.rag.app.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.petvet.rag.app.domain.RagQueryHistoryEntity;
+import com.petvet.rag.app.domain.VetRagQueryHistoryEntity;
 import com.petvet.rag.app.mapper.RagQueryHistoryMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -34,17 +33,10 @@ public class HistoryService {
      * @date 2024-12-11
      */
     @Async
-    public void saveAsync(RagQueryHistoryEntity entity) {
+    public void saveAsync(VetRagQueryHistoryEntity entity) {
         try {
-            // 设置创建时间
-            if (entity.getCreateTime() == null) {
-                entity.setCreateTime(LocalDateTime.now());
-            }
-            if (entity.getUpdateTime() == null) {
-                entity.setUpdateTime(LocalDateTime.now());
-            }
-            
             // 保存到数据库
+            // createTime 和 updateTime 由 MyBatis Plus 自动填充（BaseEntity 中的 @TableField 配置）
             historyMapper.insert(entity);
             
             log.debug("历史记录保存成功，用户: {}, 会话: {}, ID: {}", entity.getUserId(), entity.getSessionId(), entity.getId());
@@ -64,7 +56,7 @@ public class HistoryService {
      * @author daidasheng
      * @date 2024-12-11
      */
-    public List<RagQueryHistoryEntity> queryHistory(String userId, String sessionId, 
+    public List<VetRagQueryHistoryEntity> queryHistory(String userId, String sessionId, 
                                                      Integer pageNum, Integer pageSize) {
         try {
             // 简单实现：查询最近N条记录
@@ -102,7 +94,7 @@ public class HistoryService {
      * @author daidasheng
      * @date 2024-12-11
      */
-    public RagQueryHistoryEntity buildHistoryEntity(String userId, String sessionId,
+    public VetRagQueryHistoryEntity buildHistoryEntity(String userId, String sessionId,
                                                     String query, String answer,
                                                     Integer retrievedCount,
                                                     Object retrievedDocuments,
@@ -122,7 +114,7 @@ public class HistoryService {
                 conversationContextJson = objectMapper.writeValueAsString(conversationContext);
             }
             
-            return RagQueryHistoryEntity.builder()
+            return VetRagQueryHistoryEntity.builder()
                 .userId(userId)
                 .sessionId(sessionId)
                 .query(query)
@@ -134,14 +126,12 @@ public class HistoryService {
                 .queryTime(queryTime)
                 .confidence(confidence)
                 .enableGeneration(true)
-                .createTime(LocalDateTime.now())
-                .updateTime(LocalDateTime.now())
                 .build();
                 
         } catch (Exception e) {
             log.error("构建历史记录实体失败", e);
             // 返回基础实体
-            return RagQueryHistoryEntity.builder()
+            return VetRagQueryHistoryEntity.builder()
                 .userId(userId)
                 .sessionId(sessionId)
                 .query(query)
@@ -151,8 +141,6 @@ public class HistoryService {
                 .queryTime(queryTime)
                 .confidence(confidence)
                 .enableGeneration(true)
-                .createTime(LocalDateTime.now())
-                .updateTime(LocalDateTime.now())
                 .build();
         }
     }

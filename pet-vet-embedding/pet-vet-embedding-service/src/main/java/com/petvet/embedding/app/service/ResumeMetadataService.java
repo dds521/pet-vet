@@ -4,7 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.petvet.embedding.api.dto.ResumeMetadata;
 import com.petvet.embedding.api.resp.ResumeMetadataResp;
-import com.petvet.embedding.app.domain.ResumeMetadataEntity;
+import com.petvet.embedding.app.domain.VetEmbeddingResumeMetadataEntity;
 import com.petvet.embedding.app.mapper.ResumeMetadataMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,10 +36,10 @@ public class ResumeMetadataService {
         }
         
         // 转换为数据库实体
-        ResumeMetadataEntity entity = convertToEntity(metadata);
+        VetEmbeddingResumeMetadataEntity entity = convertToEntity(metadata);
         
         // 检查是否已存在
-        ResumeMetadataEntity existing = metadataMapper.selectById(metadata.getResumeId());
+        VetEmbeddingResumeMetadataEntity existing = metadataMapper.selectById(metadata.getResumeId());
         if (existing != null) {
             // 更新
             entity.setUpdateTime(LocalDateTime.now());
@@ -62,7 +62,7 @@ public class ResumeMetadataService {
             return null;
         }
         
-        ResumeMetadataEntity entity = metadataMapper.selectById(resumeId);
+        VetEmbeddingResumeMetadataEntity entity = metadataMapper.selectById(resumeId);
         if (entity == null) {
             return null;
         }
@@ -103,7 +103,7 @@ public class ResumeMetadataService {
      * 用于获取所有向量ID以便删除向量数据库中的数据
      */
     public List<ResumeMetadataResp> getAll() {
-        List<ResumeMetadataEntity> entities = metadataMapper.selectList(new LambdaQueryWrapper<>());
+        List<VetEmbeddingResumeMetadataEntity> entities = metadataMapper.selectList(new LambdaQueryWrapper<>());
         return entities.stream()
             .map(this::convertToResp)
             .collect(Collectors.toList());
@@ -122,19 +122,19 @@ public class ResumeMetadataService {
     /**
      * 将ResumeMetadata转换为数据库实体
      */
-    private ResumeMetadataEntity convertToEntity(ResumeMetadata metadata) {
+    private VetEmbeddingResumeMetadataEntity convertToEntity(ResumeMetadata metadata) {
         // 序列化vectorIds为JSON字符串
         String vectorIdsJson = null;
         if (metadata.getVectorIds() != null && !metadata.getVectorIds().isEmpty()) {
             vectorIdsJson = JSONUtil.toJsonStr(metadata.getVectorIds());
         }
         
-        return ResumeMetadataEntity.builder()
+        return VetEmbeddingResumeMetadataEntity.builder()
             .resumeId(metadata.getResumeId())
             .fileName(metadata.getFileName())
             .name(metadata.getName())
             .position(metadata.getPosition())
-            .version(metadata.getVersion())
+            .versionTag(metadata.getVersion())
             .contactInfo(metadata.getContactInfo())
             .fileSize(metadata.getFileSize())
             .parseTime(metadata.getParseTime())
@@ -146,7 +146,7 @@ public class ResumeMetadataService {
     /**
      * 将数据库实体转换为ResumeMetadataResp
      */
-    private ResumeMetadataResp convertToResp(ResumeMetadataEntity entity) {
+    private ResumeMetadataResp convertToResp(VetEmbeddingResumeMetadataEntity entity) {
         // 反序列化vectorIds JSON字符串为List
         List<String> vectorIds = null;
         if (entity.getVectorIdsJson() != null && !entity.getVectorIdsJson().trim().isEmpty()) {
@@ -162,7 +162,7 @@ public class ResumeMetadataService {
             .fileName(entity.getFileName())
             .name(entity.getName())
             .position(entity.getPosition())
-            .version(entity.getVersion())
+            .version(entity.getVersionTag())
             .contactInfo(entity.getContactInfo())
             .fileSize(entity.getFileSize())
             .parseTime(entity.getParseTime())

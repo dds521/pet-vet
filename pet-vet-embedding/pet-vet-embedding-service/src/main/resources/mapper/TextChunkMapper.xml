@@ -3,15 +3,15 @@
 <mapper namespace="com.petvet.embedding.app.mapper.TextChunkMapper">
     
     <!-- 根据简历ID查询所有Chunks -->
-    <select id="selectByResumeId" resultType="com.petvet.embedding.app.domain.TextChunkEntity">
-        SELECT * FROM text_chunk
+    <select id="selectByResumeId" resultType="com.petvet.embedding.app.domain.VetEmbeddingTextChunkEntity">
+        SELECT * FROM vet_embedding_text_chunk
         WHERE resume_id = #{resumeId}
         ORDER BY sequence ASC
     </select>
     
     <!-- 根据Chunk ID列表批量查询 -->
-    <select id="selectByChunkIds" resultType="com.petvet.embedding.app.domain.TextChunkEntity">
-        SELECT * FROM text_chunk
+    <select id="selectByChunkIds" resultType="com.petvet.embedding.app.domain.VetEmbeddingTextChunkEntity">
+        SELECT * FROM vet_embedding_text_chunk
         WHERE chunk_id IN
         <foreach collection="chunkIds" item="chunkId" open="(" separator="," close=")">
             #{chunkId}
@@ -20,7 +20,7 @@
     
     <!-- 根据简历ID删除所有Chunks -->
     <delete id="deleteByResumeId">
-        DELETE FROM text_chunk
+        DELETE FROM vet_embedding_text_chunk
         WHERE resume_id = #{resumeId}
     </delete>
     

@@ -3,26 +3,28 @@ package com.petvet.embedding.app.domain;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.petvet.common.domain.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 /**
  * 文本Chunk数据库实体类
  * 
  * 用于数据库持久化存储文本Chunk信息
  * 
- * @author PetVetEmbedding Team
+ * @author daidasheng
+ * @date 2024-12-19
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("text_chunk")
-public class TextChunkEntity {
+@EqualsAndHashCode(callSuper = true)
+@TableName("vet_embedding_text_chunk")
+public class VetEmbeddingTextChunkEntity extends BaseEntity {
     
     /**
      * Chunk ID（主键，向量数据库中的ID）
@@ -59,14 +61,4 @@ public class TextChunkEntity {
      * 在原文中的结束位置
      */
     private Integer endPosition;
-    
-    /**
-     * 创建时间
-     */
-    private LocalDateTime createTime;
-    
-    /**
-     * 更新时间
-     */
-    private LocalDateTime updateTime;
 }

@@ -1,6 +1,6 @@
 package com.petvetai.app.service;
 
-import com.petvetai.app.domain.TransactionLog;
+import com.petvetai.app.domain.VetAiTransactionLog;
 import com.petvetai.app.mapper.TransactionLogMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -218,9 +218,9 @@ class RocketMQTransactionTest {
         }
         
         // 验证数据库中没有保存记录（因为回滚了）
-        TransactionLog savedLog = transactionLogMapper.selectOne(
-            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<TransactionLog>()
-                .eq(TransactionLog::getTransactionId, result.getTransactionId())
+        VetAiTransactionLog savedLog = transactionLogMapper.selectOne(
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<VetAiTransactionLog>()
+                .eq(VetAiTransactionLog::getTransactionId, result.getTransactionId())
         );
         
         assertNull(savedLog, "数据库操作应该被回滚，不应该有记录");
@@ -266,9 +266,9 @@ class RocketMQTransactionTest {
         }
         
         // 验证数据库中保存了记录
-        TransactionLog savedLog = transactionLogMapper.selectOne(
-            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<TransactionLog>()
-                .eq(TransactionLog::getTransactionId, result.getTransactionId())
+        VetAiTransactionLog savedLog = transactionLogMapper.selectOne(
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<VetAiTransactionLog>()
+                .eq(VetAiTransactionLog::getTransactionId, result.getTransactionId())
         );
         
         assertNotNull(savedLog, "数据库操作应该成功，应该有记录");

@@ -1,0 +1,70 @@
+-- ============================================
+-- PetVet MCP 模块数据库初始化脚本
+-- 数据库：pet_vet
+-- 模块：pet-vet-mcp
+-- 创建时间：2024-12-19
+-- ============================================
+
+-- 使用数据库
+USE pet_vet;
+
+-- ============================================
+-- 说明：
+-- 当前 pet-vet-mcp 服务使用内存存储（ConcurrentHashMap）管理 MCP 服务器信息
+-- 如果未来需要持久化 MCP 服务器信息到数据库，可以在此脚本中添加表结构定义
+-- 
+-- 建议的表结构：
+-- 1. vet_mcp_server_info: MCP 服务器信息表
+-- 2. vet_mcp_server_connection_log: MCP 服务器连接日志表
+-- ============================================
+
+-- ============================================
+-- 示例：MCP 服务器信息表（如果需要持久化）
+-- ============================================
+-- DROP TABLE IF EXISTS `vet_mcp_server_info`;
+-- CREATE TABLE `vet_mcp_server_info` (
+--     `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+--     `name` VARCHAR(100) NOT NULL COMMENT '服务器名称（唯一标识）',
+--     `description` VARCHAR(500) DEFAULT NULL COMMENT '服务器描述',
+--     `status` VARCHAR(20) NOT NULL DEFAULT 'REGISTERED' COMMENT '服务器状态：REGISTERED-已注册, CONNECTED-已连接, DISCONNECTED-已断开',
+--     `transport_type` VARCHAR(20) NOT NULL COMMENT '传输类型：stdio, http, sse',
+--     `command` VARCHAR(500) DEFAULT NULL COMMENT '命令（stdio 传输类型）',
+--     `args` TEXT COMMENT '命令参数（JSON格式）',
+--     `url` VARCHAR(500) DEFAULT NULL COMMENT 'URL（http/sse 传输类型）',
+--     `headers` TEXT COMMENT '请求头（JSON格式）',
+--     `metadata` TEXT COMMENT '服务器元数据（JSON格式）',
+--     `registered_at` BIGINT(20) DEFAULT NULL COMMENT '注册时间（时间戳）',
+--     `last_connected_at` BIGINT(20) DEFAULT NULL COMMENT '最后连接时间（时间戳）',
+--     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+--     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+--     `create_by` VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+--     `update_by` VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+--     `is_void` INT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除标识：0-未删除，1-已删除',
+--     `version` INT(11) NOT NULL DEFAULT 0 COMMENT '版本号（乐观锁）',
+--     PRIMARY KEY (`id`),
+--     UNIQUE KEY `uk_name` (`name`),
+--     KEY `idx_status` (`status`),
+--     KEY `idx_is_void` (`is_void`)
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='MCP服务器信息表';
+
+-- ============================================
+-- 示例：MCP 服务器连接日志表（如果需要记录连接历史）
+-- ============================================
+-- DROP TABLE IF EXISTS `vet_mcp_server_connection_log`;
+-- CREATE TABLE `vet_mcp_server_connection_log` (
+--     `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+--     `server_name` VARCHAR(100) NOT NULL COMMENT '服务器名称',
+--     `action` VARCHAR(20) NOT NULL COMMENT '操作类型：CONNECT-连接, DISCONNECT-断开, ERROR-错误',
+--     `message` TEXT COMMENT '操作消息或错误信息',
+--     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+--     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+--     `create_by` VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+--     `update_by` VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+--     `is_void` INT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除标识：0-未删除，1-已删除',
+--     `version` INT(11) NOT NULL DEFAULT 0 COMMENT '版本号（乐观锁）',
+--     PRIMARY KEY (`id`),
+--     KEY `idx_server_name` (`server_name`),
+--     KEY `idx_action` (`action`),
+--     KEY `idx_create_time` (`create_time`),
+--     KEY `idx_is_void` (`is_void`)
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='MCP服务器连接日志表';

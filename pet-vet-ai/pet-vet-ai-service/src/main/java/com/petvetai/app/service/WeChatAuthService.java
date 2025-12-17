@@ -3,7 +3,7 @@ package com.petvetai.app.service;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.petvetai.app.domain.WeChatUser;
+import com.petvetai.app.domain.VetAiWeChatUser;
 import com.petvetai.app.mapper.WeChatUserMapper;
 import com.petvetai.app.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -103,17 +103,16 @@ public class WeChatAuthService {
         redisTemplate.opsForValue().set(redisKey, sessionKey, sessionKeyExpireSeconds, TimeUnit.SECONDS);
         
         // 3. 查询或创建用户
-        WeChatUser user = weChatUserMapper.selectByOpenId(openId);
+        VetAiWeChatUser user = weChatUserMapper.selectByOpenId(openId);
         if (user == null) {
             // 新用户，创建账户
-            user = new WeChatUser(openId);
+            user = new VetAiWeChatUser(openId);
             user.setUnionId(session.getUnionId());
             weChatUserMapper.insert(user);
             log.info("创建新用户，openId: {}, userId: {}", openId, user.getId());
         } else {
             // 老用户，更新最后登录时间
             user.setLastLoginTime(LocalDateTime.now());
-            user.setUpdateTime(LocalDateTime.now());
             if (session.getUnionId() != null && user.getUnionId() == null) {
                 // 如果之前没有unionId，现在有了，则更新
                 user.setUnionId(session.getUnionId());
@@ -140,7 +139,7 @@ public class WeChatAuthService {
      */
     @Transactional
     public void updateUserInfo(String openId, WeChatUserInfo userInfo) {
-        WeChatUser user = weChatUserMapper.selectByOpenId(openId);
+        VetAiWeChatUser user = weChatUserMapper.selectByOpenId(openId);
         if (user == null) {
             throw new RuntimeException("用户不存在");
         }
@@ -168,7 +167,6 @@ public class WeChatAuthService {
             user.setLanguage(userInfo.getLanguage());
         }
         
-        user.setUpdateTime(LocalDateTime.now());
         weChatUserMapper.updateById(user);
         
         log.info("更新用户信息成功，openId: {}", openId);
@@ -267,9 +265,9 @@ public class WeChatAuthService {
      */
     public static class LoginResult {
         private String token;
-        private WeChatUser user;
+        private VetAiWeChatUser user;
         
-        public LoginResult(String token, WeChatUser user) {
+        public LoginResult(String token, VetAiWeChatUser user) {
             this.token = token;
             this.user = user;
         }
@@ -282,11 +280,11 @@ public class WeChatAuthService {
             this.token = token;
         }
         
-        public WeChatUser getUser() {
+        public VetAiWeChatUser getUser() {
             return user;
         }
         
-        public void setUser(WeChatUser user) {
+        public void setUser(VetAiWeChatUser user) {
             this.user = user;
         }
     }
