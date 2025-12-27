@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateUserInfoRequest {
+public class UpdateUserInfoReq {
     
     /**
      * 微信openId

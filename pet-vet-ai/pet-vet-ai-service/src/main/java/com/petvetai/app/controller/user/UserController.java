@@ -2,8 +2,8 @@ package com.petvetai.app.controller.user;
 
 import com.petvetai.app.application.user.UserApplicationService;
 import com.petvetai.app.application.user.UserApplicationService.WeChatLoginResult;
-import com.petvetai.app.dto.req.LoginRequest;
-import com.petvetai.app.dto.req.UpdateUserInfoRequest;
+import com.petvetai.app.dto.req.LoginReq;
+import com.petvetai.app.dto.req.UpdateUserInfoReq;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +38,7 @@ public class UserController {
      * @date 2024-12-20
      */
     @PostMapping("/wechat/login")
-    public ResponseEntity<Map<String, Object>> weChatLogin(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<Map<String, Object>> weChatLogin(@Valid @RequestBody LoginReq request) {
         log.info("收到微信登录请求，code: {}", request.getCode());
         
         try {
@@ -81,7 +81,7 @@ public class UserController {
      * @date 2024-12-20
      */
     @PostMapping("/wechat/userinfo")
-    public ResponseEntity<Map<String, Object>> updateUserInfo(@Valid @RequestBody UpdateUserInfoRequest request) {
+    public ResponseEntity<Map<String, Object>> updateUserInfo(@Valid @RequestBody UpdateUserInfoReq request) {
         log.info("收到更新用户信息请求，openId: {}", request.getOpenId());
         
         try {
