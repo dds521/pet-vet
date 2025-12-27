@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.petvetai.infrastructure.persistence.doctor.mapper.DoctorMapper">
+    
+    <!-- 
+        医生Mapper XML映射文件
+        
+        说明：
+        1. 简单查询已使用注解方式实现（@Select等）
+        2. 如需复杂查询（如多表关联、动态SQL等），可在此文件中添加
+        3. 当前所有查询均使用注解方式，此文件作为占位符保留
+        
+        @author daidasheng
+        @date 2024-12-27
+    -->
+    
+</mapper>
