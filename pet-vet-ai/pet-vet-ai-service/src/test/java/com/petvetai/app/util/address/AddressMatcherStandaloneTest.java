@@ -1,7 +1,9 @@
 package com.petvetai.app.util.address;
 
-import com.petvetai.app.domain.address.AdministrativeDivision;
-import com.petvetai.app.domain.address.MatchResult;
+import com.petvetai.infrastructure.util.address.AdministrativeDivision;
+import com.petvetai.infrastructure.util.address.MatchResult;
+import com.petvetai.infrastructure.util.address.AddressIndex;
+import com.petvetai.infrastructure.util.address.AddressMatcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,11 +31,16 @@ class AddressMatcherStandaloneTest {
         
         // 准备测试数据
         List<AdministrativeDivision> divisions = new ArrayList<>();
-        divisions.add(new AdministrativeDivision("33011", "浙江省", "杭州市", "余杭区", "仓前街道"));
-        divisions.add(new AdministrativeDivision("33012", "浙江省", "杭州市", "余杭区", "五常街道"));
-        divisions.add(new AdministrativeDivision("33013", "浙江省", "杭州市", "西湖区", "蒋村街道"));
-        divisions.add(new AdministrativeDivision("11001", "北京市", "北京市", "海淀区", "中关村街道"));
-        divisions.add(new AdministrativeDivision("31001", "上海市", "上海市", "黄浦区", "外滩街道"));
+        divisions.add(new AdministrativeDivision("33011", "浙江省", "杭州市", "余杭区", "仓前街道", 
+            "浙江省杭州市余杭区仓前街道", 4));
+        divisions.add(new AdministrativeDivision("33012", "浙江省", "杭州市", "余杭区", "五常街道", 
+            "浙江省杭州市余杭区五常街道", 4));
+        divisions.add(new AdministrativeDivision("33013", "浙江省", "杭州市", "西湖区", "蒋村街道", 
+            "浙江省杭州市西湖区蒋村街道", 4));
+        divisions.add(new AdministrativeDivision("11001", "北京市", "北京市", "海淀区", "中关村街道", 
+            "北京市海淀区中关村街道", 4));
+        divisions.add(new AdministrativeDivision("31001", "上海市", "上海市", "黄浦区", "外滩街道", 
+            "上海市黄浦区外滩街道", 4));
         
         index.buildIndex(divisions);
     }

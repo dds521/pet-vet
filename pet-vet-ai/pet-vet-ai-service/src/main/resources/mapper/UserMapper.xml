@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.petvetai.infrastructure.persistence.user.mapper.UserMapper">
+    
+    <!-- 根据openId查询用户 -->
+    <select id="selectByOpenId" resultType="com.petvetai.infrastructure.persistence.user.po.UserPO">
+        SELECT * FROM vet_ai_wechat_user
+        WHERE open_id = #{openId}
+        AND is_void = 0
+        LIMIT 1
+    </select>
+    
+    <!-- 根据unionId查询用户 -->
+    <select id="selectByUnionId" resultType="com.petvetai.infrastructure.persistence.user.po.UserPO">
+        SELECT * FROM vet_ai_wechat_user
+        WHERE union_id = #{unionId}
+        AND is_void = 0
+        LIMIT 1
+    </select>
+    
+</mapper>

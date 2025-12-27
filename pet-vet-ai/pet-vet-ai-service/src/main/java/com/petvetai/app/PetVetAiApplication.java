@@ -19,7 +19,9 @@ import org.springframework.core.env.Environment;
  * @date 2024-12-16
  */
 @SpringBootApplication
-@MapperScan("com.petvetai.app.mapper")
+@MapperScan({"com.petvetai.infrastructure.persistence.user.mapper", 
+             "com.petvetai.infrastructure.persistence.pet.mapper",
+             "com.petvetai.infrastructure.persistence.transaction.mapper"})
 @EnableFeignClients(basePackages = {"com.petvet.rag.api.feign"})
 public class PetVetAiApplication {
 

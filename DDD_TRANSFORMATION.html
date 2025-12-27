@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetVet 项目 DDD 领域驱动设计改造方案</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #7f8c8d;
+            margin-top: 20px;
+        }
+        h4 {
+            color: #95a5a6;
+            margin-top: 15px;
+        }
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border: 1px solid #e0e0e0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: "Courier New", monospace;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            border-left: 4px solid #3498db;
+        }
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 30px;
+        }
+        .summary {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #4caf50;
+        }
+        .warning {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .info {
+            background-color: #d1ecf1;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #17a2b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PetVet 项目 DDD 领域驱动设计改造方案</h1>
+        
+        <div class="info">
+            <strong>文档信息</strong><br>
+            版本：v1.0<br>
+            创建日期：2024-12-20<br>
+            作者：daidasheng<br>
+            审核状态：待审核
+        </div>
+
+        <h2>目录</h2>
+        <ol>
+            <li><a href="#section1">DDD 领域驱动设计概述</a></li>
+            <li><a href="#section2">当前项目架构分析</a></li>
+            <li><a href="#section3">DDD 改造目标</a></li>
+            <li><a href="#section4">领域识别与划分</a></li>
+            <li><a href="#section5">DDD 分层架构设计</a></li>
+            <li><a href="#section6">详细改造方案</a></li>
+            <li><a href="#section7">迁移步骤</a></li>
+            <li><a href="#section8">架构图</a></li>
+            <li><a href="#section9">总结</a></li>
+        </ol>
+    </div>
+
+    <div class="container" id="section1">
+        <h2>1. DDD 领域驱动设计概述</h2>
+        
+        <h3>1.1 什么是 DDD</h3>
+        <p><strong>领域驱动设计（Domain-Driven Design，DDD）</strong> 是一种软件开发方法论，由 Eric Evans 在 2003 年提出。DDD 的核心思想是：</p>
+        <ul>
+            <li><strong>以业务领域为中心</strong>：将业务逻辑作为软件设计的核心，而不是技术实现</li>
+            <li><strong>统一语言（Ubiquitous Language）</strong>：开发团队和业务专家使用相同的术语和概念</li>
+            <li><strong>领域模型（Domain Model）</strong>：通过领域模型来表达业务概念和规则</li>
+            <li><strong>分层架构</strong>：将业务逻辑与技术实现分离，确保领域模型的纯净性</li>
+        </ul>
+
+        <h3>1.2 DDD 核心概念</h3>
+        <table>
+            <tr>
+                <th>概念</th>
+                <th>说明</th>
+            </tr>
+            <tr>
+                <td><strong>领域（Domain）</strong></td>
+                <td>业务所涉及的范围，包含业务概念、规则和流程</td>
+            </tr>
+            <tr>
+                <td><strong>子领域（Subdomain）</strong></td>
+                <td>核心域（核心竞争力）、支撑域（支持业务）、通用域（通用功能）</td>
+            </tr>
+            <tr>
+                <td><strong>限界上下文（Bounded Context）</strong></td>
+                <td>领域模型的边界，每个限界上下文都有独立的领域模型和统一语言</td>
+            </tr>
+            <tr>
+                <td><strong>实体（Entity）</strong></td>
+                <td>具有唯一标识的对象，通过ID区分不同实例</td>
+            </tr>
+            <tr>
+                <td><strong>值对象（Value Object）</strong></td>
+                <td>没有唯一标识的对象，通过属性值区分，不可变</td>
+            </tr>
+            <tr>
+                <td><strong>聚合（Aggregate）</strong></td>
+                <td>一组相关对象的集合，聚合根是唯一的外部访问入口</td>
+            </tr>
+            <tr>
+                <td><strong>领域服务（Domain Service）</strong></td>
+                <td>不属于任何实体或值对象的业务逻辑，通常涉及多个聚合</td>
+            </tr>
+            <tr>
+                <td><strong>仓储（Repository）</strong></td>
+                <td>封装数据访问逻辑，提供领域对象的持久化接口</td>
+            </tr>
+            <tr>
+                <td><strong>应用服务（Application Service）</strong></td>
+                <td>协调领域对象完成业务用例，不包含业务逻辑</td>
+            </tr>
+            <tr>
+                <td><strong>领域事件（Domain Event）</strong></td>
+                <td>领域模型中发生的重要业务事件</td>
+            </tr>
+        </table>
+
+        <h3>1.3 DDD 分层架构</h3>
+        <div class="mermaid">
+graph TB
+    A[用户界面层<br/>User Interface<br/>- Controller<br/>- DTO] --> B[应用服务层<br/>Application<br/>- Application Service<br/>- 用例编排]
+    B --> C[领域层<br/>Domain<br/>- Entity 实体<br/>- Value Object 值对象<br/>- Aggregate 聚合<br/>- Domain Service 领域服务<br/>- Domain Event 领域事件]
+    C --> D[基础设施层<br/>Infrastructure<br/>- Repository 实现<br/>- 数据库访问<br/>- 消息队列<br/>- 外部服务调用]
+    
+    style A fill:#e3f2fd
+    style B fill:#e1f5ff
+    style C fill:#fff4e1
+    style D fill:#e8f5e9
+        </div>
+    </div>
+
+    <div class="container" id="section2">
+        <h2>2. 当前项目架构分析</h2>
+        
+        <h3>2.1 当前架构特点</h3>
+        <p>当前 PetVet 项目采用传统的<strong>三层架构</strong>：</p>
+        <pre>Controller 层 → Service 层 → Mapper 层 → Database</pre>
+        
+        <p><strong>目录结构：</strong></p>
+        <pre>
+pet-vet-ai-service/
+├── controller/          # 控制器层
+├── service/             # 服务层（业务逻辑）
+├── domain/              # 实体类（主要是数据对象）
+├── mapper/              # 数据访问层
+├── dto/                 # 数据传输对象
+└── util/                # 工具类
+        </pre>
+
+        <h3>2.2 当前架构存在的问题</h3>
+        <div class="warning">
+            <ol>
+                <li><strong>领域模型缺失</strong>：domain 包中的类主要是数据对象（贫血模型），缺少业务逻辑</li>
+                <li><strong>职责不清</strong>：Service 层既包含业务逻辑，又包含技术实现（如 Redis、MQ 等）</li>
+                <li><strong>业务规则分散</strong>：业务规则散布在各个 Service 方法中，难以维护和复用</li>
+                <li><strong>领域概念不清晰</strong>：没有明确的领域边界和限界上下文</li>
+                <li><strong>技术实现与业务逻辑耦合</strong>：业务逻辑中直接使用 Redis、MQ 等技术组件</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="container" id="section3">
+        <h2>3. DDD 改造目标</h2>
+        
+        <h3>3.1 核心目标</h3>
+        <ul>
+            <li><strong>建立清晰的领域模型</strong>：识别核心业务概念（实体、值对象、聚合）</li>
+            <li><strong>明确领域边界</strong>：识别限界上下文，定义上下文映射关系</li>
+            <li><strong>分层架构清晰</strong>：分离业务逻辑和技术实现，确保领域层的纯净性</li>
+            <li><strong>提高代码可维护性</strong>：业务规则集中管理，代码结构清晰</li>
+            <li><strong>支持业务扩展</strong>：领域模型易于扩展，支持新业务需求快速接入</li>
+        </ul>
+
+        <h3>3.2 改造原则</h3>
+        <ul>
+            <li><strong>渐进式改造</strong>：不进行大规模重构，采用渐进式迁移</li>
+            <li><strong>向后兼容</strong>：保持现有 API 接口不变</li>
+            <li><strong>测试驱动</strong>：确保改造过程中功能不受影响</li>
+            <li><strong>领域优先</strong>：以业务领域为中心进行设计</li>
+        </ul>
+    </div>
+
+    <div class="container" id="section4">
+        <h2>4. 领域识别与划分</h2>
+        
+        <h3>4.1 领域识别</h3>
+        <p>基于当前 PetVet 项目的业务功能，识别出以下核心领域：</p>
+        
+        <table>
+            <tr>
+                <th>领域</th>
+                <th>核心概念</th>
+                <th>业务规则</th>
+            </tr>
+            <tr>
+                <td><strong>用户域</strong></td>
+                <td>用户、微信用户、账户</td>
+                <td>用户注册、登录、微信授权登录、用户信息管理</td>
+            </tr>
+            <tr>
+                <td><strong>宠物域</strong></td>
+                <td>宠物、宠物信息、宠物档案</td>
+                <td>宠物信息管理、宠物档案维护、宠物健康记录</td>
+            </tr>
+            <tr>
+                <td><strong>诊断域</strong></td>
+                <td>诊断、症状、诊断结果</td>
+                <td>症状分析、诊断建议生成、诊断历史记录</td>
+            </tr>
+            <tr>
+                <td><strong>订单域</strong></td>
+                <td>订单、交易、支付</td>
+                <td>订单创建、支付、订单状态流转、交易记录管理</td>
+            </tr>
+            <tr>
+                <td><strong>地址域</strong></td>
+                <td>地址、行政区划、地址匹配</td>
+                <td>地址解析、地址匹配、行政区划管理</td>
+            </tr>
+            <tr>
+                <td><strong>RAG 域</strong></td>
+                <td>查询、检索、知识库、对话记忆</td>
+                <td>查询分类、向量检索、对话记忆管理、答案生成</td>
+            </tr>
+        </table>
+
+        <h3>4.2 限界上下文划分</h3>
+        <div class="mermaid">
+graph TB
+    subgraph "PetVet 系统"
+        A[用户上下文<br/>User Context]
+        B[宠物上下文<br/>Pet Context]
+        C[诊断上下文<br/>Diagnosis Context]
+        D[订单上下文<br/>Order Context]
+        E[地址上下文<br/>Address Context]
+        F[RAG上下文<br/>RAG Context]
+    end
+    
+    A -->|拥有| B
+    A -->|创建| D
+    B -->|进行| C
+    C -->|使用| F
+    D -->|包含| E
+    
+    style A fill:#e3f2fd
+    style B fill:#e1f5ff
+    style C fill:#fff4e1
+    style D fill:#e8f5e9
+    style E fill:#f3e5f5
+    style F fill:#fff9c4
+        </div>
+
+        <h3>4.3 上下文映射关系</h3>
+        <ul>
+            <li><strong>用户上下文 ↔ 宠物上下文</strong>：用户拥有宠物（共享内核）</li>
+            <li><strong>用户上下文 ↔ 订单上下文</strong>：用户创建订单（客户-供应商）</li>
+            <li><strong>宠物上下文 ↔ 诊断上下文</strong>：宠物进行诊断（客户-供应商）</li>
+            <li><strong>诊断上下文 ↔ RAG上下文</strong>：诊断使用RAG能力（客户-供应商）</li>
+            <li><strong>订单上下文 ↔ 地址上下文</strong>：订单包含地址信息（共享内核）</li>
+        </ul>
+    </div>
+
+    <div class="container" id="section5">
+        <h2>5. DDD 分层架构设计</h2>
+        
+        <h3>5.1 新的目录结构</h3>
+        <pre>
+pet-vet-ai-service/
+├── src/main/java/com/petvetai/
+│   ├── app/                          # 应用层
+│   │   ├── application/              # 应用服务
+│   │   │   ├── user/                 # 用户应用服务
+│   │   │   ├── pet/                  # 宠物应用服务
+│   │   │   ├── diagnosis/            # 诊断应用服务
+│   │   │   ├── order/                # 订单应用服务
+│   │   │   └── address/              # 地址应用服务
+│   │   ├── controller/               # 控制器（用户界面层）
+│   │   │   ├── user/
+│   │   │   ├── pet/
+│   │   │   ├── diagnosis/
+│   │   │   ├── order/
+│   │   │   └── address/
+│   │   └── dto/                      # 数据传输对象
+│   │
+│   ├── domain/                       # 领域层（核心）
+│   │   ├── user/                     # 用户域
+│   │   │   ├── model/                # 领域模型
+│   │   │   │   ├── User.java         # 用户实体（聚合根）
+│   │   │   │   ├── UserId.java       # 用户ID值对象
+│   │   │   │   └── WeChatInfo.java   # 微信信息值对象
+│   │   │   ├── service/              # 领域服务
+│   │   │   ├── repository/           # 仓储接口
+│   │   │   ├── event/                # 领域事件
+│   │   │   └── exception/            # 领域异常
+│   │   ├── pet/                      # 宠物域
+│   │   ├── diagnosis/                # 诊断域
+│   │   ├── order/                    # 订单域
+│   │   └── address/                  # 地址域
+│   │
+│   └── infrastructure/               # 基础设施层
+│       ├── persistence/              # 持久化实现
+│       ├── external/                 # 外部服务调用
+│       ├── messaging/                # 消息队列
+│       ├── cache/                    # 缓存
+│       └── config/                   # 配置
+        </pre>
+
+        <h3>5.2 分层职责说明</h3>
+        <table>
+            <tr>
+                <th>层次</th>
+                <th>职责</th>
+                <th>包含</th>
+                <th>特点</th>
+            </tr>
+            <tr>
+                <td><strong>用户界面层</strong></td>
+                <td>处理 HTTP 请求，参数校验，返回响应</td>
+                <td>Controller、DTO</td>
+                <td>薄层，只负责协议转换</td>
+            </tr>
+            <tr>
+                <td><strong>应用服务层</strong></td>
+                <td>编排领域对象完成业务用例，事务管理</td>
+                <td>Application Service</td>
+                <td>不包含业务逻辑，只负责协调</td>
+            </tr>
+            <tr>
+                <td><strong>领域层</strong></td>
+                <td>核心业务逻辑，业务规则，领域模型</td>
+                <td>Entity、Value Object、Aggregate、Domain Service、Domain Event</td>
+                <td>最核心的一层，不依赖任何技术框架</td>
+            </tr>
+            <tr>
+                <td><strong>基础设施层</strong></td>
+                <td>技术实现，数据持久化，外部服务调用</td>
+                <td>Repository 实现、数据库访问、消息队列、缓存等</td>
+                <td>实现领域层定义的接口</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="container" id="section6">
+        <h2>6. 详细改造方案</h2>
+        
+        <h3>6.1 用户域改造示例</h3>
+        
+        <h4>6.1.1 用户聚合根（User Aggregate Root）</h4>
+        <pre><code>package com.petvetai.domain.user.model;
+
+/**
+ * 用户聚合根
+ * 
+ * 用户是用户域的聚合根，负责管理用户相关的所有业务逻辑
+ * 
+ * @author daidasheng
+ * @date 2024-12-20
+ */
+public class User {
+    
+    private UserId id;                    // 用户ID值对象
+    private String nickName;              // 昵称
+    private String avatarUrl;              // 头像
+    private UserStatus status;             // 用户状态值对象
+    private LocalDateTime lastLoginTime;   // 最后登录时间
+    private WeChatInfo weChatInfo;         // 微信信息值对象
+    
+    /**
+     * 用户注册
+     * 
+     * @param weChatInfo 微信信息
+     * @return 注册后的用户
+     * @author daidasheng
+     * @date 2024-12-20
+     */
+    public static User register(WeChatInfo weChatInfo) {
+        User user = new User();
+        user.id = UserId.generate();
+        user.weChatInfo = weChatInfo;
+        user.status = UserStatus.ACTIVE;
+        user.lastLoginTime = LocalDateTime.now();
+        
+        // 发布领域事件
+        DomainEventPublisher.publish(new UserRegisteredEvent(user.id));
+        
+        return user;
+    }
+    
+    /**
+     * 更新登录时间
+     * 
+     * @author daidasheng
+     * @date 2024-12-20
+     */
+    public void updateLoginTime() {
+        this.lastLoginTime = LocalDateTime.now();
+    }
+    
+    /**
+     * 更新用户信息
+     * 
+     * @param nickName 昵称
+     * @param avatarUrl 头像
+     * @author daidasheng
+     * @date 2024-12-20
+     */
+    public void updateProfile(String nickName, String avatarUrl) {
+        if (StringUtils.isBlank(nickName)) {
+            throw new IllegalArgumentException("昵称不能为空");
+        }
+        this.nickName = nickName;
+        this.avatarUrl = avatarUrl;
+    }
+    
+    // Getters
+    public UserId getId() { return id; }
+    public String getNickName() { return nickName; }
+}</code></pre>
+
+        <h4>6.1.2 用户ID值对象（UserId Value Object）</h4>
+        <pre><code>package com.petvetai.domain.user.model;
+
+/**
+ * 用户ID值对象
+ * 
+ * 值对象，不可变，通过值来区分
+ * 
+ * @author daidasheng
+ * @date 2024-12-20
+ */
+public class UserId implements ValueObject&lt;UserId&gt; {
+    
+    private final Long value;
+    
+    private UserId(Long value) {
+        if (value == null || value &lt;= 0) {
+            throw new IllegalArgumentException("用户ID必须大于0");
+        }
+        this.value = value;
+    }
+    
+    public static UserId of(Long value) {
+        return new UserId(value);
+    }
+    
+    public static UserId generate() {
+        return new UserId(SnowflakeIdGenerator.generate());
+    }
+    
+    public Long getValue() {
+        return value;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserId userId = (UserId) o;
+        return Objects.equals(value, userId.value);
+    }
+}</code></pre>
+
+        <h4>6.1.3 仓储接口（Repository Interface）</h4>
+        <pre><code>package com.petvetai.domain.user.repository;
+
+/**
+ * 用户仓储接口
+ * 
+ * 定义用户聚合的持久化接口，实现在基础设施层
+ * 
+ * @author daidasheng
+ * @date 2024-12-20
+ */
+public interface UserRepository {
+    
+    /**
+     * 保存用户
+     * 
+     * @param user 用户聚合根
+     * @author daidasheng
+     * @date 2024-12-20
+     */
+    void save(User user);
+    
+    /**
+     * 根据ID查找用户
+     * 
+     * @param userId 用户ID
+     * @return 用户聚合根
+     * @author daidasheng
+     * @date 2024-12-20
+     */
+    User findById(UserId userId);
+    
+    /**
+     * 根据openId查找用户
+     * 
+     * @param openId 微信openId
+     * @return 用户聚合根
+     * @author daidasheng
+     * @date 2024-12-20
+     */
+    User findByOpenId(String openId);
+}</code></pre>
+
+        <h4>6.1.4 应用服务（Application Service）</h4>
+        <pre><code>package com.petvetai.app.application.user;
+
+/**
+ * 用户应用服务
+ * 
+ * 协调领域对象完成业务用例，处理事务、缓存等技术问题
+ * 
+ * @author daidasheng
+ * @date 2024-12-20
+ */
+@Service
+@RequiredArgsConstructor
+public class UserApplicationService {
+    
+    private final UserDomainService userDomainService;
+    private final JwtUtil jwtUtil;
+    private final RedisService redisService;
+    
+    /**
+     * 微信登录
+     * 
+     * @param request 登录请求
+     * @return 登录响应
+     * @author daidasheng
+     * @date 2024-12-20
+     */
+    @Transactional
+    public WeChatLoginResp weChatLogin(WeChatLoginReq request) {
+        // 1. 调用领域服务完成业务逻辑
+        User user = userDomainService.loginOrRegister(request.getCode());
+        
+        // 2. 生成JWT Token（技术实现）
+        String token = jwtUtil.generateToken(user.getId().getValue());
+        
+        // 3. 缓存sessionKey（技术实现）
+        if (user.getWeChatInfo().getSessionKey() != null) {
+            redisService.set(
+                "wechat:session:" + user.getWeChatInfo().getOpenId(),
+                user.getWeChatInfo().getSessionKey(),
+                172800  // 2天
+            );
+        }
+        
+        // 4. 转换为DTO返回
+        return WeChatLoginResp.builder()
+            .token(token)
+            .userId(user.getId().getValue())
+            .nickName(user.getNickName())
+            .avatarUrl(user.getAvatarUrl())
+            .build();
+    }
+}</code></pre>
+    </div>
+
+    <div class="container" id="section7">
+        <h2>7. 迁移步骤</h2>
+        
+        <h3>7.1 第一阶段：准备阶段（1-2周）</h3>
+        <ol>
+            <li><strong>领域建模</strong>：与业务专家讨论，识别领域概念，绘制领域模型图，定义统一语言</li>
+            <li><strong>架构设计</strong>：设计新的目录结构，定义各层职责，设计上下文映射</li>
+            <li><strong>技术准备</strong>：搭建新的包结构，准备基础类和接口，编写迁移计划</li>
+        </ol>
+
+        <h3>7.2 第二阶段：核心域改造（2-3周）</h3>
+        <ol>
+            <li><strong>用户域改造</strong>：创建用户聚合根，实现用户仓储，改造用户应用服务</li>
+            <li><strong>诊断域改造</strong>：创建诊断聚合根，实现诊断领域服务，改造诊断应用服务</li>
+        </ol>
+
+        <h3>7.3 第三阶段：支撑域改造（2-3周）</h3>
+        <ol>
+            <li><strong>宠物域改造</strong>：创建宠物聚合根，实现宠物仓储，改造宠物应用服务</li>
+            <li><strong>订单域改造</strong>：创建订单聚合根，实现订单状态机，改造订单应用服务</li>
+            <li><strong>地址域改造</strong>：创建地址值对象，实现地址匹配服务</li>
+        </ol>
+
+        <h3>7.4 第四阶段：优化与测试（1-2周）</h3>
+        <ol>
+            <li><strong>代码优化</strong>：重构冗余代码，优化性能，完善注释</li>
+            <li><strong>测试</strong>：单元测试，集成测试，回归测试</li>
+            <li><strong>文档</strong>：更新架构文档，编写开发指南，更新API文档</li>
+        </ol>
+
+        <h3>7.5 迁移策略</h3>
+        <div class="info">
+            <ul>
+                <li><strong>渐进式迁移</strong>：不进行大规模重构，新功能采用DDD设计，旧功能逐步迁移</li>
+                <li><strong>双写策略</strong>：新旧代码并行运行，逐步切换流量，验证功能正确性</li>
+                <li><strong>向后兼容</strong>：保持API接口不变，内部实现逐步改造，不影响现有功能</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container" id="section8">
+        <h2>8. 架构图</h2>
+        
+        <h3>8.1 DDD 分层架构图</h3>
+        <div class="mermaid">
+graph TB
+    subgraph "用户界面层"
+        A1[UserController]
+        A2[PetController]
+        A3[DiagController]
+    end
+    
+    subgraph "应用服务层"
+        B1[UserAppService]
+        B2[PetAppService]
+        B3[DiagAppService]
+    end
+    
+    subgraph "领域层"
+        C1[User域<br/>- Entity<br/>- VO<br/>- Service<br/>- Event]
+        C2[Pet域<br/>- Entity<br/>- VO<br/>- Service<br/>- Event]
+        C3[Diag域<br/>- Entity<br/>- VO<br/>- Service<br/>- Event]
+    end
+    
+    subgraph "基础设施层"
+        D1[Repository实现]
+        D2[External Service]
+        D3[Cache/MQ]
+    end
+    
+    A1 --> B1
+    A2 --> B2
+    A3 --> B3
+    B1 --> C1
+    B2 --> C2
+    B3 --> C3
+    C1 --> D1
+    C2 --> D1
+    C3 --> D1
+    C3 --> D2
+    B1 --> D3
+    
+    style A1 fill:#e3f2fd
+    style A2 fill:#e3f2fd
+    style A3 fill:#e3f2fd
+    style B1 fill:#e1f5ff
+    style B2 fill:#e1f5ff
+    style B3 fill:#e1f5ff
+    style C1 fill:#fff4e1
+    style C2 fill:#fff4e1
+    style C3 fill:#fff4e1
+    style D1 fill:#e8f5e9
+    style D2 fill:#e8f5e9
+    style D3 fill:#e8f5e9
+        </div>
+
+        <h3>8.2 领域模型关系图</h3>
+        <div class="mermaid">
+graph LR
+    A[User<br/>聚合根<br/>- UserId<br/>- WeChatInfo] -->|拥有| B[Pet<br/>聚合根<br/>- PetId<br/>- PetInfo]
+    B -->|进行| C[Diagnosis<br/>聚合根<br/>- DiagId<br/>- Symptom<br/>- Result]
+    
+    style A fill:#e3f2fd
+    style B fill:#e1f5ff
+    style C fill:#fff4e1
+        </div>
+
+        <h3>8.3 限界上下文关系图</h3>
+        <div class="mermaid">
+graph TB
+    A[用户上下文<br/>User Context] -->|拥有| B[宠物上下文<br/>Pet Context]
+    A -->|创建| D[订单上下文<br/>Order Context]
+    B -->|进行| C[诊断上下文<br/>Diagnosis Context]
+    C -->|使用| E[RAG上下文<br/>RAG Context]
+    D -->|包含| F[地址上下文<br/>Address Context]
+    
+    style A fill:#e3f2fd
+    style B fill:#e1f5ff
+    style C fill:#fff4e1
+    style D fill:#e8f5e9
+    style E fill:#fff9c4
+    style F fill:#f3e5f5
+        </div>
+    </div>
+
+    <div class="container" id="section9">
+        <h2>9. 总结</h2>
+        
+        <h3>9.1 改造收益</h3>
+        <div class="summary">
+            <ul>
+                <li><strong>业务逻辑清晰</strong>：业务规则集中在领域模型中，易于理解和维护</li>
+                <li><strong>代码结构清晰</strong>：分层明确，职责单一，易于扩展</li>
+                <li><strong>测试友好</strong>：领域层不依赖技术框架，易于单元测试</li>
+                <li><strong>业务扩展性强</strong>：新业务需求可以快速接入，不影响现有功能</li>
+            </ul>
+        </div>
+
+        <h3>9.2 注意事项</h3>
+        <div class="warning">
+            <ul>
+                <li><strong>不要过度设计</strong>：根据实际业务需求进行设计，避免过度抽象</li>
+                <li><strong>保持简单</strong>：在简单场景下，可以使用传统方式，不必强制使用DDD</li>
+                <li><strong>团队协作</strong>：DDD需要团队统一理解，需要培训和文档支持</li>
+                <li><strong>渐进式改造</strong>：不要一次性改造所有代码，采用渐进式迁移</li>
+            </ul>
+        </div>
+
+        <h3>9.3 下一步行动</h3>
+        <ol>
+            <li><strong>组织团队讨论</strong>：与开发团队和业务专家讨论领域模型</li>
+            <li><strong>选择试点领域</strong>：选择一个核心域进行试点改造</li>
+            <li><strong>制定详细计划</strong>：根据实际情况制定详细的迁移计划</li>
+            <li><strong>开始实施</strong>：按照计划逐步实施改造</li>
+        </ol>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+    </script>
+</body>
+</html>
+
