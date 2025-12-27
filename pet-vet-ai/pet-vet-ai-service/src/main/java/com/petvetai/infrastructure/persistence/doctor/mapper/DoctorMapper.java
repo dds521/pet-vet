@@ -2,7 +2,7 @@ package com.petvetai.infrastructure.persistence.doctor.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.petvetai.infrastructure.persistence.doctor.po.DoctorPO;
+import com.petvetai.infrastructure.persistence.doctor.po.VetAiDoctorPO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -18,7 +18,7 @@ import java.util.List;
  * @date 2024-12-27
  */
 @Mapper
-public interface DoctorMapper extends BaseMapper<DoctorPO> {
+public interface DoctorMapper extends BaseMapper<VetAiDoctorPO> {
     
     /**
      * 根据手机号查询医生
@@ -29,7 +29,7 @@ public interface DoctorMapper extends BaseMapper<DoctorPO> {
      * @date 2024-12-27
      */
     @Select("SELECT * FROM vet_ai_doctor WHERE phone = #{phone} AND is_void = 0 LIMIT 1")
-    DoctorPO selectByPhone(@Param("phone") String phone);
+    VetAiDoctorPO selectByPhone(@Param("phone") String phone);
     
     /**
      * 根据状态查询医生列表
@@ -39,11 +39,11 @@ public interface DoctorMapper extends BaseMapper<DoctorPO> {
      * @author daidasheng
      * @date 2024-12-27
      */
-    default List<DoctorPO> selectByStatus(Integer status) {
-        LambdaQueryWrapper<DoctorPO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(DoctorPO::getStatus, status)
-               .eq(DoctorPO::getIsVoid, 0)
-               .orderByDesc(DoctorPO::getCreateTime);
+    default List<VetAiDoctorPO> selectByStatus(Integer status) {
+        LambdaQueryWrapper<VetAiDoctorPO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(VetAiDoctorPO::getStatus, status)
+               .eq(VetAiDoctorPO::getIsVoid, 0)
+               .orderByDesc(VetAiDoctorPO::getCreateTime);
         return selectList(wrapper);
     }
     
@@ -55,11 +55,11 @@ public interface DoctorMapper extends BaseMapper<DoctorPO> {
      * @author daidasheng
      * @date 2024-12-27
      */
-    default List<DoctorPO> selectByType(Integer type) {
-        LambdaQueryWrapper<DoctorPO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(DoctorPO::getType, type)
-               .eq(DoctorPO::getIsVoid, 0)
-               .orderByDesc(DoctorPO::getCreateTime);
+    default List<VetAiDoctorPO> selectByType(Integer type) {
+        LambdaQueryWrapper<VetAiDoctorPO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(VetAiDoctorPO::getType, type)
+               .eq(VetAiDoctorPO::getIsVoid, 0)
+               .orderByDesc(VetAiDoctorPO::getCreateTime);
         return selectList(wrapper);
     }
     
@@ -72,14 +72,14 @@ public interface DoctorMapper extends BaseMapper<DoctorPO> {
      * @author daidasheng
      * @date 2024-12-27
      */
-    default List<DoctorPO> selectByAddressCode(String addressCode, Integer status) {
-        LambdaQueryWrapper<DoctorPO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(DoctorPO::getAddressCode, addressCode)
-               .eq(DoctorPO::getIsVoid, 0);
+    default List<VetAiDoctorPO> selectByAddressCode(String addressCode, Integer status) {
+        LambdaQueryWrapper<VetAiDoctorPO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(VetAiDoctorPO::getAddressCode, addressCode)
+               .eq(VetAiDoctorPO::getIsVoid, 0);
         if (status != null) {
-            wrapper.eq(DoctorPO::getStatus, status);
+            wrapper.eq(VetAiDoctorPO::getStatus, status);
         }
-        wrapper.orderByDesc(DoctorPO::getCreateTime);
+        wrapper.orderByDesc(VetAiDoctorPO::getCreateTime);
         return selectList(wrapper);
     }
     
@@ -106,7 +106,7 @@ public interface DoctorMapper extends BaseMapper<DoctorPO> {
             "HAVING distance <= #{maxDistance} " +
             "ORDER BY distance ASC " +
             "LIMIT #{limit}")
-    List<DoctorPO> selectNearbyDoctors(@Param("longitude") Double longitude,
+    List<VetAiDoctorPO> selectNearbyDoctors(@Param("longitude") Double longitude,
                                           @Param("latitude") Double latitude,
                                           @Param("maxDistance") Double maxDistance,
                                           @Param("limit") Integer limit);

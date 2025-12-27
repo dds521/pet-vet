@@ -1,7 +1,7 @@
 package com.petvetai.infrastructure.persistence.transaction.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.petvetai.infrastructure.persistence.transaction.po.TransactionLogPO;
+import com.petvetai.infrastructure.persistence.transaction.po.VetAiTransactionLogPO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @date 2024-12-20
  */
 @Mapper
-public interface TransactionLogMapper extends BaseMapper<TransactionLogPO> {
+public interface TransactionLogMapper extends BaseMapper<VetAiTransactionLogPO> {
 }
 

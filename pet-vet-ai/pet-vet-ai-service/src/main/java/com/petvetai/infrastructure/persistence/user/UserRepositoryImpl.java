@@ -5,7 +5,7 @@ import com.petvetai.domain.user.model.UserId;
 import com.petvetai.domain.user.repository.UserRepository;
 import com.petvetai.infrastructure.persistence.user.converter.UserConverter;
 import com.petvetai.infrastructure.persistence.user.mapper.UserMapper;
-import com.petvetai.infrastructure.persistence.user.po.UserPO;
+import com.petvetai.infrastructure.persistence.user.po.VetAiUserPO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -27,7 +27,7 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public void save(User user) {
         // 转换为PO（持久化对象）
-        UserPO userPO = userConverter.toPO(user);
+        VetAiUserPO userPO = userConverter.toPO(user);
         
         // 判断是新增还是更新
         if (user.getId() != null && userMapper.selectById(user.getId().getValue()) != null) {
@@ -44,7 +44,7 @@ public class UserRepositoryImpl implements UserRepository {
         if (userId == null) {
             return null;
         }
-        UserPO userPO = userMapper.selectById(userId.getValue());
+        VetAiUserPO userPO = userMapper.selectById(userId.getValue());
         if (userPO == null) {
             return null;
         }
@@ -56,7 +56,7 @@ public class UserRepositoryImpl implements UserRepository {
         if (openId == null || openId.trim().isEmpty()) {
             return null;
         }
-        UserPO userPO = userMapper.selectByOpenId(openId);
+        VetAiUserPO userPO = userMapper.selectByOpenId(openId);
         if (userPO == null) {
             return null;
         }
@@ -68,7 +68,7 @@ public class UserRepositoryImpl implements UserRepository {
         if (unionId == null || unionId.trim().isEmpty()) {
             return null;
         }
-        UserPO userPO = userMapper.selectByUnionId(unionId);
+        VetAiUserPO userPO = userMapper.selectByUnionId(unionId);
         if (userPO == null) {
             return null;
         }

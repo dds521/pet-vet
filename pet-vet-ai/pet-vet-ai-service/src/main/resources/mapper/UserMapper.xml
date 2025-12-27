@@ -3,7 +3,7 @@
 <mapper namespace="com.petvetai.infrastructure.persistence.user.mapper.UserMapper">
     
     <!-- 根据openId查询用户 -->
-    <select id="selectByOpenId" resultType="com.petvetai.infrastructure.persistence.user.po.UserPO">
+    <select id="selectByOpenId" resultType="com.petvetai.infrastructure.persistence.user.po.VetAiUserPO">
         SELECT * FROM vet_ai_wechat_user
         WHERE open_id = #{openId}
         AND is_void = 0
@@ -11,7 +11,7 @@
     </select>
     
     <!-- 根据unionId查询用户 -->
-    <select id="selectByUnionId" resultType="com.petvetai.infrastructure.persistence.user.po.UserPO">
+    <select id="selectByUnionId" resultType="com.petvetai.infrastructure.persistence.user.po.VetAiUserPO">
         SELECT * FROM vet_ai_wechat_user
         WHERE union_id = #{unionId}
         AND is_void = 0

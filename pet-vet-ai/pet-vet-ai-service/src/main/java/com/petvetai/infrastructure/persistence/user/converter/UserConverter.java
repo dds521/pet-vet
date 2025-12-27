@@ -4,7 +4,7 @@ import com.petvetai.domain.user.model.User;
 import com.petvetai.domain.user.model.UserId;
 import com.petvetai.domain.user.model.UserStatus;
 import com.petvetai.domain.user.model.WeChatInfo;
-import com.petvetai.infrastructure.persistence.user.po.UserPO;
+import com.petvetai.infrastructure.persistence.user.po.VetAiUserPO;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,12 +26,12 @@ public class UserConverter {
      * @author daidasheng
      * @date 2024-12-20
      */
-    public UserPO toPO(User user) {
+    public VetAiUserPO toPO(User user) {
         if (user == null) {
             return null;
         }
         
-        UserPO po = new UserPO();
+        VetAiUserPO po = new VetAiUserPO();
         po.setId(user.getId() != null ? user.getId().getValue() : null);
         po.setOpenId(user.getWeChatInfo() != null ? user.getWeChatInfo().getOpenId() : null);
         po.setUnionId(user.getWeChatInfo() != null ? user.getWeChatInfo().getUnionId() : null);
@@ -56,7 +56,7 @@ public class UserConverter {
      * @author daidasheng
      * @date 2024-12-20
      */
-    public User toDomain(UserPO po) {
+    public User toDomain(VetAiUserPO po) {
         if (po == null) {
             return null;
         }

@@ -1,7 +1,7 @@
 package com.petvetai.infrastructure.persistence.user.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.petvetai.infrastructure.persistence.user.po.UserPO;
+import com.petvetai.infrastructure.persistence.user.po.VetAiUserPO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -14,7 +14,7 @@ import org.apache.ibatis.annotations.Param;
  * @date 2024-12-20
  */
 @Mapper
-public interface UserMapper extends BaseMapper<UserPO> {
+public interface UserMapper extends BaseMapper<VetAiUserPO> {
     
     /**
      * 根据openId查询用户
@@ -24,7 +24,7 @@ public interface UserMapper extends BaseMapper<UserPO> {
      * @author daidasheng
      * @date 2024-12-20
      */
-    UserPO selectByOpenId(@Param("openId") String openId);
+    VetAiUserPO selectByOpenId(@Param("openId") String openId);
     
     /**
      * 根据unionId查询用户
@@ -34,6 +34,6 @@ public interface UserMapper extends BaseMapper<UserPO> {
      * @author daidasheng
      * @date 2024-12-20
      */
-    UserPO selectByUnionId(@Param("unionId") String unionId);
+    VetAiUserPO selectByUnionId(@Param("unionId") String unionId);
 }
 

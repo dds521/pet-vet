@@ -5,7 +5,7 @@ import com.petvetai.domain.pet.model.PetId;
 import com.petvetai.domain.pet.repository.PetRepository;
 import com.petvetai.infrastructure.persistence.pet.converter.PetConverter;
 import com.petvetai.infrastructure.persistence.pet.mapper.PetMapper;
-import com.petvetai.infrastructure.persistence.pet.po.PetPO;
+import com.petvetai.infrastructure.persistence.pet.po.VetAiPetPO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -29,7 +29,7 @@ public class PetRepositoryImpl implements PetRepository {
         if (petId == null) {
             return null;
         }
-        PetPO petPO = petMapper.selectById(petId.getValue());
+        VetAiPetPO petPO = petMapper.selectById(petId.getValue());
         if (petPO == null) {
             return null;
         }

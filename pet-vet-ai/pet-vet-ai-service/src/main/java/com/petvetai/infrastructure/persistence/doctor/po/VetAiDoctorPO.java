@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("vet_ai_doctor")
-public class DoctorPO extends BaseEntity {
+public class VetAiDoctorPO extends BaseEntity {
     
     /**
      * 主键ID，自增

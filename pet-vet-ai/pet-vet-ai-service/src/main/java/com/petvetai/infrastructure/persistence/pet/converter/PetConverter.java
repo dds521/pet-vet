@@ -3,7 +3,7 @@ package com.petvetai.infrastructure.persistence.pet.converter;
 import com.petvetai.domain.pet.model.Pet;
 import com.petvetai.domain.pet.model.PetId;
 import com.petvetai.domain.pet.model.PetInfo;
-import com.petvetai.infrastructure.persistence.pet.po.PetPO;
+import com.petvetai.infrastructure.persistence.pet.po.VetAiPetPO;
 import org.springframework.stereotype.Component;
 
 /**
@@ -25,12 +25,12 @@ public class PetConverter {
      * @author daidasheng
      * @date 2024-12-20
      */
-    public PetPO toPO(Pet pet) {
+    public VetAiPetPO toPO(Pet pet) {
         if (pet == null) {
             return null;
         }
         
-        PetPO po = new PetPO();
+        VetAiPetPO po = new VetAiPetPO();
         po.setId(pet.getId() != null ? pet.getId().getValue() : null);
         if (pet.getPetInfo() != null) {
             po.setName(pet.getPetInfo().getName());
@@ -49,7 +49,7 @@ public class PetConverter {
      * @author daidasheng
      * @date 2024-12-20
      */
-    public Pet toDomain(PetPO po) {
+    public Pet toDomain(VetAiPetPO po) {
         if (po == null) {
             return null;
         }

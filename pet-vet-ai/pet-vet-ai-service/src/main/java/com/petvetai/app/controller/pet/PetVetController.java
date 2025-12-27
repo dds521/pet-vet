@@ -1,4 +1,4 @@
-package com.petvetai.app.controller;
+package com.petvetai.app.controller.pet;
 
 import com.petvetai.app.application.diagnosis.DiagnosisApplicationService;
 import com.petvetai.app.application.diagnosis.DiagnosisApplicationService.DiagnosisResultDTO;

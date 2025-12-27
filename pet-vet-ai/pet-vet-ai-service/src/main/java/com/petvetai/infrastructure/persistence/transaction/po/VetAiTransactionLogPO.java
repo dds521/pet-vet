@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("vet_ai_transaction_log")
-public class TransactionLogPO extends BaseEntity {
+public class VetAiTransactionLogPO extends BaseEntity {
     
     /**
      * 主键ID，自增

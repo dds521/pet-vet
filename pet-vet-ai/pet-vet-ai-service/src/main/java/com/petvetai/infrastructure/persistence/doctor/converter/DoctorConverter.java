@@ -1,7 +1,7 @@
 package com.petvetai.infrastructure.persistence.doctor.converter;
 
 import com.petvetai.domain.doctor.model.*;
-import com.petvetai.infrastructure.persistence.doctor.po.DoctorPO;
+import com.petvetai.infrastructure.persistence.doctor.po.VetAiDoctorPO;
 import org.springframework.stereotype.Component;
 
 /**
@@ -23,12 +23,12 @@ public class DoctorConverter {
      * @author daidasheng
      * @date 2024-12-27
      */
-    public DoctorPO toPO(Doctor doctor) {
+    public VetAiDoctorPO toPO(Doctor doctor) {
         if (doctor == null) {
             return null;
         }
         
-        DoctorPO po = new DoctorPO();
+        VetAiDoctorPO po = new VetAiDoctorPO();
         po.setId(doctor.getId() != null ? doctor.getId().getValue() : null);
         po.setType(doctor.getType() != null ? doctor.getType().getCode() : null);
         
@@ -86,7 +86,7 @@ public class DoctorConverter {
      * @author daidasheng
      * @date 2024-12-27
      */
-    public Doctor toDomain(DoctorPO po) {
+    public Doctor toDomain(VetAiDoctorPO po) {
         if (po == null) {
             return null;
         }

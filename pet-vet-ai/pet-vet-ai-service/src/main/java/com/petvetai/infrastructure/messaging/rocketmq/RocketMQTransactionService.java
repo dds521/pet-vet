@@ -1,7 +1,7 @@
 package com.petvetai.infrastructure.messaging.rocketmq;
 
 import com.petvetai.infrastructure.persistence.transaction.mapper.TransactionLogMapper;
-import com.petvetai.infrastructure.persistence.transaction.po.TransactionLogPO;
+import com.petvetai.infrastructure.persistence.transaction.po.VetAiTransactionLogPO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.LocalTransactionState;
 import org.apache.rocketmq.client.producer.TransactionListener;
@@ -188,7 +188,7 @@ public class RocketMQTransactionService {
             String messageBody = new String(msg.getBody(), StandardCharsets.UTF_8);
             
             // 保存事务日志到数据库
-            TransactionLogPO transactionLog = new TransactionLogPO();
+            VetAiTransactionLogPO transactionLog = new VetAiTransactionLogPO();
             transactionLog.setTransactionId(transactionId);
             transactionLog.setTopic(topic);
             transactionLog.setTag(tag);

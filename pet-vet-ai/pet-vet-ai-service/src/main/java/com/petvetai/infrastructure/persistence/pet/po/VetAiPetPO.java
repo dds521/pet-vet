@@ -18,7 +18,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("vet_ai_pet")
-public class PetPO extends BaseEntity {
+public class VetAiPetPO extends BaseEntity {
     
     /**
      * 主键ID，自增

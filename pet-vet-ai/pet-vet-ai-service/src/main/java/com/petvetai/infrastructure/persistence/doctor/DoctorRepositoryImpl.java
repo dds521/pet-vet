@@ -7,7 +7,7 @@ import com.petvetai.domain.doctor.model.DoctorType;
 import com.petvetai.domain.doctor.repository.DoctorRepository;
 import com.petvetai.infrastructure.persistence.doctor.converter.DoctorConverter;
 import com.petvetai.infrastructure.persistence.doctor.mapper.DoctorMapper;
-import com.petvetai.infrastructure.persistence.doctor.po.DoctorPO;
+import com.petvetai.infrastructure.persistence.doctor.po.VetAiDoctorPO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -31,7 +31,7 @@ public class DoctorRepositoryImpl implements DoctorRepository {
     
     @Override
     public Doctor save(Doctor doctor) {
-        DoctorPO po = doctorConverter.toPO(doctor);
+        VetAiDoctorPO po = doctorConverter.toPO(doctor);
         if (po.getId() == null) {
             // 新增
             doctorMapper.insert(po);
@@ -47,7 +47,7 @@ public class DoctorRepositoryImpl implements DoctorRepository {
         if (id == null) {
             return null;
         }
-        DoctorPO po = doctorMapper.selectById(id.getValue());
+        VetAiDoctorPO po = doctorMapper.selectById(id.getValue());
         return doctorConverter.toDomain(po);
     }
     
@@ -56,7 +56,7 @@ public class DoctorRepositoryImpl implements DoctorRepository {
         if (phone == null || phone.isEmpty()) {
             return null;
         }
-        DoctorPO po = doctorMapper.selectByPhone(phone);
+        VetAiDoctorPO po = doctorMapper.selectByPhone(phone);
         return doctorConverter.toDomain(po);
     }
     
@@ -65,7 +65,7 @@ public class DoctorRepositoryImpl implements DoctorRepository {
         if (status == null) {
             return List.of();
         }
-        List<DoctorPO> pos = doctorMapper.selectByStatus(status.getCode());
+        List<VetAiDoctorPO> pos = doctorMapper.selectByStatus(status.getCode());
         return pos.stream()
                 .map(doctorConverter::toDomain)
                 .collect(Collectors.toList());
@@ -76,7 +76,7 @@ public class DoctorRepositoryImpl implements DoctorRepository {
         if (type == null) {
             return List.of();
         }
-        List<DoctorPO> pos = doctorMapper.selectByType(type.getCode());
+        List<VetAiDoctorPO> pos = doctorMapper.selectByType(type.getCode());
         return pos.stream()
                 .map(doctorConverter::toDomain)
                 .collect(Collectors.toList());
@@ -90,7 +90,7 @@ public class DoctorRepositoryImpl implements DoctorRepository {
         if (limit == null || limit <= 0) {
             limit = 10; // 默认返回10条
         }
-        List<DoctorPO> pos = doctorMapper.selectNearbyDoctors(longitude, latitude, maxDistance, limit);
+        List<VetAiDoctorPO> pos = doctorMapper.selectNearbyDoctors(longitude, latitude, maxDistance, limit);
         return pos.stream()
                 .map(doctorConverter::toDomain)
                 .collect(Collectors.toList());
@@ -102,7 +102,7 @@ public class DoctorRepositoryImpl implements DoctorRepository {
             return List.of();
         }
         Integer statusCode = status != null ? status.getCode() : null;
-        List<DoctorPO> pos = doctorMapper.selectByAddressCode(addressCode, statusCode);
+        List<VetAiDoctorPO> pos = doctorMapper.selectByAddressCode(addressCode, statusCode);
         return pos.stream()
                 .map(doctorConverter::toDomain)
                 .collect(Collectors.toList());

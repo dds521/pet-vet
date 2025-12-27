@@ -1,7 +1,7 @@
 package com.petvetai.infrastructure.persistence.pet.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.petvetai.infrastructure.persistence.pet.po.PetPO;
+import com.petvetai.infrastructure.persistence.pet.po.VetAiPetPO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @date 2024-12-20
  */
 @Mapper
-public interface PetMapper extends BaseMapper<PetPO> {
+public interface PetMapper extends BaseMapper<VetAiPetPO> {
 }
 

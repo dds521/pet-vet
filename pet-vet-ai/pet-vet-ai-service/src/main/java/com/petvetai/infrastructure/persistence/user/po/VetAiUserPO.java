@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("vet_ai_wechat_user")
-public class UserPO extends BaseEntity {
+public class VetAiUserPO extends BaseEntity {
     
     /**
      * 主键ID，自增
