@@ -1,0 +1,50 @@
+-- ============================================
+-- 医生表建表语句
+-- 表名: vet_ai_doctor
+-- 说明: 存储医生（兽医）的基本信息、地址信息、资质证明等
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS `vet_ai_doctor` (
+    `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID，自增',
+    `type` TINYINT(4) NOT NULL DEFAULT 1 COMMENT '医生类型：1-个人，2-机构',
+    `name` VARCHAR(50) NOT NULL COMMENT '医生姓名',
+    `gender` TINYINT(4) DEFAULT 0 COMMENT '性别：0-未知，1-男，2-女',
+    `age` INT(11) DEFAULT NULL COMMENT '年龄',
+    `phone` VARCHAR(20) NOT NULL COMMENT '手机号',
+    `email` VARCHAR(100) DEFAULT NULL COMMENT '邮箱',
+    `avatar_url` VARCHAR(500) DEFAULT NULL COMMENT '头像URL',
+    `bio` TEXT DEFAULT NULL COMMENT '个人简介',
+    `institution_name` VARCHAR(200) DEFAULT NULL COMMENT '机构名称（机构类型时必填）',
+    `institution_address` VARCHAR(500) DEFAULT NULL COMMENT '机构地址（机构类型时必填）',
+    `province` VARCHAR(50) NOT NULL COMMENT '省份',
+    `city` VARCHAR(50) NOT NULL COMMENT '城市',
+    `district` VARCHAR(50) DEFAULT NULL COMMENT '区县',
+    `detail` VARCHAR(500) NOT NULL COMMENT '详细地址',
+    `full_address` VARCHAR(1000) DEFAULT NULL COMMENT '完整地址（省市区+详细地址）',
+    `longitude` DECIMAL(10, 7) DEFAULT NULL COMMENT '经度',
+    `latitude` DECIMAL(10, 7) DEFAULT NULL COMMENT '纬度',
+    `address_code` VARCHAR(20) DEFAULT NULL COMMENT '地址编码（行政区划编码）',
+    `license_number` VARCHAR(100) NOT NULL COMMENT '执业证书编号',
+    `license_photo_url` VARCHAR(500) NOT NULL COMMENT '执业证书照片URL',
+    `certificate_number` VARCHAR(100) NOT NULL COMMENT '资格证书编号',
+    `certificate_photo_url` VARCHAR(500) NOT NULL COMMENT '资格证书照片URL',
+    `specialty` VARCHAR(100) DEFAULT NULL COMMENT '专业领域（如：小动物医学、大动物医学等）',
+    `years_of_experience` INT(11) DEFAULT NULL COMMENT '从业年限',
+    `education` VARCHAR(200) DEFAULT NULL COMMENT '教育背景（学历、毕业院校等）',
+    `status` TINYINT(4) NOT NULL DEFAULT 0 COMMENT '医生状态：0-待审核，1-已审核，2-已禁用，3-审核失败',
+    `approve_time` DATETIME DEFAULT NULL COMMENT '审核通过时间',
+    `reject_reason` VARCHAR(500) DEFAULT NULL COMMENT '审核失败原因',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `create_by` VARCHAR(50) DEFAULT NULL COMMENT '创建人',
+    `update_by` VARCHAR(50) DEFAULT NULL COMMENT '更新人',
+    `is_void` TINYINT(4) NOT NULL DEFAULT 0 COMMENT '是否删除：0-未删除，1-已删除',
+    `version` INT(11) NOT NULL DEFAULT 0 COMMENT '版本号（用于乐观锁）',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_phone` (`phone`, `is_void`),
+    KEY `idx_status` (`status`, `is_void`),
+    KEY `idx_type` (`type`, `is_void`),
+    KEY `idx_address_code` (`address_code`, `status`, `is_void`),
+    KEY `idx_location` (`longitude`, `latitude`, `status`, `is_void`),
+    KEY `idx_create_time` (`create_time`, `is_void`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='医生表';
