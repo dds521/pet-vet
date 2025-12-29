@@ -21,9 +21,9 @@ import lombok.EqualsAndHashCode;
 public class VetAiPetPO extends BaseEntity {
     
     /**
-     * 主键ID，自增
+     * 主键ID，雪花算法生成（保证严格递增）
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
     
     /**

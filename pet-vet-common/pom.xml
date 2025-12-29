@@ -20,6 +20,29 @@
 			<artifactId>mybatis-plus-annotation</artifactId>
 			<version>3.5.5</version>
 		</dependency>
+		<dependency>
+			<groupId>com.baomidou</groupId>
+			<artifactId>mybatis-plus-core</artifactId>
+			<version>3.5.5</version>
+		</dependency>
+		<dependency>
+			<groupId>com.baomidou</groupId>
+			<artifactId>mybatis-plus-extension</artifactId>
+			<version>3.5.5</version>
+		</dependency>
+		
+		<!-- JSQLParser (用于 SQL 解析) -->
+		<dependency>
+			<groupId>com.github.jsqlparser</groupId>
+			<artifactId>jsqlparser</artifactId>
+			<version>4.7</version>
+		</dependency>
+		
+		<!-- Spring Boot Starter (用于获取 RequestContextHolder) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter</artifactId>
+		</dependency>
 		
 		<!-- Lombok -->
 		<dependency>
