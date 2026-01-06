@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.example</groupId>
+		<artifactId>pet-vet</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+	<artifactId>pet-vet-gateway</artifactId>
+	<packaging>pom</packaging>
+	<name>PetVetGateway</name>
+	<description>PetVet Gateway: 统一网关服务，提供流量控制、鉴权、日志等功能</description>
+	
+	<modules>
+		<module>pet-vet-gateway-service</module>
+	</modules>
+</project>

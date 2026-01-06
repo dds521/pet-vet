@@ -33,6 +33,7 @@
 		<module>pet-vet-embedding</module>
 		<module>pet-vet-mcp</module>
 		<module>pet-vet-rag</module>
+		<module>pet-vet-gateway</module>
 	</modules>
 	
 	<dependencyManagement>

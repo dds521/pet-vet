@@ -1,0 +1,77 @@
+# ============================================
+# PetVet Gateway 生产环境配置
+# ============================================
+# Data ID: pet-vet-gateway-prod.yml
+# Group: DEFAULT_GROUP
+# Namespace: (空，使用 public 命名空间)
+# 此文件用于上传到 Nacos 配置中心，包含生产环境的特定配置
+# ⚠️ 注意：生产环境的所有敏感信息（密钥、密码等）必须通过环境变量配置，不要硬编码
+# ============================================
+
+# 服务器端口（生产环境，通过环境变量配置）
+server:
+  port: ${SERVER_PORT:48090}
+
+# Spring Cloud Nacos 配置（生产环境）
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR}
+        namespace: ${NACOS_NAMESPACE:prod}
+      config:
+        server-addr: ${NACOS_SERVER_ADDR}
+        namespace: ${NACOS_NAMESPACE:prod}
+  # Redis 配置（生产环境，必须通过环境变量配置）
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+
+# Sentinel 配置（生产环境）
+spring.cloud.sentinel:
+  transport:
+    dashboard: ${SENTINEL_DASHBOARD}
+
+# 网关配置（生产环境特定值）
+# ⚠️ 注意：生产环境的所有敏感信息（密钥、密码等）必须通过环境变量配置，不要硬编码
+gateway:
+  jwt:
+    secret: ${JWT_SECRET}
+  auth:
+    wework:
+      enabled: ${WEWORK_ENABLED:true}
+      corp-id: ${WEWORK_CORP_ID}
+      agent-id: ${WEWORK_AGENT_ID}
+      secret: ${WEWORK_SECRET}
+      redirect-uri: ${WEWORK_REDIRECT_URI}
+    wechat:
+      enabled: ${WECHAT_ENABLED:true}
+      app-id: ${WECHAT_APP_ID}
+      app-secret: ${WECHAT_APP_SECRET}
+      redirect-uri: ${WECHAT_REDIRECT_URI}
+    alipay:
+      enabled: ${ALIPAY_ENABLED:true}
+      app-id: ${ALIPAY_APP_ID}
+      private-key: ${ALIPAY_PRIVATE_KEY}
+      public-key: ${ALIPAY_PUBLIC_KEY}
+      redirect-uri: ${ALIPAY_REDIRECT_URI}
+    qq:
+      enabled: ${QQ_ENABLED:true}
+      app-id: ${QQ_APP_ID}
+      app-key: ${QQ_APP_KEY}
+      redirect-uri: ${QQ_REDIRECT_URI}
+  log:
+    enabled: ${LOG_ENABLED:true}
+    request-body: ${LOG_REQUEST_BODY:false}
+    response-body: ${LOG_RESPONSE_BODY:false}
+
+# 日志配置（生产环境）
+logging:
+  level:
+    root: INFO
+    com.petvetgateway: INFO
+    com.alibaba.csp.sentinel: WARN
+    com.alibaba.nacos: WARN
+

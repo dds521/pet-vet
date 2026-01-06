@@ -1,0 +1,204 @@
+# ============================================
+# PetVet Gateway 公共配置（所有环境共享）
+# ============================================
+# Data ID: pet-vet-gateway-common.yml
+# Group: DEFAULT_GROUP
+# Namespace: (空，使用 public 命名空间)
+# 此文件用于上传到 Nacos 配置中心，包含所有环境的公共配置
+# ============================================
+
+# Spring Cloud Gateway 配置（所有环境公共）
+spring:
+  cloud:
+    gateway:
+      # 全局跨域配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins: "*"
+            allowed-methods: "*"
+            allowed-headers: "*"
+            allow-credentials: true
+            max-age: 3600
+      # 路由配置
+      routes:
+        # AI服务路由
+        - id: pet-vet-ai-service
+          uri: lb://pet-vet-ai-service
+          predicates:
+            - Path=/api/ai/**
+          filters:
+            - StripPrefix=1
+        # 嵌入服务路由
+        - id: pet-vet-embedding-service
+          uri: lb://pet-vet-embedding-service
+          predicates:
+            - Path=/api/embedding/**
+          filters:
+            - StripPrefix=1
+        # RAG服务路由
+        - id: pet-vet-rag-service
+          uri: lb://pet-vet-rag-service
+          predicates:
+            - Path=/api/rag/**
+          filters:
+            - StripPrefix=1
+        # MCP服务路由
+        - id: pet-vet-mcp-service
+          uri: lb://pet-vet-mcp-service
+          predicates:
+            - Path=/api/mcp/**
+          filters:
+            - StripPrefix=1
+    # Nacos 配置（所有环境公共）
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:public}
+        group: DEFAULT_GROUP
+        # 服务注册配置
+        # 本地开发请显式绑定可达 IP，避免注册不可达的内网地址
+        ip: ${NACOS_DISCOVERY_IP:127.0.0.1}
+        # 注意：port 会自动使用 server.port 的值，无需手动配置
+        # 健康检查配置
+        heart-beat-interval: 5000  # 心跳间隔（毫秒）
+        heart-beat-timeout: 15000  # 心跳超时（毫秒）
+        ip-delete-timeout: 30000   # IP删除超时（毫秒）
+      config:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: DEFAULT_GROUP
+        file-extension: yml
+        shared-configs:
+          - data-id: pet-vet-gateway-common.yml
+            group: DEFAULT_GROUP
+            refresh: true
+    # LoadBalancer 配置（用于服务发现）
+    loadbalancer:
+      cache:
+        enabled: true
+        ttl: 35s  # 服务实例缓存时间
+        capacity: 256  # 缓存容量
+    # Sentinel 配置（所有环境公共）
+    sentinel:
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD:localhost:8091}
+        port: 8719
+        # 连接超时时间（毫秒），默认 3 秒
+        heartbeat-interval-ms: 5000
+      # 设置为 false：延迟初始化，不阻塞应用启动；如果 Dashboard 不可用，只记录警告，不抛出异常
+      eager: false
+      web:
+        filter:
+          enabled: true
+          url-patterns: /**
+      compatibility-verifier:
+        enabled: false
+      # Sentinel 规则持久化到 Nacos
+      datasource:
+        # 网关流控规则
+        gw-flow:
+          nacos:
+            server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+            namespace: ${NACOS_NAMESPACE:}
+            data-id: ${spring.application.name}-gw-flow-rules
+            group-id: SENTINEL_GROUP
+            rule-type: gw-flow
+        # 网关API分组
+        gw-api-group:
+          nacos:
+            server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+            namespace: ${NACOS_NAMESPACE:}
+            data-id: ${spring.application.name}-gw-api-group-rules
+            group-id: SENTINEL_GROUP
+            rule-type: gw-api-group
+  # Redis 配置（所有环境公共，环境特定值在各环境配置文件中覆盖）
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# Spring Boot Actuator 配置（所有环境公共）
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# 网关配置（公共配置）
+gateway:
+  # 白名单配置（不需要鉴权的路径）
+  whitelist:
+    - /api/auth/**
+    - /api/public/**
+    - /actuator/**
+    - /health
+    - /favicon.ico
+  # JWT配置（公共配置，环境特定值在各环境配置文件中覆盖）
+  jwt:
+    secret: ${JWT_SECRET:pet-vet-gateway-secret-key-change-in-production-environment-minimum-32-characters}
+    expiration: ${JWT_EXPIRATION:604800000}
+    header: Authorization
+    prefix: Bearer 
+  # 授权配置（公共配置，环境特定值在各环境配置文件中覆盖）
+  auth:
+    # 企业微信配置
+    wework:
+      enabled: ${WEWORK_ENABLED:true}
+      corp-id: ${WEWORK_CORP_ID:}
+      agent-id: ${WEWORK_AGENT_ID:}
+      secret: ${WEWORK_SECRET:}
+      redirect-uri: ${WEWORK_REDIRECT_URI:}
+      urls:
+        auth-url-template: ${WEWORK_AUTH_URL:https://open.work.weixin.qq.com/wwopen/sso/qrConnect?appid=%s&agentid=%s&redirect_uri=%s&state=%s}
+        user-info-url-template: ${WEWORK_USER_INFO_URL:https://qyapi.weixin.qq.com/cgi-bin/user/getuserinfo?access_token=%s&code=%s}
+        access-token-url-template: ${WEWORK_ACCESS_TOKEN_URL:https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=%s&corpsecret=%s}
+    # 微信配置
+    wechat:
+      enabled: ${WECHAT_ENABLED:true}
+      app-id: ${WECHAT_APP_ID:}
+      app-secret: ${WECHAT_APP_SECRET:}
+      redirect-uri: ${WECHAT_REDIRECT_URI:}
+      urls:
+        auth-url-template: ${WECHAT_AUTH_URL:https://open.weixin.qq.com/connect/qrconnect?appid=%s&redirect_uri=%s&response_type=code&scope=snsapi_login&state=%s#wechat_redirect}
+        access-token-url-template: ${WECHAT_ACCESS_TOKEN_URL:https://api.weixin.qq.com/sns/oauth2/access_token?appid=%s&secret=%s&code=%s&grant_type=authorization_code}
+        user-info-url-template: ${WECHAT_USER_INFO_URL:https://api.weixin.qq.com/sns/userinfo?access_token=%s&openid=%s}
+    # 支付宝配置
+    alipay:
+      enabled: ${ALIPAY_ENABLED:true}
+      app-id: ${ALIPAY_APP_ID:}
+      private-key: ${ALIPAY_PRIVATE_KEY:}
+      public-key: ${ALIPAY_PUBLIC_KEY:}
+      redirect-uri: ${ALIPAY_REDIRECT_URI:}
+      urls:
+        auth-url-template: ${ALIPAY_AUTH_URL:https://openauth.alipay.com/oauth2/publicAppAuthorize.htm?app_id=%s&scope=auth_user&redirect_uri=%s&state=%s}
+        user-info-url-template: ${ALIPAY_USER_INFO_URL:https://openapi.alipay.com/gateway.do}
+    # QQ配置
+    qq:
+      enabled: ${QQ_ENABLED:true}
+      app-id: ${QQ_APP_ID:}
+      app-key: ${QQ_APP_KEY:}
+      redirect-uri: ${QQ_REDIRECT_URI:}
+      urls:
+        auth-url-template: ${QQ_AUTH_URL:https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=%s&redirect_uri=%s&state=%s&scope=get_user_info}
+        access-token-url-template: ${QQ_ACCESS_TOKEN_URL:https://graph.qq.com/oauth2.0/token?grant_type=authorization_code&client_id=%s&client_secret=%s&code=%s&redirect_uri=%s}
+        open-id-url-template: ${QQ_OPENID_URL:https://graph.qq.com/oauth2.0/me?access_token=%s}
+        user-info-url-template: ${QQ_USER_INFO_URL:https://graph.qq.com/user/get_user_info?access_token=%s&oauth_consumer_key=%s&openid=%s}
+  # 日志配置（公共配置，环境特定值在各环境配置文件中覆盖）
+  log:
+    enabled: ${LOG_ENABLED:true}
+    request-body: ${LOG_REQUEST_BODY:true}
+    response-body: ${LOG_RESPONSE_BODY:true}
+    max-body-size: ${LOG_MAX_BODY_SIZE:10240}
+

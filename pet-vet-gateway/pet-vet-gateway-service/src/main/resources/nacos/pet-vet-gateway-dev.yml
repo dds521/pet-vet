@@ -1,0 +1,78 @@
+# ============================================
+# PetVet Gateway 开发环境配置
+# ============================================
+# Data ID: pet-vet-gateway-dev.yml
+# Group: DEFAULT_GROUP
+# Namespace: (空，使用 public 命名空间)
+# 此文件用于上传到 Nacos 配置中心，包含开发环境的特定配置
+# ============================================
+
+# 服务器端口（开发环境）
+server:
+  port: 48090
+
+# Spring Cloud Nacos 配置（开发环境）
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:dev}
+      config:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:dev}
+  # Redis 配置（开发环境）
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+# Sentinel 配置（开发环境）
+spring.cloud.sentinel:
+  transport:
+    dashboard: ${SENTINEL_DASHBOARD:localhost:8091}
+
+# 网关配置（开发环境特定值）
+gateway:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-key-change-in-production-environment-minimum-32-characters}
+  auth:
+    wework:
+      enabled: ${WEWORK_ENABLED:true}
+      corp-id: ${WEWORK_CORP_ID:}
+      agent-id: ${WEWORK_AGENT_ID:}
+      secret: ${WEWORK_SECRET:}
+      redirect-uri: ${WEWORK_REDIRECT_URI:http://localhost:48090/api/auth/callback}
+    wechat:
+      enabled: ${WECHAT_ENABLED:true}
+      app-id: ${WECHAT_APP_ID:}
+      app-secret: ${WECHAT_APP_SECRET:}
+      redirect-uri: ${WECHAT_REDIRECT_URI:http://localhost:48090/api/auth/callback}
+    alipay:
+      enabled: ${ALIPAY_ENABLED:true}
+      app-id: ${ALIPAY_APP_ID:}
+      private-key: ${ALIPAY_PRIVATE_KEY:}
+      public-key: ${ALIPAY_PUBLIC_KEY:}
+      redirect-uri: ${ALIPAY_REDIRECT_URI:http://localhost:48090/api/auth/callback}
+    qq:
+      enabled: ${QQ_ENABLED:true}
+      app-id: ${QQ_APP_ID:}
+      app-key: ${QQ_APP_KEY:}
+      redirect-uri: ${QQ_REDIRECT_URI:http://localhost:48090/api/auth/callback}
+  log:
+    enabled: ${LOG_ENABLED:true}
+    request-body: ${LOG_REQUEST_BODY:true}
+    response-body: ${LOG_RESPONSE_BODY:true}
+
+# 日志配置（开发环境）
+logging:
+  level:
+    root: INFO
+    com.petvetgateway: DEBUG
+    com.alibaba.csp.sentinel: INFO
+    com.alibaba.nacos: INFO
+    com.alibaba.cloud.nacos: INFO
+    com.alibaba.cloud.nacos.config: DEBUG
+    com.alibaba.cloud.nacos.client.config: DEBUG
+    com.alibaba.nacos.shaded.io.grpc: WARN
+
