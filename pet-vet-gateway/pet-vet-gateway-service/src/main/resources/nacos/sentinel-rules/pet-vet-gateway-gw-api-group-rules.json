@@ -1,0 +1,39 @@
+[
+  {
+    "apiName": "ai-api",
+    "predicateItems": [
+      {
+        "pattern": "/api/ai/**",
+        "matchStrategy": 1
+      }
+    ]
+  },
+  {
+    "apiName": "embedding-api",
+    "predicateItems": [
+      {
+        "pattern": "/api/embedding/**",
+        "matchStrategy": 1
+      }
+    ]
+  },
+  {
+    "apiName": "rag-api",
+    "predicateItems": [
+      {
+        "pattern": "/api/rag/**",
+        "matchStrategy": 1
+      }
+    ]
+  },
+  {
+    "apiName": "mcp-api",
+    "predicateItems": [
+      {
+        "pattern": "/api/mcp/**",
+        "matchStrategy": 1
+      }
+    ]
+  }
+]
+

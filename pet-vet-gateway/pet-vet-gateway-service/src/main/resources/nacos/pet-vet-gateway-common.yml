@@ -95,8 +95,13 @@ spring:
       compatibility-verifier:
         enabled: false
       # Sentinel 规则持久化到 Nacos
+      # 所有规则都支持通过Nacos配置中心动态调整，无需重启应用
       datasource:
-        # 网关流控规则
+        # 网关流控规则（Gateway Flow Rules）
+        # 作用：限制每个服务/API分组的QPS，防止服务过载
+        # 配置路径：Nacos -> pet-vet-gateway-gw-flow-rules (SENTINEL_GROUP)
+        # 数据格式：JSON数组
+        # 示例：[{"resource":"pet-vet-ai-service","count":50,"intervalSec":1}]
         gw-flow:
           nacos:
             server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
@@ -104,7 +109,12 @@ spring:
             data-id: ${spring.application.name}-gw-flow-rules
             group-id: SENTINEL_GROUP
             rule-type: gw-flow
-        # 网关API分组
+        # 网关API分组（Gateway API Group）
+        # 作用：将URL路径模式映射到API分组名称，便于流控规则引用
+        # 配置路径：Nacos -> pet-vet-gateway-gw-api-group-rules (SENTINEL_GROUP)
+        # 数据格式：JSON数组
+        # 示例：[{"apiName":"ai-api","predicateItems":[{"pattern":"/api/ai/**","matchStrategy":1}]}]
+        # 注意：此配置优先级高于代码中的默认配置
         gw-api-group:
           nacos:
             server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
@@ -112,6 +122,48 @@ spring:
             data-id: ${spring.application.name}-gw-api-group-rules
             group-id: SENTINEL_GROUP
             rule-type: gw-api-group
+        # 网关降级规则（Gateway Degrade Rules）
+        # 作用：当服务响应时间过长或异常率过高时，自动熔断，防止故障扩散
+        # 配置路径：Nacos -> pet-vet-gateway-gw-degrade-rules (SENTINEL_GROUP)
+        # 数据格式：JSON数组
+        # 示例：[{"resource":"pet-vet-ai-service","grade":0,"count":100,"timeWindow":10}]
+        # grade: 0-慢调用比例, 1-异常比例, 2-异常数
+        # count: 阈值（慢调用比例或异常比例，单位：%）
+        # timeWindow: 熔断时长（秒）
+        gw-degrade:
+          nacos:
+            server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+            namespace: ${NACOS_NAMESPACE:}
+            data-id: ${spring.application.name}-gw-degrade-rules
+            group-id: SENTINEL_GROUP
+            rule-type: gw-degrade
+        # 系统保护规则（System Rules）
+        # 作用：根据系统整体负载（CPU、内存、QPS等）自动触发保护
+        # 配置路径：Nacos -> pet-vet-gateway-system-rules (SENTINEL_GROUP)
+        # 数据格式：JSON数组
+        # 示例：[{"avgRt":1000,"maxThread":10,"qps":1000,"highestSystemLoad":0.8}]
+        # 注意：系统规则是全局的，不需要指定resource
+        system:
+          nacos:
+            server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+            namespace: ${NACOS_NAMESPACE:}
+            data-id: ${spring.application.name}-system-rules
+            group-id: SENTINEL_GROUP
+            rule-type: system
+        # 授权规则（Authority Rules）
+        # 作用：通过黑白名单机制，控制特定来源对资源的访问权限
+        # 配置路径：Nacos -> pet-vet-gateway-authority-rules (SENTINEL_GROUP)
+        # 数据格式：JSON数组
+        # 示例：[{"resource":"pet-vet-ai-service","limitApp":"app1,app2","strategy":0}]
+        # strategy: 0-白名单, 1-黑名单
+        # limitApp: 应用名称列表，多个用逗号分隔
+        authority:
+          nacos:
+            server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+            namespace: ${NACOS_NAMESPACE:}
+            data-id: ${spring.application.name}-authority-rules
+            group-id: SENTINEL_GROUP
+            rule-type: authority
   # Redis 配置（所有环境公共，环境特定值在各环境配置文件中覆盖）
   data:
     redis:
@@ -201,4 +253,43 @@ gateway:
     request-body: ${LOG_REQUEST_BODY:true}
     response-body: ${LOG_RESPONSE_BODY:true}
     max-body-size: ${LOG_MAX_BODY_SIZE:10240}
+  # Sentinel流控规则配置（支持动态调整）
+  sentinel:
+    flow-rule:
+      # 默认时间窗口（秒），所有服务共享，除非服务单独指定
+      interval-sec: ${SENTINEL_FLOW_RULE_INTERVAL_SEC:1}
+      # AI服务流控规则
+      ai-service:
+        # QPS限制（每秒请求数）
+        count: ${SENTINEL_AI_SERVICE_QPS:50}
+        # 时间窗口（秒），如果未设置则使用上面的默认值
+        interval-sec: ${SENTINEL_AI_SERVICE_INTERVAL_SEC:}
+      # Embedding服务流控规则
+      embedding-service:
+        count: ${SENTINEL_EMBEDDING_SERVICE_QPS:50}
+        interval-sec: ${SENTINEL_EMBEDDING_SERVICE_INTERVAL_SEC:}
+      # RAG服务流控规则
+      rag-service:
+        count: ${SENTINEL_RAG_SERVICE_QPS:50}
+        interval-sec: ${SENTINEL_RAG_SERVICE_INTERVAL_SEC:}
+      # MCP服务流控规则
+      mcp-service:
+        count: ${SENTINEL_MCP_SERVICE_QPS:30}
+        interval-sec: ${SENTINEL_MCP_SERVICE_INTERVAL_SEC:}
+    # API分组配置（支持动态调整）
+    # 注意：Nacos中的gw-api-group配置优先级更高，会覆盖这里的默认配置
+    api-group:
+      # AI服务API分组
+      ai-api:
+        # URL路径模式（支持通配符）
+        pattern: ${SENTINEL_AI_API_PATTERN:/api/ai/**}
+      # Embedding服务API分组
+      embedding-api:
+        pattern: ${SENTINEL_EMBEDDING_API_PATTERN:/api/embedding/**}
+      # RAG服务API分组
+      rag-api:
+        pattern: ${SENTINEL_RAG_API_PATTERN:/api/rag/**}
+      # MCP服务API分组
+      mcp-api:
+        pattern: ${SENTINEL_MCP_API_PATTERN:/api/mcp/**}
 

@@ -2,6 +2,7 @@ package com.petvetgateway.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
@@ -10,11 +11,13 @@ import java.util.List;
  * 网关配置类
  * 
  * 从配置文件读取网关相关配置
+ * 支持 Nacos 配置动态刷新
  * 
  * @author daidasheng
  * @date 2024-12-27
  */
 @Data
+@RefreshScope
 @Configuration
 @ConfigurationProperties(prefix = "gateway")
 public class GatewayConfig {
@@ -366,6 +369,129 @@ public class GatewayConfig {
          * 最大请求/响应体大小（字节）
          */
         private Integer maxBodySize;
+    }
+    
+    /**
+     * Sentinel流控规则配置
+     * 
+     * @author daidasheng
+     * @date 2024-12-27
+     */
+    private SentinelConfig sentinel;
+    
+    /**
+     * Sentinel流控规则配置内部类
+     * 
+     * @author daidasheng
+     * @date 2024-12-27
+     */
+    @Data
+    public static class SentinelConfig {
+        /**
+         * 流控规则配置
+         */
+        private FlowRuleConfig flowRule;
+        
+        /**
+         * API分组配置
+         */
+        private ApiGroupConfig apiGroup;
+    }
+    
+    /**
+     * API分组配置内部类
+     * 
+     * @author daidasheng
+     * @date 2024-12-27
+     */
+    @Data
+    public static class ApiGroupConfig {
+        /**
+         * AI服务API分组
+         */
+        private ApiGroupDefinition aiApi;
+        
+        /**
+         * Embedding服务API分组
+         */
+        private ApiGroupDefinition embeddingApi;
+        
+        /**
+         * RAG服务API分组
+         */
+        private ApiGroupDefinition ragApi;
+        
+        /**
+         * MCP服务API分组
+         */
+        private ApiGroupDefinition mcpApi;
+    }
+    
+    /**
+     * API分组定义内部类
+     * 
+     * @author daidasheng
+     * @date 2024-12-27
+     */
+    @Data
+    public static class ApiGroupDefinition {
+        /**
+         * URL路径模式（支持通配符，如 "/api/ai/**"）
+         */
+        private String pattern;
+    }
+    
+    /**
+     * 流控规则配置内部类
+     * 
+     * @author daidasheng
+     * @date 2024-12-27
+     */
+    @Data
+    public static class FlowRuleConfig {
+        /**
+         * 时间窗口（秒），默认1秒
+         */
+        private Integer intervalSec = 1;
+        
+        /**
+         * AI服务QPS限制
+         */
+        private ServiceFlowRule aiService;
+        
+        /**
+         * Embedding服务QPS限制
+         */
+        private ServiceFlowRule embeddingService;
+        
+        /**
+         * RAG服务QPS限制
+         */
+        private ServiceFlowRule ragService;
+        
+        /**
+         * MCP服务QPS限制
+         */
+        private ServiceFlowRule mcpService;
+    }
+    
+    /**
+     * 服务流控规则配置内部类
+     * 
+     * @author daidasheng
+     * @date 2024-12-27
+     */
+    @Data
+    public static class ServiceFlowRule {
+        /**
+         * QPS限制（每秒请求数）
+         */
+        private Integer count;
+        
+        /**
+         * 时间窗口（秒），如果未设置则使用父级配置
+         */
+        private Integer intervalSec;
     }
 }
 

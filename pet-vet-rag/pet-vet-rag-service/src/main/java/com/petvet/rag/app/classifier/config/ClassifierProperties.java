@@ -3,6 +3,7 @@ package com.petvet.rag.app.classifier.config;
 import com.petvet.rag.app.classifier.model.RuleDefinition;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,12 +11,14 @@ import java.util.List;
 /**
  * 分类器配置属性
  * 绑定 rag.classifier.* 配置项
+ * 支持 Nacos 配置动态刷新
  * 
  * 注意：不使用 @Component，通过 @EnableConfigurationProperties 在 ClassifierConfig 中启用
  * 
  * @author daidasheng
  * @date 2024-12-15
  */
+@RefreshScope
 @ConfigurationProperties(prefix = "rag.classifier")
 @Data
 public class ClassifierProperties {

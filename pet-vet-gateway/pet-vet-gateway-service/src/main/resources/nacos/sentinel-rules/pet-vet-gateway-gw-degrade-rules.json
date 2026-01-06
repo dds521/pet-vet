@@ -1,0 +1,39 @@
+[
+  {
+    "resource": "pet-vet-ai-service",
+    "grade": 0,
+    "count": 100,
+    "timeWindow": 10,
+    "minRequestAmount": 5,
+    "slowRatioThreshold": 0.6,
+    "statIntervalMs": 1000
+  },
+  {
+    "resource": "pet-vet-embedding-service",
+    "grade": 0,
+    "count": 200,
+    "timeWindow": 10,
+    "minRequestAmount": 5,
+    "slowRatioThreshold": 0.6,
+    "statIntervalMs": 1000
+  },
+  {
+    "resource": "pet-vet-rag-service",
+    "grade": 0,
+    "count": 300,
+    "timeWindow": 10,
+    "minRequestAmount": 5,
+    "slowRatioThreshold": 0.6,
+    "statIntervalMs": 1000
+  },
+  {
+    "resource": "pet-vet-mcp-service",
+    "grade": 0,
+    "count": 200,
+    "timeWindow": 10,
+    "minRequestAmount": 5,
+    "slowRatioThreshold": 0.6,
+    "statIntervalMs": 1000
+  }
+]
+

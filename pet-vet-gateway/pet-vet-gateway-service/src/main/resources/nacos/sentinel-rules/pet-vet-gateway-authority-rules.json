@@ -1,0 +1,23 @@
+[
+  {
+    "resource": "pet-vet-ai-service",
+    "limitApp": "default",
+    "strategy": 0
+  },
+  {
+    "resource": "pet-vet-embedding-service",
+    "limitApp": "default",
+    "strategy": 0
+  },
+  {
+    "resource": "pet-vet-rag-service",
+    "limitApp": "default",
+    "strategy": 0
+  },
+  {
+    "resource": "pet-vet-mcp-service",
+    "limitApp": "default",
+    "strategy": 0
+  }
+]
+

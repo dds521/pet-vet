@@ -1,0 +1,91 @@
+[
+  {
+    "resource": "pet-vet-ai-service",
+    "resourceMode": 0,
+    "count": 50,
+    "intervalSec": 1,
+    "grade": 1,
+    "controlBehavior": 0,
+    "burst": 0,
+    "maxQueueingTimeMs": 500,
+    "paramItem": null
+  },
+  {
+    "resource": "pet-vet-embedding-service",
+    "resourceMode": 0,
+    "count": 50,
+    "intervalSec": 1,
+    "grade": 1,
+    "controlBehavior": 0,
+    "burst": 0,
+    "maxQueueingTimeMs": 500,
+    "paramItem": null
+  },
+  {
+    "resource": "pet-vet-rag-service",
+    "resourceMode": 0,
+    "count": 50,
+    "intervalSec": 1,
+    "grade": 1,
+    "controlBehavior": 0,
+    "burst": 0,
+    "maxQueueingTimeMs": 500,
+    "paramItem": null
+  },
+  {
+    "resource": "pet-vet-mcp-service",
+    "resourceMode": 0,
+    "count": 30,
+    "intervalSec": 1,
+    "grade": 1,
+    "controlBehavior": 0,
+    "burst": 0,
+    "maxQueueingTimeMs": 500,
+    "paramItem": null
+  },
+  {
+    "resource": "ai-api",
+    "resourceMode": 1,
+    "count": 50,
+    "intervalSec": 1,
+    "grade": 1,
+    "controlBehavior": 0,
+    "burst": 0,
+    "maxQueueingTimeMs": 500,
+    "paramItem": null
+  },
+  {
+    "resource": "embedding-api",
+    "resourceMode": 1,
+    "count": 50,
+    "intervalSec": 1,
+    "grade": 1,
+    "controlBehavior": 0,
+    "burst": 0,
+    "maxQueueingTimeMs": 500,
+    "paramItem": null
+  },
+  {
+    "resource": "rag-api",
+    "resourceMode": 0,
+    "count": 50,
+    "intervalSec": 1,
+    "grade": 1,
+    "controlBehavior": 0,
+    "burst": 0,
+    "maxQueueingTimeMs": 500,
+    "paramItem": null
+  },
+  {
+    "resource": "mcp-api",
+    "resourceMode": 1,
+    "count": 30,
+    "intervalSec": 1,
+    "grade": 1,
+    "controlBehavior": 0,
+    "burst": 0,
+    "maxQueueingTimeMs": 500,
+    "paramItem": null
+  }
+]
+

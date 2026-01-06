@@ -2,12 +2,18 @@ package com.petvet.embedding.app.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Configuration;
 
 /**
  * 简历Chunk切分配置类
+ * 支持 Nacos 配置动态刷新
+ * 
+ * @author daidasheng
+ * @date 2024-12-27
  */
 @Data
+@RefreshScope
 @Configuration
 @ConfigurationProperties(prefix = "resume.chunk")
 public class ResumeChunkConfig {
