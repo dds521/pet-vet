@@ -22,9 +22,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.reactive.result.view.ViewResolver;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.*;
 
 /**
@@ -175,6 +176,7 @@ public class SentinelConfig {
     /**
      * 配置Sentinel网关异常处理器
      * 
+     * @param viewResolvers 视图解析器列表
      * @param serverCodecConfigurer 服务器编解码器配置器
      * @return Sentinel网关异常处理器
      * @author daidasheng
@@ -183,8 +185,9 @@ public class SentinelConfig {
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public SentinelGatewayBlockExceptionHandler sentinelGatewayBlockExceptionHandler(
+            List<ViewResolver> viewResolvers,
             ServerCodecConfigurer serverCodecConfigurer) {
-        return new SentinelGatewayBlockExceptionHandler(serverCodecConfigurer);
+        return new SentinelGatewayBlockExceptionHandler(viewResolvers, serverCodecConfigurer);
     }
 }
 

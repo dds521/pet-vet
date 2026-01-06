@@ -10,6 +10,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -77,7 +78,8 @@ public class RequestLoggingFilter implements GlobalFilter, Ordered {
         // 如果需要记录请求体，需要包装请求
         ServerHttpRequest decoratedRequest = request;
         if (gatewayConfig.getLog().getRequestBody()) {
-            decoratedRequest = new RequestLoggingDecorator(request, requestId);
+            decoratedRequest = new RequestLoggingDecorator(
+                    request, requestId, exchange.getResponse().bufferFactory());
         }
         
         // 包装响应以记录响应信息
@@ -186,16 +188,23 @@ public class RequestLoggingFilter implements GlobalFilter, Ordered {
         private final String requestId;
         
         /**
+         * 数据缓冲区工厂
+         */
+        private final DataBufferFactory bufferFactory;
+        
+        /**
          * 构造函数
          * 
          * @param delegate 原始请求
          * @param requestId 请求ID
+         * @param bufferFactory 数据缓冲区工厂
          * @author daidasheng
          * @date 2024-12-27
          */
-        public RequestLoggingDecorator(ServerHttpRequest delegate, String requestId) {
+        public RequestLoggingDecorator(ServerHttpRequest delegate, String requestId, DataBufferFactory bufferFactory) {
             super(delegate);
             this.requestId = requestId;
+            this.bufferFactory = bufferFactory;
         }
         
         /**
@@ -226,7 +235,7 @@ public class RequestLoggingFilter implements GlobalFilter, Ordered {
                         byte[] bytes = new byte[dataBuffer.readableByteCount()];
                         dataBuffer.read(bytes);
                         DataBufferUtils.release(dataBuffer);
-                        return Flux.just(getDelegate().bufferFactory().wrap(bytes));
+                        return Flux.just(bufferFactory.wrap(bytes));
                     });
         }
     }
