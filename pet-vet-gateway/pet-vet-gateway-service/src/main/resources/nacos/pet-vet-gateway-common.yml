@@ -134,6 +134,7 @@ spring:
             rule-type: gw-api-group
         # 网关降级规则（Gateway Degrade Rules）
         # 作用：当服务响应时间过长或异常率过高时，自动熔断，防止故障扩散
+        # 注意：Sentinel 网关降级规则使用 degrade 类型，不是 gw-degrade
         # 配置路径：Nacos -> pet-vet-gateway-gw-degrade-rules (SENTINEL_GROUP)
         # 数据格式：JSON数组
         # 示例：[{"resource":"pet-vet-ai-service","grade":0,"count":100,"timeWindow":10}]
@@ -146,7 +147,7 @@ spring:
             namespace: ${NACOS_NAMESPACE:}
             data-id: ${spring.application.name}-gw-degrade-rules
             group-id: SENTINEL_GROUP
-            rule-type: gw-degrade
+            rule-type: degrade
         # 系统保护规则（System Rules）
         # 作用：根据系统整体负载（CPU、内存、QPS等）自动触发保护
         # 配置路径：Nacos -> pet-vet-gateway-system-rules (SENTINEL_GROUP)
