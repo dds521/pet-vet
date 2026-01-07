@@ -17,10 +17,16 @@ spring:
     nacos:
       discovery:
         server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
-        namespace: ${NACOS_NAMESPACE:dev}
+        # dev 命名空间 ID: 1f6b6934-150a-4e28-ba25-8e9166bab8d1
+        # 使用命名空间 ID 或显示名称都可以，Nacos 会自动识别
+        namespace: ${NACOS_NAMESPACE:public}
+        # 服务注册配置
+        ip: ${NACOS_DISCOVERY_IP:127.0.0.1}
+        enabled: true
       config:
         server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
-        namespace: ${NACOS_NAMESPACE:dev}
+        # dev 命名空间 ID: 1f6b6934-150a-4e28-ba25-8e9166bab8d1
+        namespace: ${NACOS_NAMESPACE:public}
   # Redis 配置（开发环境）
   data:
     redis:

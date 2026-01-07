@@ -7,6 +7,10 @@
 spring:
   application:
     name: pet-vet-gateway
+  # 强制使用响应式 Web 应用类型，解决 Spring Cloud Gateway 与 Spring MVC 冲突问题
+  # Spring Cloud Gateway 基于 WebFlux，不能与 spring-boot-starter-web 共存
+  main:
+    web-application-type: reactive
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev} # 默认激活 dev，可通过启动参数或环境变量覆盖
   config:
@@ -20,8 +24,12 @@ spring:
     nacos:
       discovery:
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        # namespace: 空字符串表示 public 命名空间，dev 环境会从 Nacos 配置中覆盖
         namespace: ${NACOS_NAMESPACE:}
         group: DEFAULT_GROUP
+        # 服务注册配置（本地开发环境）
+        ip: ${NACOS_DISCOVERY_IP:127.0.0.1}
+        enabled: true
       config:
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
         namespace: ${NACOS_NAMESPACE:}
