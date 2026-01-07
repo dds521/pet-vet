@@ -4,6 +4,7 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.Environment;
 
 /**
@@ -24,6 +25,10 @@ import org.springframework.core.env.Environment;
              "com.petvetai.infrastructure.persistence.doctor.mapper",
              "com.petvetai.infrastructure.persistence.transaction.mapper"})
 @EnableFeignClients(basePackages = {"com.petvet.rag.api.feign"})
+@ComponentScan(basePackages = {
+    "com.petvetai",  // 扫描应用自身的包
+    "com.petvet.rag.api.feign"  // 扫描 Feign 客户端的 FallbackFactory
+})
 public class PetVetAiApplication {
 
 	public static void main(String[] args) {

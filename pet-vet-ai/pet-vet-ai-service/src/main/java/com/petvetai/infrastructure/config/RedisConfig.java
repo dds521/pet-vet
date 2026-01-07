@@ -12,6 +12,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  * 
  * 配置 Redis 模板的序列化方式
  * 
+ * 注意：Spring Boot 会自动创建 StringRedisTemplate，它已经配置好了 String 序列化
+ * 所以这里不需要再定义 stringRedisTemplate，直接使用自动配置的即可
+ * 
  * @author daidasheng
  * @date 2024-12-20
  */
@@ -19,7 +22,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
 
     /**
-     * 配置 Redis 模板
+     * 配置 Redis 模板（用于存储对象）
      * 
      * @param connectionFactory Redis 连接工厂
      * @return Redis 模板
@@ -42,28 +45,7 @@ public class RedisConfig {
         return template;
     }
     
-    /**
-     * 配置 Redis String 模板（用于 RedisService）
-     * 
-     * @param connectionFactory Redis 连接工厂
-     * @return Redis String 模板
-     * @author daidasheng
-     * @date 2024-12-20
-     */
-    @Bean
-    public org.springframework.data.redis.core.RedisTemplate<String, String> stringRedisTemplate(
-            RedisConnectionFactory connectionFactory) {
-        org.springframework.data.redis.core.RedisTemplate<String, String> template = 
-            new org.springframework.data.redis.core.RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        
-        // Key 和 Value 都使用 String 序列化
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new StringRedisSerializer());
-        template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(new StringRedisSerializer());
-        
-        return template;
-    }
+    // 注意：不再定义 stringRedisTemplate，直接使用 Spring Boot 自动配置的 StringRedisTemplate
+    // StringRedisTemplate 已经配置好了 String 序列化，满足 RedisServiceImpl 的需求
 }
 
