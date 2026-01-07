@@ -26,6 +26,12 @@
 			<artifactId>spring-cloud-starter-gateway</artifactId>
 		</dependency>
 		
+		<!-- Spring Cloud LoadBalancer（用于版本选择） -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-loadbalancer</artifactId>
+		</dependency>
+		
 		<!-- Sentinel 流量控制 -->
 		<dependency>
 			<groupId>com.alibaba.cloud</groupId>

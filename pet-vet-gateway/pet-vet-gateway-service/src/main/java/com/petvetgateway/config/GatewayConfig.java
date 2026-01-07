@@ -380,6 +380,14 @@ public class GatewayConfig {
     private SentinelConfig sentinel;
     
     /**
+     * 灰度发布配置
+     * 
+     * @author daidasheng
+     * @date 2026-01-07
+     */
+    private GrayReleaseConfig grayRelease;
+    
+    /**
      * Sentinel流控规则配置内部类
      * 
      * @author daidasheng
@@ -492,6 +500,87 @@ public class GatewayConfig {
          * 时间窗口（秒），如果未设置则使用父级配置
          */
         private Integer intervalSec;
+    }
+    
+    /**
+     * 灰度发布配置内部类
+     * 
+     * @author daidasheng
+     * @date 2026-01-07
+     */
+    @Data
+    public static class GrayReleaseConfig {
+        /**
+         * 是否启用灰度发布
+         */
+        private Boolean enabled = false;
+        
+        /**
+         * 灰度百分比（0-100），表示走新版本的流量百分比
+         */
+        private Integer percentage = 10;
+        
+        /**
+         * 旧版本号
+         */
+        private String oldVersion = "v1.0";
+        
+        /**
+         * 新版本号
+         */
+        private String newVersion = "v2.0";
+        
+        /**
+         * 流量分配策略
+         * - hybrid: 混合策略（推荐）- 优先用户ID，其次IP，最后请求ID
+         * - user-id: 基于用户ID的一致性哈希（需要用户已登录）
+         * - ip: 基于IP的一致性哈希
+         * - request-id: 基于请求ID的取模
+         * - random: 纯随机数（不推荐，用户体验不一致）
+         */
+        private String strategy = "hybrid";
+        
+        /**
+         * 需要灰度发布的服务路径列表（支持通配符）
+         * 例如：["/api/ai/**", "/api/embedding/**"]
+         */
+        private List<String> servicePaths;
+        
+        /**
+         * 负载均衡配置
+         */
+        private LoadBalancerConfig loadBalancer = new LoadBalancerConfig();
+    }
+    
+    /**
+     * 负载均衡配置内部类
+     * 
+     * @author daidasheng
+     * @date 2026-01-07
+     */
+    @Data
+    public static class LoadBalancerConfig {
+        /**
+         * 无版本实例的默认版本
+         * 如果服务实例没有设置 version 元数据，使用此默认版本
+         * 如果为 null，则无版本实例不参与版本路由（降级处理时返回所有实例）
+         */
+        private String defaultVersion;
+        
+        /**
+         * 是否允许无版本实例参与负载均衡
+         * true: 允许无版本实例参与（降级处理）
+         * false: 严格模式，只允许有版本信息的实例参与
+         */
+        private Boolean allowNoVersion = true;
+        
+        /**
+         * 无匹配版本时的降级策略
+         * - all: 返回所有实例（包括无版本实例）
+         * - default-version: 返回默认版本的实例
+         * - fail: 返回空列表（可能导致请求失败）
+         */
+        private String fallbackStrategy = "all";
     }
 }
 

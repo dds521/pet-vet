@@ -22,13 +22,20 @@ spring:
             max-age: 3600
       # 路由配置
       routes:
-        # AI服务路由
+        # AI服务路由（支持灰度发布）
+        # 注意：GrayReleaseFilter 会根据随机数（10%概率）决定目标版本
+        # VersionLoadBalancer 会根据 Nacos 元数据中的 version 字段选择对应的服务实例
+        # 需要部署两个服务实例：
+        #   - 旧版本：metadata.version = v1.0
+        #   - 新版本：metadata.version = v2.0
         - id: pet-vet-ai-service
           uri: lb://pet-vet-ai-service
           predicates:
             - Path=/api/ai/**
           filters:
             - StripPrefix=1
+            # 移除网关内部使用的请求头，不传递给下游服务
+            - RemoveRequestHeader=X-Target-Version
         # 嵌入服务路由
         - id: pet-vet-embedding-service
           uri: lb://pet-vet-embedding-service
@@ -292,4 +299,40 @@ gateway:
       # MCP服务API分组
       mcp-api:
         pattern: ${SENTINEL_MCP_API_PATTERN:/api/mcp/**}
+  # 灰度发布配置（支持动态调整）
+  gray-release:
+    # 是否启用灰度发布
+    enabled: ${GRAY_RELEASE_ENABLED:false}
+    # 灰度百分比（0-100），表示走新版本的流量百分比
+    percentage: ${GRAY_RELEASE_PERCENTAGE:10}
+    # 旧版本号（必须与服务实例在 Nacos 中的 metadata.version 一致）
+    old-version: ${GRAY_RELEASE_OLD_VERSION:v1.0}
+    # 新版本号（必须与服务实例在 Nacos 中的 metadata.version 一致）
+    new-version: ${GRAY_RELEASE_NEW_VERSION:v2.0}
+    # 流量分配策略
+    # - hybrid: 混合策略（推荐）- 优先用户ID，其次IP，最后请求ID
+    # - user-id: 基于用户ID的一致性哈希（需要用户已登录）
+    # - ip: 基于IP的一致性哈希
+    # - request-id: 基于请求ID的取模
+    # - random: 纯随机数（不推荐，用户体验不一致）
+    strategy: ${GRAY_RELEASE_STRATEGY:hybrid}
+    # 需要灰度发布的服务路径列表（支持通配符，如 /api/ai/**）
+    # 如果不配置，默认匹配 /api/ai/** 路径（向后兼容）
+    service-paths:
+      - /api/ai/**
+    # 负载均衡配置
+    load-balancer:
+      # 无版本实例的默认版本
+      # 如果服务实例没有设置 version 元数据，使用此默认版本
+      # 如果为 null，则无版本实例不参与版本路由（降级处理时返回所有实例）
+      default-version: ${GRAY_RELEASE_DEFAULT_VERSION:v1.0}
+      # 是否允许无版本实例参与负载均衡
+      # true: 允许无版本实例参与（降级处理）
+      # false: 严格模式，只允许有版本信息的实例参与
+      allow-no-version: ${GRAY_RELEASE_ALLOW_NO_VERSION:true}
+      # 无匹配版本时的降级策略
+      # - all: 返回所有实例（包括无版本实例）
+      # - default-version: 返回默认版本的实例
+      # - fail: 返回空列表（可能导致请求失败）
+      fallback-strategy: ${GRAY_RELEASE_FALLBACK_STRATEGY:all}
 
