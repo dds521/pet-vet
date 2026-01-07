@@ -293,11 +293,9 @@ public class DoctorApplicationService {
      * @date 2024-12-27
      */
     public DoctorListResp findByAddressCode(DoctorListByAddressReq req) {
-        log.info("根据地址编码查询医生，地址编码: {}, 状态: {}", 
-                req.getAddressCode(), req.getStatus());
+        log.info("根据地址编码查询医生，地址编码: {}, 状态: {}", req.getAddressCode(), req.getStatus());
         
-        DoctorStatus status = req.getStatus() != null ? 
-                DoctorStatus.fromCode(req.getStatus()) : DoctorStatus.APPROVED;
+        DoctorStatus status = req.getStatus() != null ? DoctorStatus.fromCode(req.getStatus()) : DoctorStatus.APPROVED;
         
         List<Doctor> doctors = doctorRepository.findByAddressCode(req.getAddressCode(), status);
         
