@@ -21,6 +21,9 @@ spring:
         # 本地开发请显式绑定可达 IP，避免注册不可达的内网地址
         ip: ${NACOS_DISCOVERY_IP:127.0.0.1}
         # 注意：port 会自动使用 server.port 的值，无需手动配置
+        # 服务版本元数据（用于灰度发布）
+        metadata:
+          version: ${SERVICE_VERSION:v1.0}
         # 健康检查配置
         heart-beat-interval: 5000  # 心跳间隔（毫秒）
         heart-beat-timeout: 15000  # 心跳超时（毫秒）

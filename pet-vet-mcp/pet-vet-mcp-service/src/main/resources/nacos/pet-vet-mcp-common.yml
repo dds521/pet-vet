@@ -23,11 +23,20 @@ logging:
     com.petvet.mcp: DEBUG
 
 # ============================================
-# MCP 配置
+# Nacos 服务发现配置
 # ============================================
-# 注意：我们使用手动管理 MCP 客户端，禁用 Spring AI 自动配置
-# 这样可以延迟初始化，只在调用时才创建客户端连接
 spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:public}
+        group: DEFAULT_GROUP
+        # 服务注册配置
+        ip: ${NACOS_DISCOVERY_IP:127.0.0.1}
+        # 服务版本元数据（用于灰度发布）
+        metadata:
+          version: ${SERVICE_VERSION:v1.0}
   ai:
     mcp:
       client:

@@ -116,8 +116,21 @@ embedding:
       # - clustering: 用于聚类
       input-type: ${COHERE_INPUT_TYPE:search_document}
 
-# OpenAI 配置（需要 API Key）
+# ============================================
+# Nacos 服务发现配置
+# ============================================
 spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:public}
+        group: DEFAULT_GROUP
+        # 服务注册配置
+        ip: ${NACOS_DISCOVERY_IP:127.0.0.1}
+        # 服务版本元数据（用于灰度发布）
+        metadata:
+          version: ${SERVICE_VERSION:v1.0}
   ai:
     openai:
       embedding:
