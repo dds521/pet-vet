@@ -43,7 +43,8 @@ spring:
           predicates:
             - Path=/api/demo/**
           filters:
-            - StripPrefix=1
+            # 不截取路径，因为服务端接口已经包含 /api/demo 前缀
+            - RemoveRequestHeader=X-Target-Version
         # 嵌入服务路由
         - id: pet-vet-embedding-service
           uri: lb://pet-vet-embedding

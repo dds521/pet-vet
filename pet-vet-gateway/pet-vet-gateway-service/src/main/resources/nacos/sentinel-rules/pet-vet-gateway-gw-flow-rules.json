@@ -1,6 +1,6 @@
 [
   {
-    "resource": "pet-vet-ai-service",
+    "resource": "pet-vet-ai",
     "resourceMode": 0,
     "count": 50,
     "intervalSec": 1,
@@ -11,7 +11,7 @@
     "paramItem": null
   },
   {
-    "resource": "pet-vet-embedding-service",
+    "resource": "pet-vet-embedding",
     "resourceMode": 0,
     "count": 50,
     "intervalSec": 1,
@@ -22,7 +22,7 @@
     "paramItem": null
   },
   {
-    "resource": "pet-vet-rag-service",
+    "resource": "pet-vet-rag",
     "resourceMode": 0,
     "count": 50,
     "intervalSec": 1,
@@ -33,7 +33,7 @@
     "paramItem": null
   },
   {
-    "resource": "pet-vet-mcp-service",
+    "resource": "pet-vet-mcp",
     "resourceMode": 0,
     "count": 30,
     "intervalSec": 1,

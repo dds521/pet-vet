@@ -217,11 +217,12 @@ public class RequestLoggingFilter implements GlobalFilter, Ordered {
         @Override
         public Flux<DataBuffer> getBody() {
             return DataBufferUtils.join(super.getBody())
-                    .doOnNext(dataBuffer -> {
+                    .flatMapMany(dataBuffer -> {
+                        // 先读取 buffer 内容
                         byte[] bytes = new byte[dataBuffer.readableByteCount()];
                         dataBuffer.read(bytes);
-                        DataBufferUtils.release(dataBuffer);
                         
+                        // 记录日志
                         String body = new String(bytes, StandardCharsets.UTF_8);
                         int maxSize = gatewayConfig.getLog().getMaxBodySize();
                         
@@ -230,11 +231,11 @@ public class RequestLoggingFilter implements GlobalFilter, Ordered {
                         }
                         
                         log.info("请求ID: {}, 请求体: {}", requestId, body);
-                    })
-                    .flatMapMany(dataBuffer -> {
-                        byte[] bytes = new byte[dataBuffer.readableByteCount()];
-                        dataBuffer.read(bytes);
+                        
+                        // 释放原始 buffer
                         DataBufferUtils.release(dataBuffer);
+                        
+                        // 创建新的 buffer 供后续使用
                         return Flux.just(bufferFactory.wrap(bytes));
                     });
         }

@@ -1,6 +1,6 @@
 [
   {
-    "resource": "pet-vet-ai-service",
+    "resource": "pet-vet-ai",
     "grade": 0,
     "count": 100,
     "timeWindow": 10,
@@ -9,7 +9,7 @@
     "statIntervalMs": 1000
   },
   {
-    "resource": "pet-vet-embedding-service",
+    "resource": "pet-vet-embedding",
     "grade": 0,
     "count": 200,
     "timeWindow": 10,
@@ -18,7 +18,7 @@
     "statIntervalMs": 1000
   },
   {
-    "resource": "pet-vet-rag-service",
+    "resource": "pet-vet-rag",
     "grade": 0,
     "count": 300,
     "timeWindow": 10,
@@ -27,7 +27,7 @@
     "statIntervalMs": 1000
   },
   {
-    "resource": "pet-vet-mcp-service",
+    "resource": "pet-vet-mcp",
     "grade": 0,
     "count": 200,
     "timeWindow": 10,

@@ -1,21 +1,41 @@
 [
   {
-    "resource": "pet-vet-ai-service",
+    "resource": "pet-vet-ai",
     "limitApp": "default",
     "strategy": 0
   },
   {
-    "resource": "pet-vet-embedding-service",
+    "resource": "pet-vet-embedding",
     "limitApp": "default",
     "strategy": 0
   },
   {
-    "resource": "pet-vet-rag-service",
+    "resource": "pet-vet-rag",
     "limitApp": "default",
     "strategy": 0
   },
   {
-    "resource": "pet-vet-mcp-service",
+    "resource": "pet-vet-mcp",
+    "limitApp": "default",
+    "strategy": 0
+  },
+  {
+    "resource": "ai-api",
+    "limitApp": "default",
+    "strategy": 0
+  },
+  {
+    "resource": "embedding-api",
+    "limitApp": "default",
+    "strategy": 0
+  },
+  {
+    "resource": "rag-api",
+    "limitApp": "default",
+    "strategy": 0
+  },
+  {
+    "resource": "mcp-api",
     "limitApp": "default",
     "strategy": 0
   }
