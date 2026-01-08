@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.Request;
 import org.springframework.cloud.client.loadbalancer.RequestDataContext;
 import org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
@@ -52,6 +53,11 @@ public class VersionLoadBalancer {
     private final GatewayConfig gatewayConfig;
     
     /**
+     * DiscoveryClient（用于直接获取服务实例，避免无限递归）
+     */
+    private final DiscoveryClient discoveryClient;
+    
+    /**
      * 创建版本感知的服务实例列表提供者配置
      * 
      * 使用装饰器模式，为每个服务创建版本感知的 ServiceInstanceListSupplier
@@ -64,7 +70,7 @@ public class VersionLoadBalancer {
     @Bean
     @Primary
     public ServiceInstanceListSupplier versionAwareServiceInstanceListSupplier(LoadBalancerClientFactory clientFactory) {
-        return new VersionAwareServiceInstanceListSupplier(clientFactory, gatewayConfig);
+        return new VersionAwareServiceInstanceListSupplier(clientFactory, gatewayConfig, discoveryClient);
     }
     
     /**
@@ -76,13 +82,16 @@ public class VersionLoadBalancer {
         
         private final LoadBalancerClientFactory clientFactory;
         private final GatewayConfig gatewayConfig;
+        private final DiscoveryClient discoveryClient;
         private ServiceInstanceListSupplier delegate;
         private String serviceId;
         
         public VersionAwareServiceInstanceListSupplier(LoadBalancerClientFactory clientFactory, 
-                                                       GatewayConfig gatewayConfig) {
+                                                       GatewayConfig gatewayConfig,
+                                                       DiscoveryClient discoveryClient) {
             this.clientFactory = clientFactory;
             this.gatewayConfig = gatewayConfig;
+            this.discoveryClient = discoveryClient;
         }
         
         @Override
@@ -101,34 +110,63 @@ public class VersionLoadBalancer {
         
         @Override
         public Flux<List<ServiceInstance>> get(Request request) {
-            // 延迟初始化 delegate
+            // 从请求中获取服务ID
+            String requestServiceId = getServiceIdFromRequest(request);
+            if (requestServiceId == null) {
+                log.warn("无法从请求中获取服务ID");
+                return Flux.just(List.of());
+            }
+            
+            this.serviceId = requestServiceId;
+            
+            // 延迟初始化 delegate（避免无限递归）
             if (delegate == null) {
-                // 从请求中获取服务ID
-                String requestServiceId = getServiceIdFromRequest(request);
-                if (requestServiceId == null) {
-                    log.warn("无法从请求中获取服务ID");
-                    return Flux.just(List.of());
-                }
-                
-                this.serviceId = requestServiceId;
-                
                 // 获取原始的服务实例列表提供者
                 ObjectProvider<ServiceInstanceListSupplier> provider = clientFactory.getLazyProvider(requestServiceId, ServiceInstanceListSupplier.class);
                 
                 if (provider == null) {
-                    log.warn("无法获取服务实例列表提供者，服务ID: {}", requestServiceId);
-                    return Flux.just(List.of());
+                    log.warn("无法获取服务实例列表提供者，服务ID: {}，使用 DiscoveryClient 直接获取", requestServiceId);
+                    return getInstancesFromDiscoveryClient(requestServiceId, request);
                 }
                 
-                this.delegate = provider.getIfAvailable();
-                if (this.delegate == null) {
-                    log.warn("服务实例列表提供者不可用，服务ID: {}", requestServiceId);
-                    return Flux.just(List.of());
+                ServiceInstanceListSupplier candidate = provider.getIfAvailable();
+                
+                // 关键修复：检查是否是自身实例，避免无限递归
+                if (candidate == null || candidate instanceof VersionAwareServiceInstanceListSupplier) {
+                    log.debug("检测到循环依赖，使用 DiscoveryClient 直接获取服务实例，服务ID: {}", requestServiceId);
+                    return getInstancesFromDiscoveryClient(requestServiceId, request);
                 }
+                
+                this.delegate = candidate;
             }
             
             // 获取服务实例列表并过滤
             return delegate.get(request).map(instances -> filterInstancesByVersion(instances, request));
+        }
+        
+        /**
+         * 直接从 DiscoveryClient 获取服务实例（避免无限递归）
+         * 
+         * @param serviceId 服务ID
+         * @param request 请求对象
+         * @return 服务实例列表
+         * @author daidasheng
+         * @date 2026-01-08
+         */
+        private Flux<List<ServiceInstance>> getInstancesFromDiscoveryClient(String serviceId, Request request) {
+            try {
+                List<ServiceInstance> instances = discoveryClient.getInstances(serviceId);
+                if (instances == null || instances.isEmpty()) {
+                    log.warn("从 DiscoveryClient 获取的服务实例列表为空，服务ID: {}", serviceId);
+                    return Flux.just(List.of());
+                }
+                
+                log.debug("从 DiscoveryClient 获取到 {} 个服务实例，服务ID: {}", instances.size(), serviceId);
+                return Flux.just(filterInstancesByVersion(instances, request));
+            } catch (Exception e) {
+                log.error("从 DiscoveryClient 获取服务实例失败，服务ID: {}", serviceId, e);
+                return Flux.just(List.of());
+            }
         }
         
         /**
@@ -217,15 +255,11 @@ public class VersionLoadBalancer {
             }
             
             // 获取负载均衡配置
-            GatewayConfig.LoadBalancerConfig lbConfig = gatewayConfig.getGrayRelease() != null 
-                    ? gatewayConfig.getGrayRelease().getLoadBalancer() 
-                    : null;
+            GatewayConfig.LoadBalancerConfig lbConfig = gatewayConfig.getGrayRelease() != null ? gatewayConfig.getGrayRelease().getLoadBalancer() : null;
             
             String defaultVersion = lbConfig != null ? lbConfig.getDefaultVersion() : null;
-            boolean allowNoVersion = lbConfig == null || lbConfig.getAllowNoVersion() == null 
-                    || lbConfig.getAllowNoVersion();
-            String fallbackStrategy = lbConfig != null && lbConfig.getFallbackStrategy() != null 
-                    ? lbConfig.getFallbackStrategy() : "all";
+            boolean allowNoVersion = lbConfig == null || lbConfig.getAllowNoVersion() == null || lbConfig.getAllowNoVersion();
+            String fallbackStrategy = lbConfig != null && lbConfig.getFallbackStrategy() != null ? lbConfig.getFallbackStrategy() : "all";
             
             // 分离有版本和无版本的实例
             List<ServiceInstance> versionedInstances = new ArrayList<>();
@@ -250,8 +284,7 @@ public class VersionLoadBalancer {
                         boolean matched = targetVersion.equals(instanceVersion);
                         
                         if (matched) {
-                            log.debug("服务实例匹配 - 实例: {}:{}, 版本: {}", 
-                                    instance.getHost(), instance.getPort(), instanceVersion);
+                            log.debug("服务实例匹配 - 实例: {}:{}, 版本: {}", instance.getHost(), instance.getPort(), instanceVersion);
                         }
                         
                         return matched;
@@ -274,8 +307,7 @@ public class VersionLoadBalancer {
             }
             
             // 如果没有匹配的实例，根据降级策略处理
-            return handleFallback(targetVersion, instances, versionedInstances, noVersionInstances, 
-                    defaultVersion, allowNoVersion, fallbackStrategy);
+            return handleFallback(targetVersion, instances, versionedInstances, noVersionInstances, defaultVersion, allowNoVersion, fallbackStrategy);
         }
         
         /**
@@ -330,8 +362,7 @@ public class VersionLoadBalancer {
                 default:
                     // 返回所有实例（包括无版本实例）
                     if (allowNoVersion) {
-                        log.warn("未找到版本 {} 的服务实例，返回所有实例作为降级处理（包括 {} 个无版本实例）", 
-                                targetVersion, noVersionInstances.size());
+                        log.warn("未找到版本 {} 的服务实例，返回所有实例作为降级处理（包括 {} 个无版本实例）", targetVersion, noVersionInstances.size());
                         return allInstances;
                     } else {
                         log.warn("未找到版本 {} 的服务实例，且不允许无版本实例，返回所有有版本实例", targetVersion);
