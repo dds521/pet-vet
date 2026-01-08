@@ -33,7 +33,7 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/pet/**", "/api/user/**", "/api/doctor/**", "/actuator/**").permitAll() // 开放 API 接口
+                .requestMatchers("/api/pet/**", "/api/user/**", "/api/demo/**","/api/doctor/**", "/actuator/**").permitAll() // 开放 API 接口
                 .anyRequest().authenticated()
             );
         

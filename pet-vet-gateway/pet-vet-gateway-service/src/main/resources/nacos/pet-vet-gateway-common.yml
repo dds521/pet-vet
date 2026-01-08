@@ -15,7 +15,8 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowed-origins: "*"
+            # 使用 allowed-origin-patterns 替代 allowed-origins，支持 allow-credentials: true
+            allowed-origin-patterns: "*"
             allowed-methods: "*"
             allowed-headers: "*"
             allow-credentials: true
@@ -29,30 +30,37 @@ spring:
         #   - 旧版本：metadata.version = v1.0
         #   - 新版本：metadata.version = v2.0
         - id: pet-vet-ai-service
-          uri: lb://pet-vet-ai-service
+          uri: lb://pet-vet-ai
           predicates:
             - Path=/api/ai/**
           filters:
             - StripPrefix=1
             # 移除网关内部使用的请求头，不传递给下游服务
             - RemoveRequestHeader=X-Target-Version
+        # Demo 服务路由（用于验证网关调用）
+        - id: pet-vet-ai-demo
+          uri: lb://pet-vet-ai
+          predicates:
+            - Path=/api/demo/**
+          filters:
+            - StripPrefix=1
         # 嵌入服务路由
         - id: pet-vet-embedding-service
-          uri: lb://pet-vet-embedding-service
+          uri: lb://pet-vet-embedding
           predicates:
             - Path=/api/embedding/**
           filters:
             - StripPrefix=1
         # RAG服务路由
         - id: pet-vet-rag-service
-          uri: lb://pet-vet-rag-service
+          uri: lb://pet-vet-rag
           predicates:
             - Path=/api/rag/**
           filters:
             - StripPrefix=1
         # MCP服务路由
         - id: pet-vet-mcp-service
-          uri: lb://pet-vet-mcp-service
+          uri: lb://pet-vet-mcp
           predicates:
             - Path=/api/mcp/**
           filters:
@@ -205,6 +213,7 @@ gateway:
   whitelist:
     - /api/auth/**
     - /api/public/**
+    - /api/demo/**  # Demo 接口，用于验证网关调用
     - /actuator/**
     - /health
     - /favicon.ico

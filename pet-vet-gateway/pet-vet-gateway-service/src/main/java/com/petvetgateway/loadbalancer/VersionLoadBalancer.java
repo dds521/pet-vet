@@ -134,6 +134,10 @@ public class VersionLoadBalancer {
         /**
          * 从请求中获取服务ID
          * 
+         * Gateway 会在请求上下文中设置路由信息，我们可以从多个地方获取服务名：
+         * 1. 从 GATEWAY_REQUEST_URL_ATTR 获取完整 URL（最可靠）
+         * 2. 从路由ID推断服务名（备用方案）
+         * 
          * @param request 请求对象
          * @return 服务ID
          * @author daidasheng
@@ -146,30 +150,46 @@ public class VersionLoadBalancer {
             
             if (request.getContext() instanceof RequestDataContext) {
                 RequestDataContext context = (RequestDataContext) request.getContext();
-                // 从 URI 中提取服务名（例如：lb://pet-vet-ai-service -> pet-vet-ai-service）
-                // Gateway 会在请求上下文中设置服务信息
-                Object uri = context.getClientRequest().getAttributes().get("GATEWAY_REQUEST_URL_ATTR");
-                if (uri != null) {
-                    String uriStr = uri.toString();
-                    // 提取服务名（简化处理）
-                    if (uriStr.contains("://")) {
-                        String serviceId = uriStr.substring(uriStr.indexOf("://") + 3);
+                
+                // 方法1：从请求 URL 属性获取（Gateway 标准属性）
+                Object urlAttr = context.getClientRequest().getAttributes()
+                        .get("org.springframework.cloud.gateway.support.ServerWebExchangeUtils.gatewayRequestUrl");
+                if (urlAttr != null) {
+                    String urlStr = urlAttr.toString();
+                    // 提取服务名（例如：lb://pet-vet-ai -> pet-vet-ai）
+                    if (urlStr.startsWith("lb://")) {
+                        String serviceId = urlStr.substring(5); // 移除 "lb://" 前缀
                         if (serviceId.contains("/")) {
                             serviceId = serviceId.substring(0, serviceId.indexOf("/"));
                         }
+                        log.debug("从请求 URL 获取服务ID: {}", serviceId);
                         return serviceId;
                     }
                 }
                 
-                // 备用方案：从路由ID中提取（如果 URI 方式失败）
-                Object routeId = context.getClientRequest().getAttributes().get("GATEWAY_ROUTE_ID");
+                // 方法2：从路由ID推断服务名（备用方案）
+                // 注意：路由ID可能与服务名不同，但通常包含服务名信息
+                Object routeId = context.getClientRequest().getAttributes()
+                        .get("org.springframework.cloud.gateway.support.ServerWebExchangeUtils.gatewayRouteId");
                 if (routeId != null) {
                     String routeIdStr = routeId.toString();
-                    // 从路由ID中提取服务名（例如：pet-vet-ai-service-v1 -> pet-vet-ai-service）
-                    if (routeIdStr.contains("-v")) {
-                        return routeIdStr.substring(0, routeIdStr.lastIndexOf("-v"));
-                    }
+                    log.debug("从路由ID推断服务ID: {}", routeIdStr);
+                    // 路由ID通常是服务名，直接返回
                     return routeIdStr;
+                }
+                
+                // 方法3：从 URI 属性获取（兼容旧版本）
+                Object uriAttr = context.getClientRequest().getAttributes().get("GATEWAY_REQUEST_URL_ATTR");
+                if (uriAttr != null) {
+                    String uriStr = uriAttr.toString();
+                    if (uriStr.startsWith("lb://")) {
+                        String serviceId = uriStr.substring(5);
+                        if (serviceId.contains("/")) {
+                            serviceId = serviceId.substring(0, serviceId.indexOf("/"));
+                        }
+                        log.debug("从 URI 属性获取服务ID: {}", serviceId);
+                        return serviceId;
+                    }
                 }
             }
             
