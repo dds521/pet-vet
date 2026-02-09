@@ -13,6 +13,13 @@
 	<description>PetVetRAG Service: 增强型检索服务实现</description>
 	
 	<dependencies>
+		<!-- LangGraph4j: 用于图编排 Demo 验证 -->
+		<dependency>
+			<groupId>org.bsc.langgraph4j</groupId>
+			<artifactId>langgraph4j-core</artifactId>
+			<version>1.8.1</version>
+		</dependency>
+		
 		<!-- 依赖公共模块 -->
 		<dependency>
 			<groupId>com.example</groupId>
