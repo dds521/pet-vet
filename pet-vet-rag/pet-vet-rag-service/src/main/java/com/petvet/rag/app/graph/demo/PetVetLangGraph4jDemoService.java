@@ -2,254 +2,222 @@ package com.petvet.rag.app.graph.demo;
 
 import com.petvet.rag.api.demo.DemoTriageReq;
 import com.petvet.rag.api.demo.DemoTriageResp;
+import dev.langchain4j.model.chat.ChatModel;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.NodeAction;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
+import org.bsc.langgraph4j.state.Channel;
 import org.bsc.langgraph4j.state.Channels;
+import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 /**
- * 使用 LangGraph4j 的简单宠物分诊 Demo 服务
- * 
- * 业务场景（尽量完整但保持简单）：
- * - 输入：宠物症状描述（可选宠物昵称）
- * - 流程：记录症状 → 简单规则分诊 → 生成总结文案
- * - 输出：分诊级别 + 总结文案
- * 
- * 注意：仅作为 LangGraph4j 集成验证，不影响现有 RAG 流程。
+ * 使用 LangGraph4j 的智能多专家会诊 Demo 服务
+ *
+ * 升级说明：
+ * 从简单的规则匹配升级为基于 LLM 的多专家协作模式。
+ * 展示了 LangGraph 的并行执行与状态聚合能力。
+ *
+ * 业务场景：
+ * 1. 症状分析专家 (Symptom Expert): 分析病情严重程度。
+ * 2. 护理建议专家 (Care Expert): 提供家庭护理建议。
+ * 3. 主治医师 (Attending Vet): 汇总各方意见，给出最终诊断。
  *
  * @author daidasheng
- * @date 2026-02-09
+ * @date 2026-02-10
  */
+@Service
 @Slf4j
+@RequiredArgsConstructor
 public class PetVetLangGraph4jDemoService {
 
+    private final ChatModel chatLanguageModel;
+
     /**
-     * 简单状态：仅维护消息列表
-     * 
-     * 说明：本 Demo 不引入复杂状态，只通过一个 {@code messages} 渠道累积所有提示语和分诊结果，
-     * 最终在汇总时直接将 messages 拼接成 summary 返回给前端。
+     * 会诊状态
      */
-    static class SimpleState extends AgentState {
+    static class ConsultationState extends AgentState {
 
-        static final String MESSAGES_KEY = "messages";
+        static final String INPUT_KEY = "input";
+        static final String SYMPTOM_ANALYSIS_KEY = "symptomAnalysis";
+        static final String CARE_ADVICE_KEY = "careAdvice";
+        static final String FINAL_DIAGNOSIS_KEY = "finalDiagnosis";
 
-        /**
-         * 状态 Schema：messages 采用追加模式
-         */
-        static final Map<String, org.bsc.langgraph4j.state.Channel<?>> SCHEMA = Map.of(
-            MESSAGES_KEY, Channels.appender(ArrayList::new)
+        static final Map<String, Channel<?>> SCHEMA = Map.of(
+            INPUT_KEY, Channels.base((a, b) -> b), // 存储原始输入
+            SYMPTOM_ANALYSIS_KEY, Channels.base((a, b) -> b), // 存储症状分析结果
+            CARE_ADVICE_KEY, Channels.base((a, b) -> b), // 存储护理建议
+            FINAL_DIAGNOSIS_KEY, Channels.base((a, b) -> b) // 存储最终诊断
         );
 
-        /**
-         * 构造函数
-         *
-         * @param initData 初始状态数据（由 LangGraph4j 根据 Schema 构建）
-         * @author daidasheng
-         * @date 2026-02-09
-         */
-        SimpleState(Map<String, Object> initData) {
+        ConsultationState(Map<String, Object> initData) {
             super(initData);
         }
 
-        /**
-         * 获取当前状态中的消息列表
-         * 
-         * 如果状态中尚未包含 messages，则返回空列表，方便后续追加。
-         *
-         * @return 消息列表（只读快照），永不为 null
-         * @author daidasheng
-         * @date 2026-02-09
-         */
-        List<String> messages() {
-            return (List<String>) this.<List<String>>value(MESSAGES_KEY).orElse(List.of());
+        String input() {
+            return (String) this.value(INPUT_KEY).orElse("");
+        }
+        
+        String symptomAnalysis() {
+            return (String) this.value(SYMPTOM_ANALYSIS_KEY).orElse("（未提供分析）");
+        }
+
+        String careAdvice() {
+            return (String) this.value(CARE_ADVICE_KEY).orElse("（未提供建议）");
         }
     }
 
     /**
-     * 节点1：收集症状 & 打招呼
-     * 
-     * 职责说明：
-     * - 组合欢迎语与症状描述，写入状态的 messages 渠道
-     * - 不做任何业务判断，仅负责“输入 → 内部上下文”的转换
+     * 节点：症状分析专家
      */
-    static class CollectSymptomNode implements NodeAction<SimpleState> {
-
-        private final DemoTriageReq req;
-
-        /**
-         * 构造函数
-         *
-         * @param req Demo 请求对象，包含宠物昵称与症状描述
-         * @author daidasheng
-         * @date 2026-02-09
-         */
-        CollectSymptomNode(DemoTriageReq req) {
-            this.req = req;
-        }
-
-        /**
-         * 执行节点逻辑
-         * 
-         * - 从请求中读取宠物昵称与症状描述
-         * - 构造两条文案写入 messages：欢迎语 + 症状回显
-         * - 返回的 Map 会被 LangGraph4j 根据 Channel 配置追加到状态中
-         *
-         * @param state 当前图状态（此处不会修改原 state，只基于其构造增量）
-         * @return 增量状态 Map，仅包含对 messages 的追加数据
-         * @author daidasheng
-         * @date 2026-02-09
-         */
+    class SymptomAnalysisNode implements NodeAction<ConsultationState> {
         @Override
-        public Map<String, Object> apply(SimpleState state) {
-            String petName = req.getPetName();
-            String symptom = req.getSymptomDesc();
-            String prefix = petName != null && !petName.isBlank() ? "宠物「" + petName + "」" : "宠物";
-            String msg1 = "欢迎使用宠物医疗 AI 简易分诊 Demo。";
-            String msg2 = prefix + " 的症状描述为：" + symptom;
-            log.debug("CollectSymptomNode, msg1={}, msg2={}", msg1, msg2);
-            return Map.of(SimpleState.MESSAGES_KEY, List.of(msg1, msg2));
+        public Map<String, Object> apply(ConsultationState state) {
+            String input = state.input();
+            log.info("🔍 [症状分析专家] 开始分析: {}", input);
+            
+            String prompt = String.format(
+                "你是一位经验丰富的兽医病理学家。请分析以下宠物症状。\n" +
+                "\n" +
+                "输入信息: %s\n" +
+                "\n" +
+                "请提供：\n" +
+                "1. 潜在的病因分析\n" +
+                "2. 症状的危急程度评估 (低/中/高)\n" +
+                "3. 是否需要立即就医\n" +
+                "\n" +
+                "请保持专业、客观。",
+                input
+            );
+                
+            String response = chatLanguageModel.chat(prompt);
+            log.info("✅ [症状分析专家] 分析完成");
+            return Map.of(ConsultationState.SYMPTOM_ANALYSIS_KEY, response);
         }
     }
 
     /**
-     * 节点2：基于简单规则做分诊，并生成建议
-     * 
-     * 职责说明：
-     * - 读取前序节点写入的 messages，并进行字符串拼接
-     * - 基于非常简单的关键词规则做“伪分诊”：
-     *   - 紧急就诊 / 建议尽快就诊 / 可继续观察
-     * - 生成一条包含“分诊级别 + 建议”信息的追加消息
+     * 节点：护理建议专家
      */
-    static class TriageNode implements NodeAction<SimpleState> {
-
-        /**
-         * 执行节点逻辑，进行规则分诊
-         *
-         * @param state 当前图状态，包含前序节点累积的 messages
-         * @return 增量状态 Map，仅包含对 messages 的追加数据（分诊结果文案）
-         * @author daidasheng
-         * @date 2026-02-09
-         */
+    class CareAdviceNode implements NodeAction<ConsultationState> {
         @Override
-        public Map<String, Object> apply(SimpleState state) {
-            List<String> messages = state.messages();
-            String all = String.join(" ", messages);
-            String triageLevel;
-            String advice;
-
-            String lower = all.toLowerCase();
-            if (containsAny(lower, "呕吐", "吐", "拉稀", "腹泻", "出血", "抽搐", "不吃不喝")) {
-                triageLevel = "紧急就诊";
-                advice = "根据描述，建议尽快带宠物前往附近宠物医院急诊就诊，途中注意保暖和安抚，不要自行大量用药。";
-            } else if (containsAny(lower, "食欲差", "不太吃", "精神不好", "萎靡", "咳嗽", "打喷嚏")) {
-                triageLevel = "建议尽快就诊";
-                advice = "症状提示可能存在潜在疾病，建议 24 小时内联系宠物医院进行线下检查，并记录近期饮食、排便和疫苗驱虫情况。";
-            } else {
-                triageLevel = "可继续观察";
-                advice = "目前症状描述相对较轻，可先观察 24 小时，如出现食欲明显下降、持续呕吐/腹泻、精神变差等情况，请立即就诊。";
-            }
-
-            String msg = "分诊级别：" + triageLevel + "。建议：" + advice;
-            log.debug("TriageNode, triageLevel={}, advice={}", triageLevel, advice);
-            return Map.of(SimpleState.MESSAGES_KEY, msg);
-        }
-
-        /**
-         * 判断文本中是否包含任一关键词（忽略大小写）
-         *
-         * @param text 文本（建议预先转换为小写）
-         * @param keywords 关键词列表
-         * @return 是否命中任一关键词
-         * @author daidasheng
-         * @date 2026-02-09
-         */
-        private boolean containsAny(String text, String... keywords) {
-            for (String k : keywords) {
-                if (text.contains(k.toLowerCase())) {
-                    return true;
-                }
-            }
-            return false;
+        public Map<String, Object> apply(ConsultationState state) {
+            String input = state.input();
+            log.info("❤️ [护理建议专家] 开始分析: {}", input);
+            
+            String prompt = String.format(
+                "你是一位宠物家庭护理专家。请针对以下情况提供家庭护理建议。\n" +
+                "\n" +
+                "输入信息: %s\n" +
+                "\n" +
+                "请注意：\n" +
+                "1. 不要开具处方药\n" +
+                "2. 提供缓解不适的方法\n" +
+                "3. 列出观察重点（如果发生什么情况需要立即去医院）\n" +
+                "\n" +
+                "语气要温和、安抚。",
+                input
+            );
+                
+            String response = chatLanguageModel.chat(prompt);
+            log.info("✅ [护理建议专家] 分析完成");
+            return Map.of(ConsultationState.CARE_ADVICE_KEY, response);
         }
     }
 
     /**
-     * 运行 LangGraph4j 简单分诊 Demo
-     *
-     * @param req 请求
-     * @return DemoTriageResp 响应
-     * @author daidasheng
-     * @date 2026-02-09
+     * 节点：主治医师（汇总）
      */
+    class AttendingPhysicianNode implements NodeAction<ConsultationState> {
+        @Override
+        public Map<String, Object> apply(ConsultationState state) {
+            String input = state.input();
+            String analysis = state.symptomAnalysis();
+            String advice = state.careAdvice();
+            
+            log.info("👨‍⚕️ [主治医师] 开始汇总会诊意见...");
+            
+            String prompt = String.format(
+                "你是一位资深主治兽医。请根据你的专家团队的意见，为用户生成一份最终的会诊报告。\n" +
+                "\n" +
+                "用户描述: %s\n" +
+                "\n" +
+                "专家 A (病理分析):\n" +
+                "%s\n" +
+                "\n" +
+                "专家 B (护理建议):\n" +
+                "%s\n" +
+                "\n" +
+                "请生成一份结构清晰的报告，包含：\n" +
+                "1. 【分诊建议】：明确指出是需要紧急就医、预约就诊还是居家观察。\n" +
+                "2. 【病情摘要】：综合病理分析。\n" +
+                "3. 【护理指导】：综合护理建议。\n" +
+                "\n" +
+                "请直接对宠物主人说话，语气专业且富有同理心。",
+                input, analysis, advice
+            );
+                
+            String response = chatLanguageModel.chat(prompt);
+            log.info("✅ [主治医师] 报告生成完毕");
+            return Map.of(ConsultationState.FINAL_DIAGNOSIS_KEY, response);
+        }
+    }
+
     public DemoTriageResp runDemo(DemoTriageReq req) {
+        String input = "宠物名: " + req.getPetName() + ", 症状: " + req.getSymptomDesc();
+        
         try {
-            // 1. 定义图结构
-            AgentStateFactory<SimpleState> factory = SimpleState::new;
-            StateGraph<SimpleState> stateGraph = new StateGraph<>(
-                SimpleState.SCHEMA,
-                factory
-            )
-                // 节点：收集症状
-                .addNode("collect_symptom", node_async(new CollectSymptomNode(req)))
-                // 节点：简单分诊
-                .addNode("triage", node_async(new TriageNode()))
-                // 边：START -> collect_symptom -> triage -> END
-                .addEdge(START, "collect_symptom")
-                .addEdge("collect_symptom", "triage")
-                .addEdge("triage", END);
-
-            // 2. 编译图
-            var compiledGraph = stateGraph.compile();
-
-            // 3. 执行图，获取最终状态
-            var lastOpt = compiledGraph.invoke(Map.of());
-            if (lastOpt.isEmpty()) {
-                return DemoTriageResp.builder().triageLevel("未知").summary("分诊失败：图执行未返回任何状态").build();
-            }
-            SimpleState last = (SimpleState) lastOpt.get();
-
-            List<String> messages = last.messages();
-            String summary = String.join("\n", messages);
-            String triageLevel = parseTriageLevel(summary);
-
-            return DemoTriageResp.builder().triageLevel(triageLevel).summary(summary).build();
-        } catch (GraphStateException e) {
-            log.error("LangGraph4j Demo 图构建或执行失败", e);
-            return DemoTriageResp.builder().triageLevel("未知").summary("分诊失败：图构建或执行异常：" + e.getMessage()).build();
+            // 1. 构建图
+            AgentStateFactory<ConsultationState> factory = ConsultationState::new;
+            StateGraph<ConsultationState> graph = new StateGraph<>(ConsultationState.SCHEMA, factory);
+            
+            // 2. 添加节点
+            graph.addNode("symptom_expert", node_async(new SymptomAnalysisNode()));
+            graph.addNode("care_expert", node_async(new CareAdviceNode()));
+            graph.addNode("attending_vet", node_async(new AttendingPhysicianNode()));
+            
+            // 3. 定义边 (并行执行：Start -> Expert A & Expert B)
+            graph.addEdge(START, "symptom_expert");
+            graph.addEdge(START, "care_expert");
+            
+            // 4. 汇聚 (Expert A & Expert B -> Attending)
+            graph.addEdge("symptom_expert", "attending_vet");
+            graph.addEdge("care_expert", "attending_vet");
+            
+            // 5. 结束
+            graph.addEdge("attending_vet", END);
+            
+            // 6. 编译并运行
+            var app = graph.compile();
+            var result = app.invoke(Map.of(ConsultationState.INPUT_KEY, input));
+            
+            // 7. 提取结果
+            // result 是 Optional<State> 类型
+            Optional<Object> diagnosisOpt = result.flatMap(state -> state.value(ConsultationState.FINAL_DIAGNOSIS_KEY));
+            String diagnosis = diagnosisOpt.map(Object::toString).orElse("诊断生成失败");
+            
+            // 简单解析分诊级别（Demo用途）
+            String level = "建议就诊";
+            if (diagnosis.contains("紧急")) level = "紧急就诊";
+            else if (diagnosis.contains("观察")) level = "居家观察";
+            
+            return DemoTriageResp.builder()
+                .triageLevel(level)
+                .summary(diagnosis)
+                .build();
+                
+        } catch (Exception e) {
+            log.error("LangGraph 执行异常", e);
+            throw new RuntimeException(e);
         }
-    }
-
-    /**
-     * 从总结文案中解析分诊级别
-     * 
-     * 当前 Demo 中，分诊结果的格式固定为：
-     * {@code 分诊级别：{level}。建议：{advice...}}
-     * 因此这里只做简单的字符串截取，作为 Demo 使用。
-     *
-     * @param summary 总结文案（由多条 messages 拼接而成）
-     * @return 解析出的分诊级别，解析失败时返回 "未知"
-     * @author daidasheng
-     * @date 2026-02-09
-     */
-    private String parseTriageLevel(String summary) {
-        int idx = summary.indexOf("分诊级别：");
-        if (idx >= 0) {
-            String sub = summary.substring(idx + "分诊级别：".length());
-            int end = sub.indexOf("。");
-            return end > 0 ? sub.substring(0, end) : sub;
-        }
-        return "未知";
     }
 }
-
