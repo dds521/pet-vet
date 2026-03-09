@@ -6,11 +6,14 @@ import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.ServerParameters;
 import io.modelcontextprotocol.client.transport.StdioClientTransport;
+import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -74,10 +77,68 @@ public class McpClientManager {
 				return createStdioClient(serverInfo);
 			case "http":
 			case "sse":
-				// TODO: 实现 HTTP/SSE 客户端
-				throw new UnsupportedOperationException("HTTP/SSE 传输方式暂未实现");
+				// Demo2：HTTP/SSE 远程 MCP Server 客户端
+				// 说明：
+				// - 使用 Java MCP SDK 提供的 HttpClientSseClientTransport
+				// - 通过 HTTP + SSE 连接远程 MCP Server（通常部署在云端或其他服务器）
+				// - 具体 URL 及认证信息从 mcp-servers.json 映射到 McpConnectionConfig 中
+				return createHttpClient(serverInfo);
 			default:
 				throw new IllegalArgumentException("不支持的传输类型: " + transportType);
+		}
+	}
+
+	/**
+	 * 创建 HTTP/SSE 类型的 MCP 客户端（Demo）
+	 *
+	 * 使用场景：
+	 * - 远程 MCP Server 已由第三方或平台部署好，并通过 HTTP/SSE 暴露能力；
+	 * - 本服务只需根据配置中的 url 建立连接，无需在本机再起子进程。
+	 *
+	 * 配置示例（mcp-servers.json）：
+	 * {
+	 *   "mcpServers": {
+	 *     "demo-remote-http": {
+	 *       "transportType": "http",
+	 *       "url": "https://your-remote-mcp-server-base-url"
+	 *     }
+	 *   }
+	 * }
+	 *
+	 * 注意：
+	 * - 这里只做 Demo 实现，未对 headers/超时/鉴权做复杂封装，便于后续按需扩展。
+	 */
+	private McpSyncClient createHttpClient(McpServerInfo serverInfo) {
+		var connectionConfig = serverInfo.getConnectionConfig();
+		if (connectionConfig == null || connectionConfig.getUrl() == null) {
+			throw new IllegalArgumentException("http/sse 传输类型需要 url 配置");
+		}
+
+		String url = connectionConfig.getUrl();
+		URI baseUri = URI.create(url);
+
+		log.info("创建 HTTP MCP 客户端: name={}, url={}", serverInfo.getName(), url);
+
+		try {
+			// 构建 HTTP + SSE 传输层
+			HttpClientSseClientTransport transport = HttpClientSseClientTransport.builder(baseUri)
+				// 为兼容部分 Python/Node 服务器，这里强制使用 HTTP/1.1
+				.clientBuilder(HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1))
+				.build();
+
+			// 构建同步 MCP 客户端（与 stdio 模式保持一致的超时时间）
+			McpSyncClient client = McpClient.sync(transport)
+				.requestTimeout(java.time.Duration.ofSeconds(30))
+				.build();
+
+			// 标记为未初始化（延迟初始化，保持与 stdio 一致的生命周期管理）
+			clientInitialized.put(serverInfo.getName(), false);
+			log.info("HTTP MCP 客户端已创建（延迟初始化）: {}", serverInfo.getName());
+
+			return client;
+		} catch (Exception e) {
+			log.error("HTTP MCP 客户端初始化失败: {}", serverInfo.getName(), e);
+			throw new RuntimeException("HTTP MCP 客户端初始化失败: " + e.getMessage(), e);
 		}
 	}
 	

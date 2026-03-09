@@ -76,14 +76,46 @@ public class McpServerInitializer {
 			log.warn("服务器配置格式错误: {}", serverName);
 			return;
 		}
-		
+
+		// 说明：
+		// - 这里将 mcp-servers.json 中的配置转换为 McpConnectionConfig。
+		// - 为了兼容「本地 stdio」和「远程 HTTP/SSE」两种方式，支持以下字段：
+		//   * transportType: stdio / http / sse，默认 stdio，兼容旧配置
+		//   * command + args: 用于 stdio（例如 npx @modelcontextprotocol/server-filesystem）
+		//   * url:           用于 http/sse（例如 https://your-remote-mcp-server-base-url）
+		//   * headers:       HTTP 头（可选，用于 Token 等）
+		//   * timeout:       请求超时（毫秒，可选）
+		//   * additionalConfig: 预留扩展字段
 		Map<String, Object> config = (Map<String, Object>) serverConfig;
-		
-		// 构建连接配置
+
+		// 传输类型，默认 stdio，兼容当前已经存在的配置
+		String transportType = (String) config.getOrDefault("transportType", "stdio");
+
+		// stdio 所需字段（command + args）
+		String command = (String) config.get("command");
+		List<String> args = (List<String>) config.get("args");
+
+		// http/sse 所需字段（url + headers + timeout）
+		String url = (String) config.get("url");
+		Map<String, String> headers = (Map<String, String>) config.get("headers");
+
+		Long timeout = null;
+		Object timeoutObj = config.get("timeout");
+		if (timeoutObj instanceof Number) {
+			timeout = ((Number) timeoutObj).longValue();
+		}
+
+		Map<String, Object> additionalConfig = (Map<String, Object>) config.get("additionalConfig");
+
+		// 构建连接配置（两种方式共用一个 DTO，由 transportType 决定走哪个分支）
 		McpConnectionConfig connectionConfig = McpConnectionConfig.builder()
-			.transportType("stdio") // 默认使用 stdio
-			.command((String) config.get("command"))
-			.args((List<String>) config.get("args"))
+			.transportType(transportType)
+			.command(command)
+			.args(args)
+			.url(url)
+			.headers(headers)
+			.timeout(timeout)
+			.additionalConfig(additionalConfig)
 			.build();
 		
 		// 构建服务器信息
