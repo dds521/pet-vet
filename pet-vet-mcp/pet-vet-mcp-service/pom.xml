@@ -41,11 +41,11 @@
 		</dependency>
 		
 		<!-- Spring AI MCP Client -->
-		<!-- 注意：Spring AI 1.0.0 版本已更新命名，使用 spring-ai-starter-mcp-client -->
+		<!-- 升级到 1.1.2：包含更新的 MCP Java SDK 与 Streamable HTTP 支持 -->
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-starter-mcp-client</artifactId>
-			<version>1.0.0</version>
+			<version>1.1.2</version>
 		</dependency>
 		
 		<!-- Nacos 客户端依赖 -->
