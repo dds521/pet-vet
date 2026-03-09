@@ -7,6 +7,7 @@ import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.ServerParameters;
 import io.modelcontextprotocol.client.transport.StdioClientTransport;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
+import io.modelcontextprotocol.json.McpJsonMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
@@ -177,8 +178,11 @@ public class McpClientManager {
 				paramsBuilder.args(args.toArray(new String[0]));
 			}
 			
-			// 创建传输层
-			StdioClientTransport transport = new StdioClientTransport(paramsBuilder.build());
+			// 创建传输层（MCP SDK 0.12.0 之后需要显式传入 McpJsonMapper）
+			StdioClientTransport transport = new StdioClientTransport(
+				paramsBuilder.build(),
+				McpJsonMapper.getDefault()
+			);
 			
 			// 创建同步客户端（不立即初始化）
 			McpSyncClient client = McpClient.sync(transport)
