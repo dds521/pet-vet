@@ -12,7 +12,6 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -115,13 +114,13 @@ public class McpClientManager {
 		}
 
 		String url = connectionConfig.getUrl();
-		URI baseUri = URI.create(url);
 
 		log.info("创建 HTTP MCP 客户端: name={}, url={}", serverInfo.getName(), url);
 
 		try {
 			// 构建 HTTP + SSE 传输层
-			HttpClientSseClientTransport transport = HttpClientSseClientTransport.builder(baseUri)
+			// 注意：当前 Java SDK 的 HttpClientSseClientTransport.builder 接受的是字符串形式的 baseUrl
+			HttpClientSseClientTransport transport = HttpClientSseClientTransport.builder(url)
 				// 为兼容部分 Python/Node 服务器，这里强制使用 HTTP/1.1
 				.clientBuilder(HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1))
 				.build();

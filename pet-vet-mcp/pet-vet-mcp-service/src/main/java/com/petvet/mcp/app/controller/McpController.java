@@ -152,8 +152,7 @@ public class McpController {
 	 * @param args 透传给 MCP 工具的参数（JSON 对象，可为空）
 	 */
 	@PostMapping("/demo/stdio/filesystem/call-first-tool")
-	public ResponseEntity<Map<String, Object>> demoCallFirstFilesystemTool(
-		@RequestBody(required = false) Map<String, Object> args) {
+	public ResponseEntity<Map<String, Object>> demoCallFirstFilesystemTool(@RequestBody(required = false) Map<String, Object> args) {
 
 		// 1. 先获取工具列表
 		Map<String, Object> toolsResult = toolService.listTools("filesystem");

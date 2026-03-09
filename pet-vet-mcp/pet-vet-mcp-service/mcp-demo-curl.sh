@@ -6,7 +6,7 @@
 ## 说明：
 ## - 用于验证 pet-vet-mcp 服务在两种模式下的调用链路：
 ##   1）本地 stdio MCP（以 filesystem 为例）；
-##   2）远程 HTTP/SSE MCP（以 serverName=demo-remote-http 为例，需要你在 mcp-servers.json 中配置）。
+##   2）远程 HTTP MCP（以 DeepWiki 官方 MCP Server 为例，serverName=deepwiki）。
 ## - 默认服务地址：http://localhost:48083（见 application.yml 的 server.port）。
 ##
 
@@ -26,19 +26,21 @@ curl -sS -X POST "${BASE_URL}/api/mcp/demo/stdio/filesystem/call-first-tool" \
   -d '{}' | jq .
 
 echo
-echo "=== Demo2：远程 HTTP/SSE MCP（示例 serverName=demo-remote-http）- 列出工具 ==="
-echo "提示：需要在 mcp-servers.json 中配置 demo-remote-http，且远程 MCP Server 可访问。"
-curl -sS -X GET "${BASE_URL}/api/mcp/servers/demo-remote-http/tools" \
+echo "=== Demo2：远程 HTTP MCP（DeepWiki，serverName=deepwiki）- 列出工具 ==="
+echo "提示：需要网络可以访问 https://mcp.deepwiki.com/mcp。"
+curl -sS -X GET "${BASE_URL}/api/mcp/servers/deepwiki/tools" \
   -H "Accept: application/json" | jq .
 
 echo
-echo "=== Demo2：远程 HTTP/SSE MCP（demo-remote-http）- 调用工具示例 ==="
-echo "请根据上一步返回的 tools 列表中的 name 字段，替换下面 JSON 中的 toolName。"
+echo "=== Demo2：远程 HTTP MCP（DeepWiki）- 调用 ask_question 工具示例 ==="
+echo "该示例会向 DeepWiki 提一个关于 GitHub 仓库的简单问题。"
 curl -sS -X POST "${BASE_URL}/api/mcp/tools/call" \
   -H "Content-Type: application/json" \
   -d '{
-    "serverName": "demo-remote-http",
-    "toolName": "请替换为实际工具名",
-    "arguments": {}
+    "serverName": "deepwiki",
+    "toolName": "ask_question",
+    "arguments": {
+      "question": "简要介绍一下 GitHub 仓库 rose-compiler/rose-full 是做什么的？请用中文回答。"
+    }
   }' | jq .
 
